@@ -742,16 +742,10 @@ function deserializeState(saved) {
 
 function triggerFileDownload(blob, filename) {
   const url = URL.createObjectURL(blob);
-  let clicked = false;
-  try {
-    const a = document.createElement("a");
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    clicked = true;
-  } catch (e) { /* ignore, try fallback below */ }
-  try { window.open(url, "_blank"); } catch (e) {}
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 60000);
-  return clicked;
 }
 
 function downloadJSONBackup(transactions, rubricas, evoMonths, debts) {
