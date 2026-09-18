@@ -4209,7 +4209,7 @@ function openGameDetail(gameId) {
     const topContributor = [...realRows].sort((a,b)=>(b.goals+b.assists)-(a.goals+a.assists))[0];
     const motm = getGameMOTM(g.id);
     const badges = [];
-    if (motm) badges.push('<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:var(--scp-gold);border-radius:99px;font-size:12px"><span style="color:#3a2f0c;font-size:10px;text-transform:uppercase;font-weight:800">🏅 Man of the Match</span> <strong style="color:#3a2f0c">'+motm.player+'</strong></span>');
+    if (motm) badges.push('<span onclick="openMotmRankingModal(\''+g.id+'\')" style="cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:var(--scp-gold);border-radius:99px;font-size:12px"><span style="color:#3a2f0c;font-size:10px;text-transform:uppercase;font-weight:800">🏅 Man of the Match</span> <strong style="color:#3a2f0c">'+motm.player+'</strong></span>');
     if (topScorer && topScorer.goals > 0) badges.push('<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:var(--surface2);border-radius:99px;font-size:12px"><span style="color:var(--dim);font-size:10px;text-transform:uppercase;font-weight:700">Top scorer</span> <strong>'+topScorer.player+'</strong> <span style="color:var(--scp-green);font-weight:700">'+topScorer.goals+'⚽</span></span>');
     if (topAssister && topAssister.assists > 0) badges.push('<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:var(--surface2);border-radius:99px;font-size:12px"><span style="color:var(--dim);font-size:10px;text-transform:uppercase;font-weight:700">Top assister</span> <strong>'+topAssister.player+'</strong> <span style="color:var(--amber);font-weight:700">'+topAssister.assists+'🎯</span></span>');
     if (topContributor && (topContributor.goals+topContributor.assists) > 0) badges.push('<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:var(--surface2);border-radius:99px;font-size:12px"><span style="color:var(--dim);font-size:10px;text-transform:uppercase;font-weight:700">Top contributor</span> <strong>'+topContributor.player+'</strong> <span style="font-weight:700">'+(topContributor.goals+topContributor.assists)+' G+A</span></span>');
@@ -4833,7 +4833,7 @@ function getGameScore(g) {
 
 // ══════════════════════════════════════════
 // MAN OF THE MATCH (MOTM)
-// Score = (Goals×10) + (Assists×6) − (OwnGoals×10) + (Contribution%×0.20) + (Difficulty%×0.20) + (20 if won else 0)
+// Score = (Goals×10) + (Assists×6) + (Contribution%×0.20) + (Difficulty%×0.20) + (20 if won else 0)
 // ══════════════════════════════════════════
 function computeGameMOTM(gameId) {
   const g = GAMES.find(x => x.id === gameId);
@@ -4855,7 +4855,7 @@ function computeGameMOTM(gameId) {
     const contribPct = teamGoals[team] > 0 ? (goals+assists)/teamGoals[team]*100 : 0;
     const diffPct = (1 - teamProb[team]) * 100;
     const won = (g.winner === team);
-    const score = goals*10 + assists*6 - og*10 + contribPct*0.20 + diffPct*0.20 + (won?20:0);
+    const score = goals*10 + assists*6 + contribPct*0.20 + diffPct*0.20 + (won?20:0);
     results.push({ player: p, team, goals, assists, ownGoals: og, won, score });
   });
   results.sort((a,b) => b.score - a.score);
@@ -4865,6 +4865,28 @@ function computeGameMOTM(gameId) {
 function getGameMOTM(gameId) {
   const results = computeGameMOTM(gameId);
   return results.length ? results[0] : null;
+}
+
+// Ranked list of every player's MOTM score for one game — 1st to last, medals for top 3
+function openMotmRankingModal(gameId) {
+  const g = GAMES.find(x => x.id === gameId);
+  const results = computeGameMOTM(gameId);
+  if (!g || !results.length) return;
+  const rows = results.map((r, i) => {
+    const rankLabel = i===0 ? '🏆' : i===1 ? '🥈' : i===2 ? '🥉' : (i+1);
+    return `<div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border)">
+      <span style="width:26px;text-align:center;font-size:${i<3?'18':'13'}px;font-weight:700;color:var(--dim);flex-shrink:0">${rankLabel}</span>
+      <span style="flex:1;min-width:0;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.player}</span>
+      <span style="font-size:11px;color:var(--muted);flex-shrink:0">${r.goals}⚽ ${r.assists}🎯${r.won?' · W':' · L'}</span>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:var(--scp-green);flex-shrink:0;min-width:44px;text-align:right">${r.score.toFixed(1)}</span>
+    </div>`;
+  }).join('');
+  const html = `<div style="background:var(--scp-gold);padding:16px 20px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:#3a2f0c">🏅 MOTM Ranking — Game #${g.id}</div>
+    <button onclick="closeAppModal()" style="background:rgba(0,0,0,0.15);border:none;border-radius:50%;width:28px;height:28px;font-size:18px;cursor:pointer;color:#3a2f0c;line-height:1">×</button>
+  </div>
+  <div style="padding:14px 20px 18px">${rows}</div>`;
+  openAppModal(html);
 }
 
 // Aggregate MOTM stats (awards, total score, average score) across a set of games — used by Records
