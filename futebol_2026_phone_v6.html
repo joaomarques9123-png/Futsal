@@ -1098,6 +1098,15 @@ body { background: var(--bg); color: var(--text); font-family: 'Barlow', sans-se
     </div>
 
     <div class="card" style="padding:18px">
+      <div class="section-label">Season</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <span style="font-size:13px">Year</span>
+        <select id="settings-year" style="padding:5px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);font-family:'Barlow',sans-serif;font-size:13px;color:var(--text)" onchange="setSelectedYear(this.value)"></select>
+      </div>
+      <div style="font-size:12px;color:var(--dim)">Every page in the app — Records, Rankings, Current Form, Player Stats, and more — shows only this year's games. Switching years never deletes anything; it's just what you're currently looking at. ELO keeps running continuously across years and isn't affected by this, except for 2025, which is a frozen, view-only year that never feeds into ELO.</div>
+    </div>
+
+    <div class="card" style="padding:18px">
       <div class="section-label">ELO settings</div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
         <span style="font-size:13px">K-factor</span>
@@ -1279,7 +1288,7 @@ function parseWorkbook(wb) {
       const winner = resultA === 'Vitória' ? 'A' : 'B';
       const month = dateRaw instanceof Date ? dateRaw.getMonth()+1 : 0;
       newGames2025.push({
-        id, date: dateStr, month,
+        id, date: dateStr, month, year: 2025,
         teamA: tA.map(r=>String(r['Jogador']||'').trim()).filter(n=>!!n),
         teamB: tB.map(r=>String(r['Jogador']||'').trim()).filter(n=>!!n),
         winner
@@ -1330,11 +1339,12 @@ function parseWorkbook(wb) {
     const resultA = (tA[0]['Resultado']||'').trim();
     const winner = resultA === 'Vitória' ? 'A' : 'B';
     const month = dateRaw instanceof Date ? dateRaw.getMonth()+1 : 0;
+    const year = dateRaw instanceof Date ? dateRaw.getFullYear() : SELECTED_YEAR;
     const eloAdjust = parseFloat(tA[0]['Ajuste ELO']) || 0;
     const probWinA  = parseFloat(tA[0]['Probabilidade Vitória']) || null;
     const comment   = String(tA[0]['Comment']||'').trim() || null;
     newGames.push({
-      id, date: dateStr, month,
+      id, date: dateStr, month, year,
       teamA: tA.map(r => String(r['Jogador']||'').trim()).filter(n => !!n),
       teamB: tB.map(r => String(r['Jogador']||'').trim()).filter(n => !!n),
       teamAelo: tA.map(r => ({name: String(r['Jogador']||'').trim(), elo: parseFloat(r['ELO'])||0, adj: parseFloat(r['Ajuste ELO'])||0})),
@@ -1398,10 +1408,17 @@ function parseWorkbook(wb) {
   if (!newAllPlayers.find(p => p.name === 'Outro')) newAllPlayers.push({name:'Outro', elo:400, initialElo:400, comment:''});
 
   // Update globals
-  GAMES.length = 0; newGames.forEach(g => GAMES.push(g));
+  GAMES_ALL_YEARS.length = 0;
+  newGames.forEach(g => GAMES_ALL_YEARS.push(g));
+  newGames2025.forEach(g => GAMES_ALL_YEARS.push(g));
   ALL_PLAYERS.length = 0; newAllPlayers.forEach(p => ALL_PLAYERS.push(p));
   PAY_DATA.length = 0; newPay.forEach(p => PAY_DATA.push(p));
   TOLERANCE = newTolerance;
+  if (!GAMES_ALL_YEARS.some(g => g.year === SELECTED_YEAR)) {
+    const years = [...new Set(GAMES_ALL_YEARS.map(g => g.year))].sort((a,b) => b-a);
+    if (years.length) SELECTED_YEAR = years[0];
+  }
+  applyYearFilter();
 
   slots = Array.from({length:10}, ()=>({name:null,team:null}));
   gamesFilter = 0;
@@ -1423,11 +1440,40 @@ function parseWorkbook(wb) {
 // ══════════════════════════════════════════
 const ALL_PLAYERS = [];
 const PLAYER_STATS = [];
-const GAMES = [];
+const GAMES = []; // the CURRENTLY VIEWED year's games — a derived slice, rebuilt by applyYearFilter()
+const GAMES_ALL_YEARS = []; // the true store — every game ever played, each tagged with .year
 const PAY_DATA = []; // [{date, player, serial}]
-const GAMES_2025 = []; // same structure as GAMES
+const GAMES_2025 = []; // legacy — kept only so the existing Year Comparison page keeps working unchanged
 const GOAL_STATS = []; // [{gameId, player, goals, assists}]
 let TOLERANCE = null; // ELO balance tolerance from Simulador F12
+let SELECTED_YEAR = new Date().getFullYear(); // which year's games GAMES currently reflects
+
+// Rebuild the visible GAMES slice from the true store, for the currently selected year
+function applyYearFilter() {
+  GAMES.length = 0;
+  GAMES_ALL_YEARS.filter(g => g.year === SELECTED_YEAR).forEach(g => GAMES.push(g));
+}
+
+// One-time upgrade path for data saved before multi-year support existed:
+// tags any un-tagged GAMES entries as 2026 (this app's original single year), and copies
+// GAMES_2025 in as real, selectable 2026-style entries — without disturbing the legacy
+// GAMES_2025 array itself, so the existing Year Comparison page is untouched.
+function migrateToMultiYear() {
+  if (!GAMES_ALL_YEARS.length && GAMES.length) {
+    GAMES.forEach(g => { if (typeof g.year !== 'number') g.year = 2026; GAMES_ALL_YEARS.push(g); });
+  }
+  if (GAMES_2025.length) {
+    const already = new Set(GAMES_ALL_YEARS.filter(g => g.year === 2025).map(g => g.id));
+    GAMES_2025.forEach(g => {
+      if (already.has(g.id)) return;
+      GAMES_ALL_YEARS.push({ ...g, year: 2025 });
+    });
+  }
+  if (!GAMES_ALL_YEARS.some(g => g.year === SELECTED_YEAR)) {
+    const years = [...new Set(GAMES_ALL_YEARS.map(g => g.year))].sort((a,b) => b-a);
+    if (years.length) SELECTED_YEAR = years[0];
+  }
+}
 
 // Build duo stats from game data
 function buildDuoStats() {
@@ -1474,9 +1520,9 @@ function minEligibleGames() {
 function saveState() {
   try {
     const state = {
-      version: 2,
-      ALL_PLAYERS, GAMES, GOAL_STATS, PAY_DATA, GAMES_2025,
-      TOLERANCE, K_FACTOR, ELIGIBILITY_PCT,
+      version: 3,
+      ALL_PLAYERS, GAMES_ALL_YEARS, GOAL_STATS, PAY_DATA, GAMES_2025,
+      TOLERANCE, K_FACTOR, ELIGIBILITY_PCT, SELECTED_YEAR,
       savedAt: Date.now()
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -1490,7 +1536,6 @@ function loadState() {
     const state = JSON.parse(raw);
     if (!state || typeof state !== 'object') return false;
     ALL_PLAYERS.length = 0; (state.ALL_PLAYERS||[]).forEach(p => ALL_PLAYERS.push(p));
-    GAMES.length = 0; (state.GAMES||[]).forEach(g => GAMES.push(g));
     GOAL_STATS.length = 0; (state.GOAL_STATS||[]).forEach(g => GOAL_STATS.push(g));
     PAY_DATA.length = 0; (state.PAY_DATA||[]).forEach(p => PAY_DATA.push(p));
     GAMES_2025.length = 0; (state.GAMES_2025||[]).forEach(g => GAMES_2025.push(g));
@@ -1498,13 +1543,26 @@ function loadState() {
     K_FACTOR = state.K_FACTOR || 20;
     ELIGIBILITY_PCT = state.ELIGIBILITY_PCT || 30;
     ALL_PLAYERS.forEach(p => { if (typeof p.initialElo !== 'number') p.initialElo = p.elo; });
-    return ALL_PLAYERS.length > 0 || GAMES.length > 0;
+
+    GAMES_ALL_YEARS.length = 0;
+    if (Array.isArray(state.GAMES_ALL_YEARS) && state.GAMES_ALL_YEARS.length) {
+      // Already multi-year — load it directly
+      state.GAMES_ALL_YEARS.forEach(g => GAMES_ALL_YEARS.push(g));
+    } else {
+      // Old-format save: stage what used to be the single GAMES array, then migrate it
+      GAMES.length = 0; (state.GAMES||[]).forEach(g => GAMES.push(g));
+      migrateToMultiYear();
+    }
+    SELECTED_YEAR = (typeof state.SELECTED_YEAR === 'number') ? state.SELECTED_YEAR : SELECTED_YEAR;
+    migrateToMultiYear(); // safe to call again — no-ops once already migrated; also picks a sensible SELECTED_YEAR
+    applyYearFilter();
+    return ALL_PLAYERS.length > 0 || GAMES_ALL_YEARS.length > 0;
   } catch (e) { console.error('Load failed', e); return false; }
 }
 
 function nextGameId() {
   let max = 0;
-  GAMES.forEach(g => { const n = parseInt(g.id, 10); if (!isNaN(n) && n > max) max = n; });
+  GAMES_ALL_YEARS.forEach(g => { const n = parseInt(g.id, 10); if (!isNaN(n) && n > max) max = n; });
   return String(max + 1);
 }
 
@@ -1550,7 +1608,10 @@ function populateMonthDropdowns() {
 function getPlayerEloTrajectory(name) {
   const p = ALL_PLAYERS.find(x => x.name === name);
   if (!p) return { initialElo: 400, rows: [] };
-  const games = GAMES.filter(g => g.teamA.includes(name) || g.teamB.includes(name))
+  // ELO is one continuous history regardless of which year is currently being viewed — always
+  // walks the full, real store (GAMES_ALL_YEARS), skipping 2025 since those games are frozen
+  // and never fed into ELO.
+  const games = GAMES_ALL_YEARS.filter(g => g.year !== 2025 && (g.teamA.includes(name) || g.teamB.includes(name)))
     .slice()
     .sort((a,b) => (parseInt(a.id,10)||0) - (parseInt(b.id,10)||0));
 
@@ -2188,12 +2249,15 @@ function confirmSaveGame() {
   const teamBelo = tB.map(n => ({name:n, elo: getElo(n), adj: n.startsWith('Outro') ? 0 : (winner==='B' ? adj : -adj)}));
 
   const id = nextGameId();
-  GAMES.push({
-    id, date: dateStr, month,
+  const year = dateObj.getFullYear();
+  GAMES_ALL_YEARS.push({
+    id, date: dateStr, month, year,
     teamA: tA.slice(), teamB: tB.slice(),
     teamAelo, teamBelo,
     winner, eloAdjust: adj, probWinA: probA, comment
   });
+  if (year !== SELECTED_YEAR) SELECTED_YEAR = year; // jump the view to match, so the new game is visible right away
+  applyYearFilter();
 
   // Apply ELO deltas
   [...tA].forEach(n => { if (n.startsWith('Outro')) return; const p = ALL_PLAYERS.find(x=>x.name===n); if (p) p.elo += (winner==='A' ? adj : -adj); });
@@ -2905,10 +2969,9 @@ function renderRecords() {
     const byGoals=[...sorted].sort((a,b)=>b.g-a.g);
     const byAss=[...sorted].sort((a,b)=>b.a-a.a);
     const byGI=[...sorted].sort((a,b)=>b.gi-a.gi);
-    const minFilmed = Math.max(1, Math.ceil(gamesWithStats.length * 0.30));
-    const byAvgG  = [...sorted].filter(p=>p.gamesPlayed>=minFilmed).sort((a,b)=>(b.g/b.gamesPlayed)-(a.g/a.gamesPlayed));
-    const byAvgA  = [...sorted].filter(p=>p.gamesPlayed>=minFilmed).sort((a,b)=>(b.a/b.gamesPlayed)-(a.a/a.gamesPlayed));
-    const byAvgGI = [...sorted].filter(p=>p.gamesPlayed>=minFilmed).sort((a,b)=>((b.g+b.a)/b.gamesPlayed)-((a.g+a.a)/a.gamesPlayed));
+    const byAvgG  = [...sorted].sort((a,b)=>(b.g/b.gamesPlayed)-(a.g/a.gamesPlayed));
+    const byAvgA  = [...sorted].sort((a,b)=>(b.a/b.gamesPlayed)-(a.a/a.gamesPlayed));
+    const byAvgGI = [...sorted].sort((a,b)=>((b.g+b.a)/b.gamesPlayed)-((a.g+a.a)/a.gamesPlayed));
     const maxG=byGoals[0]?.g||1,maxA=byAss[0]?.a||1,maxGI=byGI[0]?.gi||1;
     const maxAvgG=byAvgG[0]?byAvgG[0].g/byAvgG[0].gamesPlayed:1;
     const maxAvgA=byAvgA[0]?byAvgA[0].a/byAvgA[0].gamesPlayed:1;
@@ -2983,15 +3046,15 @@ function renderRecords() {
       ) +
       // Row 4
       card('📈 Avg goals / filmed game',
-        byAvgG.map(p=>barRow(p.name,p.g/p.gamesPlayed,maxAvgG,'var(--scp-green)',`${(p.g/p.gamesPlayed).toFixed(2)}/g`)).join('') + '<div style="font-size:10px;color:var(--dim);font-style:italic;margin-top:10px">Only players in 30%+ of filmed games</div>',
+        byAvgG.map(p=>barRow(p.name,p.g/p.gamesPlayed,maxAvgG,'var(--scp-green)',`${(p.g/p.gamesPlayed).toFixed(2)}/g`)).join(''),
         byAvgG[0] ? previewLine(byAvgG[0].name, (byAvgG[0].g/byAvgG[0].gamesPlayed).toFixed(2)+'/g') : ''
       ) +
       card('📈 Avg assists / filmed game',
-        byAvgA.map(p=>barRow(p.name,p.a/p.gamesPlayed,maxAvgA,'var(--scp-gold)',`${(p.a/p.gamesPlayed).toFixed(2)}/g`)).join('') + '<div style="font-size:10px;color:var(--dim);font-style:italic;margin-top:10px">Only players in 30%+ of filmed games</div>',
+        byAvgA.map(p=>barRow(p.name,p.a/p.gamesPlayed,maxAvgA,'var(--scp-gold)',`${(p.a/p.gamesPlayed).toFixed(2)}/g`)).join(''),
         byAvgA[0] ? previewLine(byAvgA[0].name, (byAvgA[0].a/byAvgA[0].gamesPlayed).toFixed(2)+'/g') : ''
       ) +
       card('📈 Avg goal involvement / filmed game',
-        byAvgGI.map(p=>barRow(p.name,(p.g+p.a)/p.gamesPlayed,maxAvgGI,'var(--amber)',`${((p.g+p.a)/p.gamesPlayed).toFixed(2)}/g`)).join('') + '<div style="font-size:10px;color:var(--dim);font-style:italic;margin-top:10px">Only players in 30%+ of filmed games</div>',
+        byAvgGI.map(p=>barRow(p.name,(p.g+p.a)/p.gamesPlayed,maxAvgGI,'var(--amber)',`${((p.g+p.a)/p.gamesPlayed).toFixed(2)}/g`)).join(''),
         byAvgGI[0] ? previewLine(byAvgGI[0].name, ((byAvgGI[0].g+byAvgGI[0].a)/byAvgGI[0].gamesPlayed).toFixed(2)+'/g') : ''
       ) +
       // Row 5
@@ -4267,24 +4330,28 @@ function deleteGame(gameId) {
   if (!confirm(`Delete game #${g.id} (${g.date})? This also removes its goal/assist stats and reverses its ELO adjustment. This cannot be undone.`)) return;
 
   // Reverse the ELO this game applied, using each player's own recorded delta — no guessing.
-  (g.teamAelo||[]).forEach(e => {
-    if (!e.name || e.name.startsWith('Outro')) return;
-    const p = ALL_PLAYERS.find(x => x.name === e.name);
-    if (p) p.elo -= (e.adj || 0);
-  });
-  (g.teamBelo||[]).forEach(e => {
-    if (!e.name || e.name.startsWith('Outro')) return;
-    const p = ALL_PLAYERS.find(x => x.name === e.name);
-    if (p) p.elo -= (e.adj || 0);
-  });
+  // 2025 games are frozen and never touched ELO in the first place, so nothing to reverse for them.
+  if (g.year !== 2025) {
+    (g.teamAelo||[]).forEach(e => {
+      if (!e.name || e.name.startsWith('Outro')) return;
+      const p = ALL_PLAYERS.find(x => x.name === e.name);
+      if (p) p.elo -= (e.adj || 0);
+    });
+    (g.teamBelo||[]).forEach(e => {
+      if (!e.name || e.name.startsWith('Outro')) return;
+      const p = ALL_PLAYERS.find(x => x.name === e.name);
+      if (p) p.elo -= (e.adj || 0);
+    });
+  }
 
   // Remove any goal/assist stats tied to this game
   for (let i = GOAL_STATS.length - 1; i >= 0; i--) {
     if (GOAL_STATS[i].gameId === gameId) GOAL_STATS.splice(i, 1);
   }
 
-  const idx = GAMES.findIndex(x => x.id === gameId);
-  if (idx >= 0) GAMES.splice(idx, 1);
+  const idxAll = GAMES_ALL_YEARS.findIndex(x => x.id === gameId);
+  if (idxAll >= 0) GAMES_ALL_YEARS.splice(idxAll, 1);
+  applyYearFilter();
 
   closeGameDetail();
   refreshAll();
@@ -4698,11 +4765,16 @@ function confirmEditPlayer(oldName) {
 function renamePlayerEverywhere(oldName, newName) {
   const p = ALL_PLAYERS.find(x => x.name === oldName);
   if (p) p.name = newName;
-  GAMES.forEach(g => {
+  GAMES_ALL_YEARS.forEach(g => {
     g.teamA = g.teamA.map(n => n === oldName ? newName : n);
     g.teamB = g.teamB.map(n => n === oldName ? newName : n);
     (g.teamAelo||[]).forEach(e => { if (e.name === oldName) e.name = newName; });
     (g.teamBelo||[]).forEach(e => { if (e.name === oldName) e.name = newName; });
+  });
+  applyYearFilter();
+  GAMES_2025.forEach(g => {
+    g.teamA = g.teamA.map(n => n === oldName ? newName : n);
+    g.teamB = g.teamB.map(n => n === oldName ? newName : n);
   });
   GOAL_STATS.forEach(r => { if (r.player === oldName) r.player = newName; });
   PAY_DATA.forEach(r => { if (r.player === oldName) r.player = newName; });
@@ -5096,12 +5168,28 @@ function renderHomeWidgets() {
 function renderSettingsTab() {
   const el = document.getElementById('settings-summary');
   if (el) {
-    el.innerHTML = `${ALL_PLAYERS.length} players &middot; ${GAMES.length} games recorded &middot; ${GOAL_STATS.length ? [...new Set(GOAL_STATS.map(r=>r.gameId))].length : 0} games with goal stats`;
+    el.innerHTML = `${ALL_PLAYERS.length} players &middot; ${GAMES_ALL_YEARS.length} games recorded across all years (${GAMES.length} in ${SELECTED_YEAR}) &middot; ${GOAL_STATS.length ? [...new Set(GOAL_STATS.map(r=>r.gameId))].length : 0} games with goal stats`;
   }
   const kf = document.getElementById('settings-kfactor');
   if (kf) kf.value = K_FACTOR;
   const el2 = document.getElementById('settings-eligibility');
   if (el2) el2.value = ELIGIBILITY_PCT;
+
+  const yearSel = document.getElementById('settings-year');
+  if (yearSel) {
+    let years = [...new Set(GAMES_ALL_YEARS.map(g => g.year))].sort((a,b) => b-a);
+    if (!years.includes(SELECTED_YEAR)) years = [SELECTED_YEAR, ...years];
+    yearSel.innerHTML = years.map(y => `<option value="${y}">${y}${y===2025?' (frozen — view only, no ELO impact)':''}</option>`).join('');
+    yearSel.value = SELECTED_YEAR;
+  }
+}
+
+function setSelectedYear(val) {
+  const y = parseInt(val, 10);
+  if (isNaN(y)) return;
+  SELECTED_YEAR = y;
+  applyYearFilter();
+  refreshAll();
 }
 
 function setKFactor(val) {
@@ -5122,8 +5210,8 @@ function setEligibilityPct(val) {
 
 function exportJsonBackup() {
   const state = {
-    version: 2, ALL_PLAYERS, GAMES, GOAL_STATS, PAY_DATA, GAMES_2025,
-    TOLERANCE, K_FACTOR, ELIGIBILITY_PCT, exportedAt: new Date().toISOString()
+    version: 3, ALL_PLAYERS, GAMES_ALL_YEARS, GOAL_STATS, PAY_DATA, GAMES_2025,
+    TOLERANCE, K_FACTOR, ELIGIBILITY_PCT, SELECTED_YEAR, exportedAt: new Date().toISOString()
   };
   const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -5144,7 +5232,6 @@ function importJsonBackup(file) {
     try {
       const state = JSON.parse(e.target.result);
       ALL_PLAYERS.length = 0; (state.ALL_PLAYERS||[]).forEach(p => ALL_PLAYERS.push(p));
-      GAMES.length = 0; (state.GAMES||[]).forEach(g => GAMES.push(g));
       GOAL_STATS.length = 0; (state.GOAL_STATS||[]).forEach(g => GOAL_STATS.push(g));
       PAY_DATA.length = 0; (state.PAY_DATA||[]).forEach(p => PAY_DATA.push(p));
       GAMES_2025.length = 0; (state.GAMES_2025||[]).forEach(g => GAMES_2025.push(g));
@@ -5153,9 +5240,21 @@ function importJsonBackup(file) {
       ELIGIBILITY_PCT = state.ELIGIBILITY_PCT || 30;
       ALL_PLAYERS.forEach(p => { if (typeof p.initialElo !== 'number') p.initialElo = p.elo; });
       if (!ALL_PLAYERS.find(p => p.name === 'Outro')) ALL_PLAYERS.push({name:'Outro', elo:400, initialElo:400});
+
+      GAMES_ALL_YEARS.length = 0;
+      if (Array.isArray(state.GAMES_ALL_YEARS) && state.GAMES_ALL_YEARS.length) {
+        state.GAMES_ALL_YEARS.forEach(g => GAMES_ALL_YEARS.push(g));
+      } else {
+        GAMES.length = 0; (state.GAMES||[]).forEach(g => GAMES.push(g));
+        migrateToMultiYear();
+      }
+      SELECTED_YEAR = (typeof state.SELECTED_YEAR === 'number') ? state.SELECTED_YEAR : SELECTED_YEAR;
+      migrateToMultiYear();
+      applyYearFilter();
+
       slots = Array.from({length:10}, () => ({name:null, team:null}));
       streakSelected = new Set(); duoTabSelected = new Set();
-      GAMES.forEach(g => { [...g.teamA, ...g.teamB].forEach(p => { streakSelected.add(p); duoTabSelected.add(p); }); });
+      GAMES_ALL_YEARS.forEach(g => { [...g.teamA, ...g.teamB].forEach(p => { streakSelected.add(p); duoTabSelected.add(p); }); });
       refreshAll();
       goHome();
       alert('Backup imported successfully.');
@@ -5172,6 +5271,7 @@ function resetAppData() {
   localStorage.removeItem(STORAGE_KEY);
   ALL_PLAYERS.length = 0;
   GAMES.length = 0;
+  GAMES_ALL_YEARS.length = 0;
   GOAL_STATS.length = 0;
   PAY_DATA.length = 0;
   GAMES_2025.length = 0;
@@ -5179,6 +5279,7 @@ function resetAppData() {
   TOLERANCE = null;
   K_FACTOR = 20;
   ELIGIBILITY_PCT = 30;
+  SELECTED_YEAR = new Date().getFullYear();
   slots = Array.from({length:10}, () => ({name:null, team:null}));
   streakSelected = new Set(); duoTabSelected = new Set();
   refreshAll();
@@ -5762,7 +5863,10 @@ function showPlayerStats(name, btn) {
 function renderYearComparison() {
   const grid = document.getElementById('compare-grid');
   if (!grid) return;
-  if (!GAMES.length || !GAMES_2025.length) {
+  // Always compares literal 2026 vs 2025, regardless of whichever year is currently selected
+  // elsewhere in the app — GAMES itself is just "whatever year you're viewing" now.
+  const GAMES26 = GAMES_ALL_YEARS.filter(g => g.year === 2026);
+  if (!GAMES26.length || !GAMES_2025.length) {
     grid.innerHTML = '<div class="card" style="padding:18px;color:var(--dim);font-style:italic">Upload your Excel file (with the 2025 sheet) to see the year comparison.</div>';
     return;
   }
