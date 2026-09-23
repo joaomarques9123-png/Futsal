@@ -118,6 +118,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Barlow', sans-se
 .ls-count-btn .cb-value { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 900; line-height: 1; }
 .ls-count-btn.goals .cb-value { color: var(--scp-green); }
 .ls-count-btn.assists .cb-value { color: var(--amber); }
+.ls-count-btn.recoveries .cb-value { color: #4a7fb5; }
 .ls-count-btn.og .cb-value { color: var(--red); }
 .ls-count-btn.disabled { opacity: 0.5; pointer-events: none; }
 .ls-count-btn.just-tapped { background: #dcefe3; }
@@ -1308,7 +1309,8 @@ function parseWorkbook(wb) {
       const goals = parseInt(r['Goals']||0) || 0;
       const assists = parseInt(r['Assists']||0) || 0;
       const ownGoals = parseInt(r['Own Goals']||0) || 0;
-      if (gameId && player) newGoalStats.push({gameId, player, goals, assists, ownGoals});
+      const recoveries = parseInt(r['Ball Recoveries']||r['Recoveries']||0) || 0;
+      if (gameId && player) newGoalStats.push({gameId, player, goals, assists, ownGoals, recoveries});
     });
   }
   GOAL_STATS.length = 0; newGoalStats.forEach(g => GOAL_STATS.push(g));
@@ -2924,14 +2926,15 @@ function renderRecords() {
     const gamesWithStats = [...new Set(fGOAL_STATS.map(r=>r.gameId))];
     const numGames = gamesWithStats.length;
     const playerStats = {};
-    const bestGameG = {}, bestGameA = {}, bestGameGI = {};
+    const bestGameG = {}, bestGameA = {}, bestGameGI = {}, bestGameR = {};
     fGOAL_STATS.forEach(r => {
       if (r.player==='Outro') return;
-      if (!playerStats[r.player]) playerStats[r.player]={g:0,a:0,gi:0,og:0,gamesPlayed:0,maxGoalsGame:0,maxAssGame:0,maxGIGame:0};
+      if (!playerStats[r.player]) playerStats[r.player]={g:0,a:0,gi:0,og:0,rec:0,gamesPlayed:0,maxGoalsGame:0,maxAssGame:0,maxGIGame:0,maxRecGame:0};
       playerStats[r.player].g  += r.goals;
       playerStats[r.player].a  += r.assists;
       playerStats[r.player].gi += r.goals + r.assists;
       playerStats[r.player].og += (r.ownGoals||0);
+      playerStats[r.player].rec += (r.recoveries||0);
       playerStats[r.player].gamesPlayed++;
       // Track per-game bests (each field from the SAME game row)
       if (r.goals > playerStats[r.player].maxGoalsGame) {
@@ -2941,6 +2944,10 @@ function renderRecords() {
       if (r.assists > playerStats[r.player].maxAssGame) {
         playerStats[r.player].maxAssGame = r.assists;
         bestGameA[r.player] = r.gameId;
+      }
+      if ((r.recoveries||0) > playerStats[r.player].maxRecGame) {
+        playerStats[r.player].maxRecGame = r.recoveries||0;
+        bestGameR[r.player] = r.gameId;
       }
       const gi = r.goals + r.assists;
       if (gi > playerStats[r.player].maxGIGame) {
@@ -2969,13 +2976,16 @@ function renderRecords() {
     const byGoals=[...sorted].sort((a,b)=>b.g-a.g);
     const byAss=[...sorted].sort((a,b)=>b.a-a.a);
     const byGI=[...sorted].sort((a,b)=>b.gi-a.gi);
+    const byRec=[...sorted].sort((a,b)=>b.rec-a.rec);
     const byAvgG  = [...sorted].sort((a,b)=>(b.g/b.gamesPlayed)-(a.g/a.gamesPlayed));
     const byAvgA  = [...sorted].sort((a,b)=>(b.a/b.gamesPlayed)-(a.a/a.gamesPlayed));
     const byAvgGI = [...sorted].sort((a,b)=>((b.g+b.a)/b.gamesPlayed)-((a.g+a.a)/a.gamesPlayed));
-    const maxG=byGoals[0]?.g||1,maxA=byAss[0]?.a||1,maxGI=byGI[0]?.gi||1;
+    const byAvgR  = [...sorted].sort((a,b)=>(b.rec/b.gamesPlayed)-(a.rec/a.gamesPlayed));
+    const maxG=byGoals[0]?.g||1,maxA=byAss[0]?.a||1,maxGI=byGI[0]?.gi||1,maxRec=byRec[0]?.rec||1;
     const maxAvgG=byAvgG[0]?byAvgG[0].g/byAvgG[0].gamesPlayed:1;
     const maxAvgA=byAvgA[0]?byAvgA[0].a/byAvgA[0].gamesPlayed:1;
     const maxAvgGI=byAvgGI[0]?(byAvgGI[0].g+byAvgGI[0].a)/byAvgGI[0].gamesPlayed:1;
+    const maxAvgR=byAvgR[0]?byAvgR[0].rec/byAvgR[0].gamesPlayed:1;
     let bestG={player:'—',val:0,gameId:'—'},bestA={player:'—',val:0,gameId:'—'},bestGI={player:'—',val:0,gameId:'—'},bestOG={player:'—',val:0,gameId:'—'};
     fGOAL_STATS.forEach(r=>{
       if(r.player==='Outro')return;
@@ -3005,9 +3015,11 @@ function renderRecords() {
     const byBestG  = [...sorted].sort((a,b)=>(b.maxGoalsGame||0)-(a.maxGoalsGame||0));
     const byBestA  = [...sorted].sort((a,b)=>(b.maxAssGame||0)-(a.maxAssGame||0));
     const byBestGI = [...sorted].sort((a,b)=>(b.maxGIGame||0)-(a.maxGIGame||0));
+    const byBestR  = [...sorted].sort((a,b)=>(b.maxRecGame||0)-(a.maxRecGame||0));
     const maxBG  = byBestG[0]?.maxGoalsGame||1;
     const maxBA  = byBestA[0]?.maxAssGame||1;
     const maxBGI = byBestGI[0]?.maxGIGame||1;
+    const maxBR  = byBestR[0]?.maxRecGame||1;
 
     goalCards =
       // Row 2
@@ -3018,6 +3030,10 @@ function renderRecords() {
       card('🎯 Most assists (total)',
         byAss.map(p=>barRow(p.name,p.a,maxA,'var(--scp-gold)',`${p.a} assists · ${p.gamesPlayed}g`)).join(''),
         byAss[0] ? previewLine(byAss[0].name, byAss[0].a+' assists') : ''
+      ) +
+      card('🛡️ Most ball recoveries (total)',
+        byRec.map(p=>barRow(p.name,p.rec,maxRec,'#4a7fb5',`${p.rec} recoveries · ${p.gamesPlayed}g`)).join(''),
+        byRec[0] ? previewLine(byRec[0].name, byRec[0].rec+' recoveries') : ''
       ) +
       card('🔥 Most goal involvement (G+A)',
         byGI.map(p=>barRow(p.name,p.gi,maxGI,'var(--amber)',`${p.gi} (${p.g}G+${p.a}A) · ${p.gamesPlayed}g`)).join(''),
@@ -3035,6 +3051,10 @@ function renderRecords() {
       card('🎯 Most assists in a single game',
         byBestA.map(p=>barRow(p.name, p.maxAssGame||0, maxBA, 'var(--scp-gold)', `${p.maxAssGame||0} assists · #${bestGameA[p.name]||'—'}`)).join(''),
         byBestA[0] ? previewLine(byBestA[0].name, (byBestA[0].maxAssGame||0)+' assists') : ''
+      ) +
+      card('🛡️ Most ball recoveries in a single game',
+        byBestR.map(p=>barRow(p.name, p.maxRecGame||0, maxBR, '#4a7fb5', `${p.maxRecGame||0} recoveries · #${bestGameR[p.name]||'—'}`)).join(''),
+        byBestR[0] ? previewLine(byBestR[0].name, (byBestR[0].maxRecGame||0)+' recoveries') : ''
       ) +
       card('🔥 Most consecutive games scoring',
         (() => { const max=scoringStreakArr[0]?.[1]||1;return scoringStreakArr.map(([n,v])=>barRow(n,v,max,'var(--scp-green)',`${v} game${v===1?'':'s'} in a row`)).join(''); })(),
@@ -3056,6 +3076,10 @@ function renderRecords() {
       card('📈 Avg goal involvement / filmed game',
         byAvgGI.map(p=>barRow(p.name,(p.g+p.a)/p.gamesPlayed,maxAvgGI,'var(--amber)',`${((p.g+p.a)/p.gamesPlayed).toFixed(2)}/g`)).join(''),
         byAvgGI[0] ? previewLine(byAvgGI[0].name, ((byAvgGI[0].g+byAvgGI[0].a)/byAvgGI[0].gamesPlayed).toFixed(2)+'/g') : ''
+      ) +
+      card('📈 Avg ball recoveries / filmed game',
+        byAvgR.map(p=>barRow(p.name,p.rec/p.gamesPlayed,maxAvgR,'#4a7fb5',`${(p.rec/p.gamesPlayed).toFixed(2)}/g`)).join(''),
+        byAvgR[0] ? previewLine(byAvgR[0].name, (byAvgR[0].rec/byAvgR[0].gamesPlayed).toFixed(2)+'/g') : ''
       ) +
       // Row 5
       card('🔝 Most goals in a game (both teams)', gamesByTotal.map((g,i)=>{
@@ -3182,6 +3206,37 @@ function renderRecords() {
         card('🎯 Best individual assist performances',
           assistPerformances.map(p=>barRow(p.player, p.assists, maxPerfAssists, 'var(--amber)', `${p.assists} assists · #${p.gameId} · ${p.date}`)).join('') || '<div style="font-size:12px;color:var(--dim);font-style:italic">No assists logged yet</div>',
           assistPerformances[0] ? previewLine(assistPerformances[0].player, assistPerformances[0].assists+' assists') : ''
+        );
+      })() +
+      // Row 5d — Same logic again, but for ball recoveries
+      (() => {
+        const topRecovererCounts = {};
+        const filmedGameIdsForTopR = [...new Set(fGOAL_STATS.map(r=>r.gameId))];
+        filmedGameIdsForTopR.forEach(gid => {
+          const rowsG = fGOAL_STATS.filter(r=>r.gameId===gid && r.player!=='Outro');
+          if (!rowsG.length) return;
+          const maxRecThisGame = Math.max(...rowsG.map(r=>r.recoveries||0));
+          if (maxRecThisGame <= 0) return;
+          rowsG.filter(r=>(r.recoveries||0)===maxRecThisGame).forEach(r => {
+            topRecovererCounts[r.player] = (topRecovererCounts[r.player]||0) + 1;
+          });
+        });
+        const topRecovererArr = Object.entries(topRecovererCounts).map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count);
+        const maxTopRecovererCount = topRecovererArr[0]?.count || 1;
+
+        const recoveryPerformances = fGOAL_STATS.filter(r=>r.player!=='Outro' && (r.recoveries||0)>0).map(r => {
+          const gm = fGAMES.find(g=>g.id===r.gameId);
+          return { player:r.player, gameId:r.gameId, recoveries:r.recoveries, date: gm?gm.date:'' };
+        }).sort((a,b)=>b.recoveries-a.recoveries);
+        const maxPerfRec = recoveryPerformances[0]?.recoveries || 1;
+
+        return card('🛡️ Most times top recoverer of the game',
+          topRecovererArr.map(p=>barRow(p.name, p.count, maxTopRecovererCount, '#4a7fb5', `${p.count} game${p.count===1?'':'s'}`)).join('') || '<div style="font-size:12px;color:var(--dim);font-style:italic">No filmed games with recoveries yet</div>',
+          topRecovererArr[0] ? previewLine(topRecovererArr[0].name, topRecovererArr[0].count+' game'+(topRecovererArr[0].count===1?'':'s')) : ''
+        ) +
+        card('🛡️ Best individual recovery performances',
+          recoveryPerformances.map(p=>barRow(p.player, p.recoveries, maxPerfRec, '#4a7fb5', `${p.recoveries} recoveries · #${p.gameId} · ${p.date}`)).join('') || '<div style="font-size:12px;color:var(--dim);font-style:italic">No recoveries logged yet</div>',
+          recoveryPerformances[0] ? previewLine(recoveryPerformances[0].player, recoveryPerformances[0].recoveries+' recoveries') : ''
         );
       })() +
       // Row 6 — Man of the Match
@@ -4172,15 +4227,8 @@ function renderGamesDetail() {
 
       let badgesHtml = '';
       if (filmed) {
-        const gsRows = GOAL_STATS.filter(r => r.gameId === g.id && r.player !== 'Outro');
-        const motm = getGameMOTM(g.id);
-        const topScorer = [...gsRows].sort((a,b)=>b.goals-a.goals)[0];
-        const topAssister = [...gsRows].sort((a,b)=>b.assists-a.assists)[0];
-        const badges = [];
-        if (motm) badges.push('<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:var(--scp-gold);border-radius:99px;font-size:11px;color:#3a2f0c;font-weight:700">🏅 '+motm.player+' '+motm.score.toFixed(0)+'</span>');
-        if (topScorer && topScorer.goals>0) badges.push('<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:var(--surface2);border-radius:99px;font-size:11px">⚽ '+topScorer.player+' '+topScorer.goals+'</span>');
-        if (topAssister && topAssister.assists>0) badges.push('<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:var(--surface2);border-radius:99px;font-size:11px">🎯 '+topAssister.player+' '+topAssister.assists+'</span>');
-        if (badges.length) badgesHtml = '<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;padding-top:10px;border-top:1px solid var(--border)">'+badges.join('')+'</div>';
+        const badges = gameCardBadgesHtml(g.id);
+        if (badges) badgesHtml = '<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;padding-top:10px;border-top:1px solid var(--border)">'+badges+'</div>';
       }
 
       const eloTag = g.eloAdjust ? '<span style="font-size:10px;color:var(--dim)">ELO ±'+Math.abs(g.eloAdjust).toFixed(1)+'</span>' : '';
@@ -4233,12 +4281,10 @@ function openGameDetail(gameId) {
     const ps = gsRows.find(function(r){return r.player===name;});
     const goals = ps ? ps.goals : 0;
     const assists = ps ? ps.assists : 0;
-    const og = ps ? (ps.ownGoals||0) : 0;
     var statHtml = hasStats
       ? '<div style="display:flex;gap:10px;align-items:center;flex-shrink:0">'
         +'<span style="min-width:20px;text-align:center;font-size:12px;font-weight:700;color:var(--scp-green)">'+goals+'⚽</span>'
         +'<span style="min-width:20px;text-align:center;font-size:12px;font-weight:700;color:var(--amber)">'+assists+'🎯</span>'
-        +(og>0?'<span style="font-size:11px;font-weight:700;color:var(--red)">OG:'+og+'</span>':'')
         +'</div>'
       : '';
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--border)">'
@@ -4266,18 +4312,9 @@ function openGameDetail(gameId) {
   // Top Performers — just the standout in each category, not a full list
   var topPerformersHtml = '';
   if (hasStats) {
-    const realRows = gsRows.filter(r => r.player !== 'Outro');
-    const topScorer = [...realRows].sort((a,b)=>b.goals-a.goals)[0];
-    const topAssister = [...realRows].sort((a,b)=>b.assists-a.assists)[0];
-    const topContributor = [...realRows].sort((a,b)=>(b.goals+b.assists)-(a.goals+a.assists))[0];
-    const motm = getGameMOTM(g.id);
-    const badges = [];
-    if (motm) badges.push('<span onclick="openMotmRankingModal(\''+g.id+'\')" style="cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:var(--scp-gold);border-radius:99px;font-size:12px"><span style="color:#3a2f0c;font-size:10px;text-transform:uppercase;font-weight:800">🏅 Man of the Match</span> <strong style="color:#3a2f0c">'+motm.player+'</strong></span>');
-    if (topScorer && topScorer.goals > 0) badges.push('<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:var(--surface2);border-radius:99px;font-size:12px"><span style="color:var(--dim);font-size:10px;text-transform:uppercase;font-weight:700">Top scorer</span> <strong>'+topScorer.player+'</strong> <span style="color:var(--scp-green);font-weight:700">'+topScorer.goals+'⚽</span></span>');
-    if (topAssister && topAssister.assists > 0) badges.push('<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:var(--surface2);border-radius:99px;font-size:12px"><span style="color:var(--dim);font-size:10px;text-transform:uppercase;font-weight:700">Top assister</span> <strong>'+topAssister.player+'</strong> <span style="color:var(--amber);font-weight:700">'+topAssister.assists+'🎯</span></span>');
-    if (topContributor && (topContributor.goals+topContributor.assists) > 0) badges.push('<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:var(--surface2);border-radius:99px;font-size:12px"><span style="color:var(--dim);font-size:10px;text-transform:uppercase;font-weight:700">Top contributor</span> <strong>'+topContributor.player+'</strong> <span style="font-weight:700">'+(topContributor.goals+topContributor.assists)+' G+A</span></span>');
-    if (badges.length) {
-      topPerformersHtml = '<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:6px;justify-content:center">'+badges.join('')+'</div>';
+    const badges = gameCardBadgesHtml(g.id);
+    if (badges) {
+      topPerformersHtml = '<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:6px;justify-content:center">'+badges+'</div>';
     }
   }
 
@@ -4374,11 +4411,12 @@ function openEditGameStats(gameId) {
   const players = [...g.teamA, ...g.teamB];
 
   function row(name, team) {
-    const e = existing[name] || {goals:0, assists:0, ownGoals:0};
-    return `<div style="display:grid;grid-template-columns:1fr 50px 50px 50px;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+    const e = existing[name] || {goals:0, assists:0, ownGoals:0, recoveries:0};
+    return `<div style="display:grid;grid-template-columns:1fr 42px 42px 42px 42px;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
       <span style="font-size:12px;font-weight:${team==='A'?600:400}">${name}</span>
       <input type="number" min="0" value="${e.goals||0}" data-egs="${name}" data-field="goals" style="width:100%;padding:4px;border:1px solid var(--border2);border-radius:4px;text-align:center;font-size:12px">
       <input type="number" min="0" value="${e.assists||0}" data-egs="${name}" data-field="assists" style="width:100%;padding:4px;border:1px solid var(--border2);border-radius:4px;text-align:center;font-size:12px">
+      <input type="number" min="0" value="${e.recoveries||0}" data-egs="${name}" data-field="recoveries" style="width:100%;padding:4px;border:1px solid var(--border2);border-radius:4px;text-align:center;font-size:12px">
       <input type="number" min="0" value="${e.ownGoals||0}" data-egs="${name}" data-field="ownGoals" style="width:100%;padding:4px;border:1px solid var(--border2);border-radius:4px;text-align:center;font-size:12px">
     </div>`;
   }
@@ -4389,8 +4427,8 @@ function openEditGameStats(gameId) {
       <button onclick="closeAppModal()" style="background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:28px;height:28px;font-size:18px;cursor:pointer;color:#fff;line-height:1">×</button>
     </div>
     <div style="padding:16px 20px">
-      <div style="display:grid;grid-template-columns:1fr 50px 50px 50px;gap:6px;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--dim);padding-bottom:6px;border-bottom:2px solid var(--border2)">
-        <span>Player</span><span style="text-align:center">G</span><span style="text-align:center">A</span><span style="text-align:center">OG</span>
+      <div style="display:grid;grid-template-columns:1fr 42px 42px 42px 42px;gap:6px;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--dim);padding-bottom:6px;border-bottom:2px solid var(--border2)">
+        <span>Player</span><span style="text-align:center">G</span><span style="text-align:center">A</span><span style="text-align:center">BR</span><span style="text-align:center">OG</span>
       </div>
       ${players.map(n => row(n, g.teamA.includes(n) ? 'A' : 'B')).join('')}
       <button class="btn btn-primary" style="width:100%;margin-top:16px;padding:11px" onclick="confirmSaveGameStats('${g.id}')">Save stats</button>
@@ -4404,7 +4442,7 @@ function confirmSaveGameStats(gameId) {
   inputs.forEach(inp => {
     const name = inp.getAttribute('data-egs');
     const field = inp.getAttribute('data-field');
-    if (!byPlayer[name]) byPlayer[name] = {gameId, player:name, goals:0, assists:0, ownGoals:0};
+    if (!byPlayer[name]) byPlayer[name] = {gameId, player:name, goals:0, assists:0, ownGoals:0, recoveries:0};
     byPlayer[name][field] = Math.max(0, parseInt(inp.value, 10) || 0);
   });
   // Remove old rows for this game, push fresh ones
@@ -4458,7 +4496,7 @@ function lsPickGame(gameId) {
   [...g.teamA, ...g.teamB].forEach(name => {
     if (!name) return;
     const row = GOAL_STATS.find(r => r.gameId === gameId && r.player === name);
-    lsLiveStats[name] = { goals: row ? (row.goals||0) : 0, assists: row ? (row.assists||0) : 0, og: row ? (row.ownGoals||0) : 0 };
+    lsLiveStats[name] = { goals: row ? (row.goals||0) : 0, assists: row ? (row.assists||0) : 0, recoveries: row ? (row.recoveries||0) : 0, og: row ? (row.ownGoals||0) : 0 };
   });
 
   renderLogStatsEntry();
@@ -4514,6 +4552,7 @@ function lsCounterRow(name) {
     <div class="ls-counters-row">
       ${lsCountBtnHtml(name,'goals','⚽',s.goals,dis)}
       ${lsCountBtnHtml(name,'assists','🎯',s.assists,dis)}
+      ${lsCountBtnHtml(name,'recoveries','🛡️',s.recoveries,dis)}
       ${lsCountBtnHtml(name,'og','⭕',s.og,dis)}
     </div>
   </div>`;
@@ -4614,7 +4653,7 @@ function lsSaveStats() {
   const gameId = lsCurrentGame.id;
   for (let i = GOAL_STATS.length - 1; i >= 0; i--) { if (GOAL_STATS[i].gameId === gameId) GOAL_STATS.splice(i, 1); }
   Object.entries(lsLiveStats).forEach(([name, v]) => {
-    GOAL_STATS.push({ gameId, player: name, goals: v.goals, assists: v.assists, ownGoals: v.og });
+    GOAL_STATS.push({ gameId, player: name, goals: v.goals, assists: v.assists, recoveries: v.recoveries, ownGoals: v.og });
   });
   lsCurrentGame.notFilmedLocked = false;
   refreshAll();
@@ -4905,7 +4944,7 @@ function getGameScore(g) {
 
 // ══════════════════════════════════════════
 // MAN OF THE MATCH (MOTM)
-// Score = (Goals×10) + (Assists×6) + (Contribution%×0.20) + (Difficulty%×0.20) + (20 if won else 0)
+// Score = (Goals×10) + (Assists×6) + (Recoveries×2) + (Contribution%×0.20) + (Difficulty%×0.20) + (20 if won else 0)
 // ══════════════════════════════════════════
 function computeGameMOTM(gameId) {
   const g = GAMES.find(x => x.id === gameId);
@@ -4924,11 +4963,12 @@ function computeGameMOTM(gameId) {
     const goals = row ? (row.goals||0) : 0;
     const assists = row ? (row.assists||0) : 0;
     const og = row ? (row.ownGoals||0) : 0;
+    const recoveries = row ? (row.recoveries||0) : 0;
     const contribPct = teamGoals[team] > 0 ? (goals+assists)/teamGoals[team]*100 : 0;
     const diffPct = (1 - teamProb[team]) * 100;
     const won = (g.winner === team);
-    const score = goals*10 + assists*6 + contribPct*0.20 + diffPct*0.20 + (won?20:0);
-    results.push({ player: p, team, goals, assists, ownGoals: og, won, score });
+    const score = goals*10 + assists*6 + recoveries*2 + contribPct*0.20 + diffPct*0.20 + (won?20:0);
+    results.push({ player: p, team, goals, assists, ownGoals: og, recoveries, won, score });
   });
   results.sort((a,b) => b.score - a.score);
   return results;
@@ -4959,6 +4999,68 @@ function openMotmRankingModal(gameId) {
   </div>
   <div style="padding:14px 20px 18px">${rows}</div>`;
   openAppModal(html);
+}
+
+// Generic ranked list for one raw stat (goals, assists, recoveries, ownGoals...) in one game —
+// same visual pattern as the MOTM ranking, just sorted by a plain number instead of the score.
+function openStatRankingModal(gameId, field, icon, title) {
+  const g = GAMES.find(x => x.id === gameId);
+  const results = computeGameMOTM(gameId);
+  if (!g || !results.length) return;
+  const sorted = [...results].sort((a,b) => (b[field]||0) - (a[field]||0));
+  const rows = sorted.map((r, i) => {
+    const rankLabel = i===0 ? '🏆' : i===1 ? '🥈' : i===2 ? '🥉' : (i+1);
+    return `<div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border)">
+      <span style="width:26px;text-align:center;font-size:${i<3?'18':'13'}px;font-weight:700;color:var(--dim);flex-shrink:0">${rankLabel}</span>
+      <span style="flex:1;min-width:0;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.player}</span>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:var(--scp-green);flex-shrink:0;min-width:30px;text-align:right">${r[field]||0}</span>
+    </div>`;
+  }).join('');
+  const html = `<div style="background:var(--scp-green);padding:16px 20px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:#fff">${icon} ${title} — Game #${g.id}</div>
+    <button onclick="closeAppModal()" style="background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:28px;height:28px;font-size:18px;cursor:pointer;color:#fff;line-height:1">×</button>
+  </div>
+  <div style="padding:14px 20px 18px">${rows}</div>`;
+  openAppModal(html);
+}
+
+// "Other Stats" — a small menu of everything that isn't goals/assists/MOTM. Built so a future
+// stat just slots in as one more row here, no redesign needed.
+function openOtherStatsModal(gameId) {
+  const g = GAMES.find(x => x.id === gameId);
+  if (!g) return;
+  const items = [
+    { field: 'recoveries', icon: '🛡️', title: 'Ball Recoveries' },
+    { field: 'ownGoals', icon: '⭕', title: 'Own Goals' },
+  ];
+  const rows = items.map(it => `<div onclick="closeAppModal();openStatRankingModal('${gameId}','${it.field}','${it.icon}','${it.title}')" style="display:flex;align-items:center;gap:10px;padding:12px 4px;border-bottom:1px solid var(--border);cursor:pointer">
+    <span style="font-size:18px">${it.icon}</span>
+    <span style="flex:1;font-size:14px;font-weight:600">${it.title}</span>
+    <span style="color:var(--dim);font-size:14px">›</span>
+  </div>`).join('');
+  const html = `<div style="background:var(--muted);padding:16px 20px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:#fff">Other Stats — Game #${g.id}</div>
+    <button onclick="closeAppModal()" style="background:rgba(255,255,255,0.15);border:none;border-radius:50%;width:28px;height:28px;font-size:18px;cursor:pointer;color:#fff;line-height:1">×</button>
+  </div>
+  <div style="padding:8px 20px 14px">${rows}</div>`;
+  openAppModal(html);
+}
+
+// Shared badge row for a game card — used by both the Games list and the Game Detail popup,
+// so they stay visually identical. Icon + player + number only, no spelled-out labels
+// (except "Other stats", which is a menu trigger, not a stat value).
+function gameCardBadgesHtml(gameId) {
+  const gsRows = GOAL_STATS.filter(r => r.gameId === gameId && r.player !== 'Outro');
+  if (!gsRows.length) return '';
+  const motm = getGameMOTM(gameId);
+  const topScorer = [...gsRows].sort((a,b)=>b.goals-a.goals)[0];
+  const topAssister = [...gsRows].sort((a,b)=>b.assists-a.assists)[0];
+  const badges = [];
+  if (motm) badges.push(`<span onclick="event.stopPropagation();openMotmRankingModal('${gameId}')" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--scp-gold);border-radius:99px;font-size:11px;font-weight:700;color:#3a2f0c">🏅 ${motm.player} ${motm.score.toFixed(0)}</span>`);
+  if (topScorer && topScorer.goals > 0) badges.push(`<span onclick="event.stopPropagation();openStatRankingModal('${gameId}','goals','⚽','Goals')" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--surface2);border-radius:99px;font-size:11px;font-weight:600">⚽ ${topScorer.player} ${topScorer.goals}</span>`);
+  if (topAssister && topAssister.assists > 0) badges.push(`<span onclick="event.stopPropagation();openStatRankingModal('${gameId}','assists','🎯','Assists')" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--surface2);border-radius:99px;font-size:11px;font-weight:600">🎯 ${topAssister.player} ${topAssister.assists}</span>`);
+  badges.push(`<span onclick="event.stopPropagation();openOtherStatsModal('${gameId}')" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--surface2);border-radius:99px;font-size:11px;font-weight:600;color:var(--muted)">➕ Other stats</span>`);
+  return badges.join('');
 }
 
 // Aggregate MOTM stats (awards, total score, average score) across a set of games — used by Records
