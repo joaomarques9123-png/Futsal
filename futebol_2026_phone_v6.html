@@ -1736,6 +1736,52 @@ function toggleWidgetModalEligible(btn) {
 }
 
 // ══════════════════════════════════════════
+// CATEGORY TILE — same small widget size, but opens a window with several stats inside it,
+// switchable via tabs, instead of one tile per stat. Used by Records to group its ~30 widgets
+// into a handful of categories.
+// ══════════════════════════════════════════
+window._categoryBodies = window._categoryBodies || {};
+window._categorySeq = window._categorySeq || 0;
+function categoryTile(icon, title, stats) {
+  const id = 'cat' + (++window._categorySeq);
+  window._categoryBodies[id] = { icon, title, stats };
+  const glance = stats[0] && stats[0].previewHtml ? stats[0].previewHtml : '<div style="font-size:12px;color:var(--dim);font-style:italic">Tap to view</div>';
+  return `<div class="home-card home-widget-compact" onclick="openCategoryModal('${id}')">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+      <span style="font-size:15px">${icon}</span>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${title}</span>
+    </div>
+    ${glance}
+  </div>`;
+}
+function openCategoryModal(id) {
+  const cat = window._categoryBodies[id];
+  if (!cat || !cat.stats.length) return;
+  const tabs = cat.stats.map((s,i) => `<button class="duo-min-btn cat-tab-btn ${i===0?'active':''}" id="cat-tab-btn-${id}-${i}" onclick="switchCategoryTab('${id}',${i})" style="flex-shrink:0;white-space:nowrap">${s.tabLabel}</button>`).join('');
+  const bodies = cat.stats.map((s,i) => `<div class="cat-tab-body" id="cat-tab-body-${id}-${i}" style="${i===0?'':'display:none'}">${s.body}</div>`).join('');
+  const html = `<div style="background:var(--scp-green);padding:16px 20px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:#fff">${cat.icon} ${cat.title}</div>
+    <button onclick="closeAppModal()" style="background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:28px;height:28px;font-size:18px;cursor:pointer;color:#fff;line-height:1">×</button>
+  </div>
+  <div style="display:flex;gap:6px;overflow-x:auto;padding:12px 20px 0;-webkit-overflow-scrolling:touch">${tabs}</div>
+  <div style="padding:12px 20px 0;display:flex;justify-content:flex-end">
+    <button class="duo-min-btn" id="widget-modal-eligible-btn" onclick="toggleWidgetModalEligible(this)">${ELIGIBILITY_PCT}%+ games</button>
+  </div>
+  <div style="padding:8px 20px 18px" id="widget-modal-body">${bodies}</div>`;
+  openAppModal(html);
+}
+function switchCategoryTab(id, idx) {
+  const cat = window._categoryBodies[id];
+  if (!cat) return;
+  cat.stats.forEach((s,i) => {
+    const body = document.getElementById(`cat-tab-body-${id}-${i}`);
+    const btn = document.getElementById(`cat-tab-btn-${id}-${i}`);
+    if (body) body.style.display = (i===idx) ? '' : 'none';
+    if (btn) btn.classList.toggle('active', i===idx);
+  });
+}
+
+// ══════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════
 let slots = Array.from({length:10}, () => ({name:null, team:null}));
@@ -2845,8 +2891,56 @@ function renderRecords() {
   const fPLAYER_STATS = buildLocalPlayerStats(fGAMES);
 
   // ── Shared helpers ──
+  // Records has ~30 individual stat widgets — grouped here into 7 categories so the page shows
+  // 7 tiles instead of 30. card() no longer renders its own tile; it just files each stat under
+  // its category, and the category tiles (with an internal tab switcher) get built at the end.
+  const categoryGroups = {};
+  const CARD_META = {
+    '🔥 Best winning streaks ever': {cat:'streaks', tab:'Best streaks'},
+    '❄️ Longest losing streaks ever': {cat:'streaks', tab:'Worst streaks'},
+    '👥 Participation rate': {cat:'streaks', tab:'Participation'},
+    '📅 Most games in a row': {cat:'streaks', tab:'Attendance'},
+    '⚽ Most goals (total)': {cat:'goals', tab:'Total'},
+    '⚽ Most goals in a single game': {cat:'goals', tab:'Single game'},
+    '🔥 Most consecutive games scoring': {cat:'goals', tab:'Hot streak'},
+    '🥶 Most consecutive games without scoring': {cat:'goals', tab:'Cold streak'},
+    '📈 Avg goals / filmed game': {cat:'goals', tab:'Avg/game'},
+    '🥇 Most times top scorer of the game': {cat:'goals', tab:'Top scorer count'},
+    '⚽ Best individual scoring performances': {cat:'goals', tab:'Best performances'},
+    '🎯 Most assists (total)': {cat:'assists', tab:'Total'},
+    '🎯 Most assists in a single game': {cat:'assists', tab:'Single game'},
+    '📈 Avg assists / filmed game': {cat:'assists', tab:'Avg/game'},
+    '🎯 Most times top assister of the game': {cat:'assists', tab:'Top assister count'},
+    '🎯 Best individual assist performances': {cat:'assists', tab:'Best performances'},
+    '🔥 Most goal involvement (G+A)': {cat:'involvement', tab:'Total'},
+    '🔥 Most involvement in a single game': {cat:'involvement', tab:'Single game'},
+    '📈 Avg goal involvement / filmed game': {cat:'involvement', tab:'Avg/game'},
+    '🛡️ Most ball recoveries (total)': {cat:'recovery', tab:'Total'},
+    '🛡️ Most ball recoveries in a single game': {cat:'recovery', tab:'Single game'},
+    '📈 Avg ball recoveries / filmed game': {cat:'recovery', tab:'Avg/game'},
+    '🛡️ Most times top recoverer of the game': {cat:'recovery', tab:'Top recoverer count'},
+    '🛡️ Best individual recovery performances': {cat:'recovery', tab:'Best performances'},
+    '🔝 Most goals in a game (both teams)': {cat:'gamerecords', tab:'Highest scoring'},
+    '🔒 Fewest goals in a game (both teams)': {cat:'gamerecords', tab:'Lowest scoring'},
+    '💥 Biggest win margin': {cat:'gamerecords', tab:'Biggest margin'},
+    '🏅 Most Man of the Match awards': {cat:'motm', tab:'Awards'},
+    '🏅 Total MOTM score': {cat:'motm', tab:'Total score'},
+    '🏅 Average MOTM score / game': {cat:'motm', tab:'Avg score'},
+  };
+  const CATEGORY_META = {
+    streaks:     { icon:'🔥', title:'Streaks & Attendance' },
+    goals:       { icon:'⚽', title:'Goals' },
+    assists:     { icon:'🎯', title:'Assists' },
+    involvement: { icon:'🔥', title:'Goal Involvement' },
+    recovery:    { icon:'🛡️', title:'Ball Recovery' },
+    motm:        { icon:'🏅', title:'Man of the Match' },
+    gamerecords: { icon:'🎮', title:'Game Records' },
+  };
   function card(title, body, previewHtml) {
-    return widgetTile('', title, previewHtml || '<div style="font-size:12px;color:var(--dim);font-style:italic">Tap to view</div>', body);
+    const meta = CARD_META[title] || { cat:'other', tab:title.replace(/^\S+\s/,'') };
+    if (!categoryGroups[meta.cat]) categoryGroups[meta.cat] = [];
+    categoryGroups[meta.cat].push({ tabLabel: meta.tab, previewHtml, body });
+    return '';
   }
   function previewLine(name, value, sub) {
     return `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
@@ -3310,25 +3404,34 @@ function renderRecords() {
   const maxAttS = playerStreakData[attTop[0]?.name]?.bestAtt||1;
   const partTop = [...players].sort((a,b)=>b.games-a.games);
 
-  grid.innerHTML = overviewHtml +
-    // Row 1
-    card('🔥 Best winning streaks ever',
-      topW.map(p=>{const sd=playerStreakData[p.name];const range=sd&&sd.maxWStart?` (${sd.maxWStart} – ${sd.maxWEnd})`:'';return barRow(p.name,p.maxW,maxWs,'var(--scp-green)',`${p.maxW} wins${range}`);}).join(''),
-      topW[0] ? previewLine(topW[0].name, topW[0].maxW+' wins') : ''
-    ) +
-    card('❄️ Longest losing streaks ever',
-      topL.map(p=>{const sd=playerStreakData[p.name];const range=sd&&sd.maxLStart?` (${sd.maxLStart} – ${sd.maxLEnd})`:'';return barRow(p.name,p.maxL,maxLs,'var(--red)',`${p.maxL} losses${range}`);}).join(''),
-      topL[0] ? previewLine(topL[0].name, topL[0].maxL+' losses') : ''
-    ) +
-    card('👥 Participation rate',
-      partTop.map(p=>{const pct=Math.round(p.games/total*100);return barRow(p.name,p.games,total,pct>=70?'var(--scp-green)':pct>=40?'var(--amber)':'var(--muted)',`${p.games} games (${pct}%)`);}).join(''),
-      partTop[0] ? previewLine(partTop[0].name, partTop[0].games+' games') : ''
-    ) +
-    card('📅 Most games in a row',
-      attTop.map(p=>{const v=playerStreakData[p.name]?.bestAtt||0;return barRow(p.name,v,maxAttS,'var(--scp-green)',`${v} consecutive games`);}).join(''),
-      attTop[0] ? previewLine(attTop[0].name, (playerStreakData[attTop[0].name]?.bestAtt||0)+' games') : ''
-    ) +
-    goalCards;
+  // These still need to run so their card() calls populate categoryGroups —
+  // just no longer concatenated directly into the page (see categoryTile assembly below).
+  card('🔥 Best winning streaks ever',
+    topW.map(p=>{const sd=playerStreakData[p.name];const range=sd&&sd.maxWStart?` (${sd.maxWStart} – ${sd.maxWEnd})`:'';return barRow(p.name,p.maxW,maxWs,'var(--scp-green)',`${p.maxW} wins${range}`);}).join(''),
+    topW[0] ? previewLine(topW[0].name, topW[0].maxW+' wins') : ''
+  );
+  card('❄️ Longest losing streaks ever',
+    topL.map(p=>{const sd=playerStreakData[p.name];const range=sd&&sd.maxLStart?` (${sd.maxLStart} – ${sd.maxLEnd})`:'';return barRow(p.name,p.maxL,maxLs,'var(--red)',`${p.maxL} losses${range}`);}).join(''),
+    topL[0] ? previewLine(topL[0].name, topL[0].maxL+' losses') : ''
+  );
+  card('👥 Participation rate',
+    partTop.map(p=>{const pct=Math.round(p.games/total*100);return barRow(p.name,p.games,total,pct>=70?'var(--scp-green)':pct>=40?'var(--amber)':'var(--muted)',`${p.games} games (${pct}%)`);}).join(''),
+    partTop[0] ? previewLine(partTop[0].name, partTop[0].games+' games') : ''
+  );
+  card('📅 Most games in a row',
+    attTop.map(p=>{const v=playerStreakData[p.name]?.bestAtt||0;return barRow(p.name,v,maxAttS,'var(--scp-green)',`${v} consecutive games`);}).join(''),
+    attTop[0] ? previewLine(attTop[0].name, (playerStreakData[attTop[0].name]?.bestAtt||0)+' games') : ''
+  );
+
+  // goalCards was already computed above (inside the hasGoals block) purely to run its card()
+  // calls and populate categoryGroups — its own string value isn't used here.
+  const CATEGORY_ORDER = ['streaks','goals','assists','involvement','recovery','motm','gamerecords'];
+  const categoryTilesHtml = CATEGORY_ORDER.filter(k => categoryGroups[k] && categoryGroups[k].length).map(catKey => {
+    const meta = CATEGORY_META[catKey];
+    return categoryTile(meta.icon, meta.title, categoryGroups[catKey]);
+  }).join('');
+
+  grid.innerHTML = overviewHtml + categoryTilesHtml;
 }
 
 // GOAL SUMMARY TAB
