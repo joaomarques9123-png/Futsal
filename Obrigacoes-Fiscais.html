@@ -92,7 +92,7 @@ button.w:active{transform:scale(.98)}
 .sel select{width:100%;appearance:none;-webkit-appearance:none;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 44px 12px 14px;font:inherit;font-weight:700;font-size:17px;color:var(--ink);min-height:50px}
 .sel::after{content:"";position:absolute;right:18px;top:50%;width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-70%) rotate(45deg);pointer-events:none}
 .mx{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--card);margin-top:12px}
-.mx table{border-collapse:separate;border-spacing:0;min-width:660px;width:100%;font-size:13px}
+.mx table{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
 .mx th,.mx td{padding:6px 3px;text-align:center;border-bottom:1px solid var(--line)}
 .mx tr:last-child td{border-bottom:0}
 .mx th{color:var(--muted);font-weight:600}
@@ -314,12 +314,14 @@ function slotKey(mi){return`${Math.floor(mi/12)}-${pad(mi%12+1)}`}
 function slotLabel(o,key){const[y,m]=key.split('-').map(Number);return o.ciclo==='anual'?`Prazo de ${MESES[m-1].toLowerCase()} ${y}`:`${MESES[m-1]} ${y}`}
 const kidx=k=>{const[y,m]=String(k).split('-').map(Number);return y*12+(m||1)-1};
 const curMonth=()=>slotKey(midx(hoje()));
-const mLabel=k=>{const i=kidx(k);return `${MES[i%12]} ${Math.floor(i/12)}`};
+const cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
+const ab=(m,y)=>`${cap(MES[m])}/${String(y).slice(-2)}`;
+const mLabel=k=>{const i=kidx(k);return ab(i%12,Math.floor(i/12))};
 function perIdx(o,mi){return mi-Number(o.ref||0)}
 function perLabel(o,mi){const p=perIdx(o,mi),y=Math.floor(p/12),m=((p%12)+12)%12;
-  if(o.ciclo==='anual')return `Exercício ${y}`;if(o.ciclo==='trimestral')return `${Math.floor(m/3)+1}.º trimestre ${y}`;if(o.ciclo==='semestral')return `${m<6?1:2}.º semestre ${y}`;return `${MESES[m]} ${y}`}
+  const yy=String(y).slice(-2);if(o.ciclo==='anual')return `Ano/${yy}`;if(o.ciclo==='trimestral')return `T${Math.floor(m/3)+1}/${yy}`;if(o.ciclo==='semestral')return `S${m<6?1:2}/${yy}`;return ab(m,y)}
 function perShort(o,mi){const p=perIdx(o,mi),y=Math.floor(p/12),m=((p%12)+12)%12;
-  if(o.ciclo==='anual')return `${y}`;if(o.ciclo==='trimestral')return `T${Math.floor(m/3)+1}`;if(o.ciclo==='semestral')return `S${m<6?1:2}`;return MES[m]}
+  if(o.ciclo==='anual')return `Ano/${String(y).slice(-2)}`;if(o.ciclo==='trimestral')return `T${Math.floor(m/3)+1}`;if(o.ciclo==='semestral')return `S${m<6?1:2}`;return cap(MES[m])}
 const vigIdx=(o,mi)=>o.ciclo==='anual'?mi:perIdx(o,mi);
 const vigs=(e,oid)=>(e.vig&&e.vig[oid])||[];
 const emVigor=(e,oid,i)=>vigs(e,oid).some(v=>i>=kidx(v.de)&&(!v.ate||i<=kidx(v.ate)));
@@ -549,13 +551,21 @@ function yearNav(){return `<div class="yr"><button class="icon-btn" data-act="an
 function renderMapa(){
   const e=S.empresas.find(x=>x.id===ui.emp);if(!e)return'';
   const ob=S.obrigacoes.filter(o=>(e.obr||[]).includes(o.id)).sort((a,b)=>a.nome.localeCompare(b.nome));
-  let h=`<p class="sub">${esc(e.nome)}. Nas obrigações mensais e trimestrais a coluna é o mês do período (como no Excel); nas anuais é o mês do prazo. Toca numa célula para marcar ou ver o detalhe.</p>`+yearNav();
+  let h=`<p class="sub">${esc(e.nome)}. Nas obrigações mensais e trimestrais a coluna é o período; nas anuais é o mês do prazo. Toca numa célula para marcar ou ver o detalhe.</p>`+yearNav();
   if(!ob.length)return h+`<div class="empty"><p>Esta empresa ainda não tem obrigações.</p></div>`;
-  h+=`<div class="mx"><table><thead><tr><th scope="col">Obrigação</th>${MES.map(m=>`<th scope="col">${m}</th>`).join('')}</tr></thead><tbody>`;
-  for(const o of ob){
-    const oc=occYear(e,o,ui.ano);reg(oc);
-    h+=`<tr><td><button data-act="hist" data-id="${esc(o.id)}">${esc(o.nome)}</button></td>`+MES.map((_,i)=>{const c=oc.find(x=>((colIdx(x)%12)+12)%12===i);if(!c)return'<td></td>';const st=status(c);
-      return `<td><button class="cell c-${st}" data-act="oc" data-id="${esc(c.e.id+'::'+c.k)}" aria-label="${esc(o.nome)}, ${MESES[i]}: ${stLabel(st)}">${SYM[st]}</button></td>`}).join('')+`</tr>`;
+  const col=x=>((colIdx(x)%12)+12)%12;
+  const rows=ob.map(o=>({o,oc:occYear(e,o,ui.ano)})).filter(r=>r.oc.length);
+  rows.forEach(r=>reg(r.oc));
+  const used=[...Array(12).keys()].filter(i=>rows.some(r=>r.oc.some(x=>col(x)===i)));
+  const open=used.filter(i=>rows.some(r=>r.oc.some(x=>col(x)===i&&isOpen(x))));
+  const cols=ui.mapAll?used:open,hid=used.length-open.length;
+  const vis=rows.filter(r=>r.oc.some(x=>cols.includes(col(x))));
+  const tg=hid?`<div class="actions" style="margin:10px 0 0"><button class="btn ghost" data-act="mapAll">${ui.mapAll?'Esconder meses concluídos':`Mostrar ${plural(hid,'mês concluído','meses concluídos')}`}</button></div>`:'';
+  if(!vis.length)return h+tg+`<div class="empty"><strong>Tudo cumprido</strong><p>Todas as obrigações de ${ui.ano} estão feitas.</p></div>`;
+  h+=tg+`<div class="mx"><table style="min-width:${150+cols.length*44}px"><thead><tr><th scope="col">Obrigação</th>${cols.map(i=>`<th scope="col">${ab(i,ui.ano)}</th>`).join('')}</tr></thead><tbody>`;
+  for(const {o,oc} of vis){
+    h+=`<tr><td><button data-act="hist" data-id="${esc(o.id)}">${esc(o.nome)}</button></td>`+cols.map(i=>{const c=oc.find(x=>col(x)===i);if(!c)return'<td></td>';const st=status(c);
+      return `<td><button class="cell c-${st}" data-act="oc" data-id="${esc(c.e.id+'::'+c.k)}" aria-label="${esc(o.nome)}, ${esc(perLabel(o,c.mi))}: ${stLabel(st)}">${SYM[st]}</button></td>`}).join('')+`</tr>`;
   }
   return h+`</tbody></table></div>`+legend();
 }
@@ -768,6 +778,7 @@ function act(a,e){
   if(k==='seg'){ui.seg=a.dataset.s;render();return true}
   if(k==='ano'){ui.ano+=Number(a.dataset.d);render();return true}
   if(k==='lista'){openLista(a.dataset.l,a.dataset.e);return true}
+  if(k==='mapAll'){ui.mapAll=!ui.mapAll;render();return true}
   if(k==='atribuir'){atribuir(a.dataset.id);return true}
   if(k==='vigAdd'||k==='vigDel'){const e=S.empresas.find(x=>x.id===ui.emp),o=S.obrigacoes.find(x=>x.id===ui.obr);e.vig=e.vig||{};const l=e.vig[o.id]=e.vig[o.id]||[];
     if(k==='vigAdd'){l.push({de:curMonth(),ate:null});if(!(e.obr||[]).includes(o.id))(e.obr=e.obr||[]).push(o.id)}else l.splice(Number(a.dataset.i),1);vigEdit(e,o);render();return true}
