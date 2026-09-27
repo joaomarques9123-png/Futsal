@@ -365,6 +365,125 @@ body { background: var(--bg); color: var(--text); font-family: 'Barlow', sans-se
 .duo-min-btn { padding: 3px 9px; border-radius: 99px; border: 1px solid var(--border2); background: none; color: var(--muted); font-size: 11px; font-weight: 600; cursor: pointer; font-family: 'Barlow', sans-serif; transition: all 0.12s; }
 .duo-min-btn.active { background: var(--scp-green); border-color: var(--scp-green); color: #fff; }
 .duo-min-btn:hover:not(.active) { border-color: var(--scp-green); color: var(--scp-green); }
+.gd-ctrl { display:flex; gap:6px; align-items:center; margin-bottom:8px; }
+.gd-chips { display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; margin-bottom:6px; scrollbar-width:none; }
+.gd-chip { padding:5px 11px; border-radius:99px; border:1px solid var(--border2); background:var(--surface); color:var(--muted); font-family:'Barlow',sans-serif; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; }
+.gd-chip.on { background:var(--scp-green); border-color:var(--scp-green); color:#fff; }
+.gd-psel { margin-left:auto; max-width:150px; padding:5px 8px; border:1px solid var(--border2); border-radius:var(--radius-sm); background:var(--surface2); font-family:'Barlow',sans-serif; font-size:12px; color:var(--text); }
+.gd-empty { padding:24px 4px; color:var(--dim); font-size:13px; font-style:italic; }
+.gd-mh { display:flex; justify-content:space-between; gap:8px; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; color:var(--scp-green); text-transform:uppercase; letter-spacing:.06em; margin:8px 0 6px; }
+.gd-mh span:last-child { color:var(--muted); text-transform:none; letter-spacing:0; font-family:'Barlow',sans-serif; font-weight:600; font-size:11.5px; }
+.gd-card { padding:10px 12px !important; margin-bottom:8px; cursor:pointer; }
+.gd-top { display:flex; justify-content:space-between; font-size:11px; color:var(--dim); font-weight:700; }
+.gd-mid { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); gap:10px; align-items:center; margin-top:6px; }
+.gd-team { font-size:12px; line-height:1.45; color:var(--muted); min-width:0; overflow:hidden; }
+.gd-team.win { color:var(--scp-green); font-weight:700; }
+.gd-team u { text-decoration-thickness:2px; text-underline-offset:2px; }
+.gd-score { font-family:'Barlow Condensed',sans-serif; font-size:30px; font-weight:900; white-space:nowrap; color:var(--text); }
+.gd-score .win { color:var(--scp-green); } .gd-score em { font-style:normal; color:var(--dim); font-weight:300; margin:0 6px; }
+.gd-wonby { font-size:12px; font-weight:700; color:var(--scp-green); text-align:center; line-height:1.2; }
+.gd-pb { display:flex; height:6px; border-radius:3px; overflow:hidden; margin-top:8px; gap:1px; }
+.gd-pb i { background:var(--border2); } .gd-pb i.on { background:var(--scp-green); }
+.gd-pb-l { display:flex; justify-content:space-between; font-size:10px; color:var(--dim); margin-top:2px; }
+.gd-bds { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+.gd-bd { font-size:11px; font-weight:700; padding:2px 9px; border-radius:99px; }
+.gd-bd.motm { background:var(--scp-gold); color:#3a2f0c; }
+.gd-bd.close { background:rgba(39,100,176,0.12); color:#2764b0; }
+.gd-bd.rout { background:var(--red-bg); color:var(--red); }
+.gd-bd.upset { background:rgba(111,66,193,0.12); color:#6f42c1; }
+.gd-vd { display:inline-grid; place-items:center; width:18px; height:18px; border-radius:4px; font-size:10.5px; font-weight:700; margin-left:6px; vertical-align:middle; }
+.gd-vd.w { background:var(--green-bg); color:var(--scp-green); } .gd-vd.l { background:var(--red-bg); color:var(--red); }
+.gd-compact { padding:0 !important; overflow:hidden; }
+.gd-row { display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:1px solid var(--border); font-size:13px; cursor:pointer; }
+.gd-row:last-child { border-bottom:none; }
+.gd-row:hover { background:var(--green-bg); }
+.gd-row-id { font-size:11px; font-weight:700; color:var(--dim); width:34px; flex-shrink:0; }
+.gd-row-d { font-size:12px; color:var(--muted); width:46px; flex-shrink:0; }
+.gd-row-f { width:20px; text-align:center; flex-shrink:0; font-size:13px; } .gd-row-f i { font-style:normal; color:var(--dim); }
+.gd-row b { white-space:nowrap; } .gd-row b.dim { color:var(--muted); font-weight:600; font-size:12px; }
+.gd-row-m { flex:1; text-align:right; font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+.gd-hd { background:var(--scp-green); color:#fff; border-radius:12px 12px 0 0; padding:10px 8px; display:flex; align-items:center; gap:6px; }
+.gd-hd-c { flex:1; text-align:center; min-width:0; }
+.gd-hd-t { font-size:11.5px; opacity:.85; }
+.gd-hd-s { font-family:'Barlow Condensed',sans-serif; font-size:36px; font-weight:900; line-height:1.05; }
+.gd-nav { width:36px; height:36px; border-radius:50%; border:none; background:rgba(255,255,255,0.18); color:#fff; font-size:24px; line-height:1; cursor:pointer; flex-shrink:0; }
+.gd-nav:disabled { opacity:.3; cursor:default; }
+.gd-comment { margin:8px 14px 0; padding:8px 12px; background:rgba(0,102,51,0.07); border-left:3px solid var(--scp-green); font-size:13px; }
+.gd-teams { display:grid; grid-template-columns:1fr; gap:10px; padding:8px 14px; }
+@media (min-width:701px) { .gd-teams { grid-template-columns:1fr 1fr; } }
+.gd-pr { display:grid; grid-template-columns:minmax(0,1fr) 24px 24px 24px 40px 44px; gap:2px; align-items:center; font-size:12.5px; padding:6px 0; border-bottom:1px solid var(--border); }
+.gd-pr > span { text-align:center; } .gd-pr .n { text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.gd-pr.win .n { color:var(--scp-green); font-weight:700; }
+.gd-pr-h { font-size:10px; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.04em; border-bottom:2px solid var(--border2); }
+.gd-pr-h .n { color:var(--muted) !important; }
+.gd-pr .up { color:var(--scp-green); font-weight:600; } .gd-pr .down { color:var(--red); font-weight:600; } .gd-pr .dim { color:var(--dim); }
+.gd-plink { cursor:pointer; } .gd-plink i { font-style:normal; color:var(--dim); font-size:11px; } .gd-plink .star { color:var(--scp-gold); }
+.gd-mlink { cursor:pointer; color:#8a6d1c; font-weight:700; text-decoration:underline dotted; text-underline-offset:3px; }
+.gd-mb { background:var(--amber-bg); border-radius:6px; margin:4px 0 6px; padding:6px 10px; font-size:12px; }
+.gd-mb div { display:flex; justify-content:space-between; padding:1px 0; } .gd-mb span { color:var(--muted); }
+.gd-mb .tot { border-top:1px solid rgba(200,168,75,0.4); margin-top:3px; padding-top:3px; } .gd-mb .tot span, .gd-mb .tot b { color:#8a6d1c; font-weight:800; }
+.gd-mb .note { color:var(--dim); font-size:10.5px; display:block; }
+.gd-hint { font-size:10.5px; color:var(--dim); text-align:center; padding:2px 14px 0; }
+.gd-act { display:flex; gap:6px; padding:10px 14px 12px; }
+.gd-btn { flex:0 0 auto; padding:8px 14px; border:1px solid var(--border2); border-radius:var(--radius-sm); background:none; cursor:pointer; font-family:'Barlow',sans-serif; font-size:13px; font-weight:600; color:var(--muted); }
+.gd-btn:first-child { flex:1; color:var(--scp-green); border-color:var(--scp-green); }
+.gd-more { gap:6px; padding:0 14px 14px; }
+.gd-more button { flex:1; padding:8px; border:1px solid var(--scp-green); border-radius:var(--radius-sm); background:none; cursor:pointer; font-family:'Barlow',sans-serif; font-size:13px; font-weight:600; color:var(--scp-green); }
+.gd-more button.del { border-color:var(--red); color:var(--red); }
+.ps-head { background:var(--scp-green); color:#fff; border-radius:var(--radius); padding:10px 14px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.ps-head-name { font-family:'Barlow Condensed',sans-serif; font-size:26px; font-weight:900; line-height:1; }
+.ps-head-elo { font-family:'Barlow Condensed',sans-serif; font-size:26px; font-weight:800; line-height:1; }
+.ps-head-sub { font-size:11px; opacity:.85; margin-top:2px; }
+.ps-g3 { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
+.ps-g2 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px 12px; }
+.ps-sc { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:6px 8px; min-width:0; }
+.ps-sc-l { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ps-sc-v { font-family:'Barlow Condensed',sans-serif; font-size:20px; font-weight:800; line-height:1.1; white-space:nowrap; }
+.ps-sc-s { font-size:10px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ps-sec { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--scp-green); margin:14px 0 6px; padding-bottom:3px; border-bottom:1px solid var(--border2); }
+.ps-pred { margin-top:8px; }
+.ps-pred-bar { position:relative; height:8px; border-radius:4px; background:var(--surface2); border:1px solid var(--border); }
+.ps-pred-bar i { position:absolute; left:0; top:0; bottom:0; border-radius:4px; }
+.ps-pred-bar b { position:absolute; top:-4px; bottom:-4px; width:3px; border-radius:2px; background:var(--text); }
+.ps-pred-txt { font-size:11px; color:var(--muted); margin-top:5px; }
+.ps-pred-txt span { display:inline-block; margin-left:4px; padding:1px 8px; border-radius:99px; font-weight:700; font-size:10.5px; }
+.ps-radar-row { display:grid; grid-template-columns:150px minmax(0,1fr); gap:10px; align-items:center; }
+.ps-axes { display:flex; flex-direction:column; gap:5px; }
+.ps-ax { position:relative; display:flex; justify-content:space-between; font-size:11.5px; padding:2px 2px 4px; background:linear-gradient(var(--border2),var(--border2)) no-repeat left bottom/100% 2px; }
+.ps-ax span { color:var(--muted); } .ps-ax b { font-weight:700; }
+.ps-ax i { position:absolute; left:0; bottom:0; height:2px; background:var(--scp-green); border-radius:1px; }
+.ps-mini { font-size:10px; color:var(--dim); font-weight:700; width:34px; flex-shrink:0; }
+.ps-mrow { display:flex; align-items:center; gap:4px; margin-bottom:2px; }
+.ps-mrow .ps-m12 { flex:1; }
+.ps-m12 { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:2px; }
+.ps-mcell { height:24px; border-radius:4px; display:grid; place-items:center; font-size:10.5px; font-weight:700; background:var(--surface2); color:var(--dim); font-variant-numeric:tabular-nums; letter-spacing:-.02em; }
+.ps-mlbl { text-align:center; font-size:10px; font-weight:600; color:var(--dim); }
+.ps-mcell.hi, .ps-pill.hi { background:var(--green-bg); color:var(--scp-green); }
+.ps-mcell.mid { background:var(--amber-bg); color:#8a6d1c; }
+.ps-mcell.lo, .ps-pill.lo { background:var(--red-bg); color:var(--red); }
+.ps-pill { display:inline-grid; place-items:center; width:20px; height:20px; border-radius:4px; font-size:10.5px; font-weight:700; }
+.ps-kvgrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:14px; }
+.ps-kv { display:flex; justify-content:space-between; align-items:baseline; gap:6px; padding:4px 0; border-bottom:1px solid var(--border); font-size:12px; min-width:0; }
+.ps-kv span { color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ps-kv b { font-weight:700; white-space:nowrap; }
+.ps-kv em { font-style:normal; font-weight:400; font-size:10.5px; color:var(--dim); }
+.ps-rel { font-size:12.5px; padding:4px 0; border-bottom:1px solid var(--border); min-width:0; }
+.ps-rel-t { font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--dim); margin-bottom:2px; }
+.ps-rel div { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600; }
+.ps-rel span { color:var(--dim); font-weight:400; font-size:11px; }
+.ps-res { display:flex; justify-content:space-between; align-items:baseline; gap:6px; padding:4px 0; border-bottom:1px solid var(--border); font-size:12px; cursor:pointer; }
+.ps-res span { color:var(--dim); font-size:11px; } .ps-res b i { font-style:normal; font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:800; }
+.ps-res em { font-style:normal; font-size:10.5px; font-weight:700; color:var(--muted); }
+.ps-games-toggle { width:100%; margin-top:16px; display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border:1px solid var(--border2); border-radius:var(--radius); background:var(--surface); font-family:'Barlow',sans-serif; font-size:13px; font-weight:700; color:var(--scp-green); cursor:pointer; }
+.ps-games-toggle:focus-visible { outline:2px solid var(--scp-gold); outline-offset:2px; }
+.gd-player-link { cursor:pointer; }
+.gd-player-link:hover { background:var(--green-bg); }
+@media (min-width:701px) {
+  .ps-g3 { grid-template-columns:repeat(6,minmax(0,1fr)); }
+  .ps-kvgrid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .ps-g2 { grid-template-columns:repeat(4,minmax(0,1fr)); }
+  .ps-radar-row { grid-template-columns:170px minmax(0,340px); }
+}
 .ps-game-by-game { display: block; }
 .ps-game-mobile { display: none; }
 .sub-nav { display:flex; align-items:center; gap:4px; padding:6px 20px; background:var(--surface2); border-bottom:1px solid var(--border2); flex-wrap:wrap; }
@@ -1838,11 +1957,28 @@ function navigateTo(id) {
 }
 
 function goHome() {
+  PS_RETURN = null;
   navStack = ['home'];
   showPage('home');
 }
 
+let GD_CURRENT_GAME = null;   // game shown in the Game Detail popup
+let PS_RETURN = null;         // set when Player Stats was opened from a game: {gameId, prevPlayer, samePage}
+
 function goBack() {
+  // Player Stats opened from a game → back returns to that game, not the list
+  if (PS_RETURN && document.getElementById('tab-player-stats')?.classList.contains('active')) {
+    const r = PS_RETURN; PS_RETURN = null;
+    if (r.samePage) {
+      if (r.prevPlayer) showPlayerStats(r.prevPlayer, null);
+    } else {
+      navStack.pop();
+      showPage(navStack.length ? navStack[navStack.length - 1] : 'home');
+    }
+    openGameDetail(r.gameId);
+    return;
+  }
+  PS_RETURN = null;
   navStack.pop();
   const prev = navStack.length ? navStack[navStack.length - 1] : 'home';
   showPage(prev);
@@ -4275,178 +4411,249 @@ function renderGoalStats() {
   buildGoalTable();
 }
 
+// ══════════════════════════════════════════
+// GAMES LIST (cards / compact) + filters
+// ══════════════════════════════════════════
+let GD_VIEW = (function(){ try { return localStorage.getItem('f26_gd_view') || 'cards'; } catch(e) { return 'cards'; } })();
+let GD_FILTER = 'all';   // all | film | close | upset
+let GD_PLAYER = '';
+
+function gdScore(g) {
+  const s = getGameScore(g);
+  return { filmed: s.hasStats, A: s.scoreA, B: s.scoreB };
+}
+function gdWinProb(g) { return typeof g.probWinA === 'number' ? (g.winner==='A' ? g.probWinA : 1-g.probWinA)*100 : null; }
+function gdIsUpset(g) { const p = gdWinProb(g); return p !== null && p < 45; }
+function gdIsClose(g, s) { return s.filmed && Math.abs(s.A - s.B) <= 1; }
+function gdIsRout(g, s)  { return s.filmed && Math.abs(s.A - s.B) >= 6; }
+function gdEsc(n) { return String(n).replace(/'/g, "\\'"); }
+
+function gdSetView(v) { GD_VIEW = v; try { localStorage.setItem('f26_gd_view', v); } catch(e) {} renderGamesDetail(); }
+function gdSetFilter(f) { GD_FILTER = f; renderGamesDetail(); }
+function gdSetPlayer(p) { GD_PLAYER = p; renderGamesDetail(); }
+
+function gdPlayerPill(g) {
+  if (!GD_PLAYER) return '';
+  const a = g.teamA.includes(GD_PLAYER), b = g.teamB.includes(GD_PLAYER);
+  if (!a && !b) return '';
+  const w = (a && g.winner==='A') || (b && g.winner==='B');
+  return '<span class="gd-vd '+(w?'w':'l')+'">'+(w?'W':'L')+'</span>';
+}
+function gdProbBar(g) {
+  if (typeof g.probWinA !== 'number') return '';
+  const pA = Math.round(g.probWinA*100);
+  return '<div class="gd-pb"><i style="width:'+pA+'%" class="'+(g.winner==='A'?'on':'')+'"></i><i style="flex:1" class="'+(g.winner==='B'?'on':'')+'"></i></div>'
+    + '<div class="gd-pb-l"><span>A '+pA+'%</span><span>predicted</span><span>B '+(100-pA)+'%</span></div>';
+}
+function gdBadges(g, s) {
+  let b = '';
+  const w = s.filmed ? getGameMOTMWinners(g.id) : [];
+  if (w.length) b += '<span class="gd-bd motm">🏅 '+w.map(x=>x.player).join(' & ')+'</span>';
+  if (gdIsClose(g,s)) b += '<span class="gd-bd close">Close game</span>';
+  if (gdIsRout(g,s))  b += '<span class="gd-bd rout">Rout</span>';
+  if (gdIsUpset(g))   b += '<span class="gd-bd upset">Upset</span>';
+  return b ? '<div class="gd-bds">'+b+'</div>' : '';
+}
+
 function renderGamesDetail() {
   const list = document.getElementById('gd-list');
   if (!list || !GAMES.length) return;
   const sel = document.getElementById('gd-month-filter');
   const mFilter = sel ? (parseInt(sel.value)||'all') : 'all';
+  const mn = {1:'January',2:'February',3:'March',4:'April',5:'May',6:'June',7:'July',8:'August',9:'September',10:'October',11:'November',12:'December'};
   if (sel && sel.options.length <= 1) {
     const months = [...new Set(GAMES.map(g=>g.month))].sort((a,b)=>a-b);
-    const mn = {1:'January',2:'February',3:'March',4:'April',5:'May',6:'June',7:'July',8:'August',9:'September',10:'October',11:'November',12:'December'};
     sel.innerHTML = '<option value="all">All</option>' + months.map(m=>'<option value="'+m+'">'+mn[m]+'</option>').join('');
   }
-  const filtered = mFilter==='all' ? GAMES : GAMES.filter(g=>g.month===mFilter);
+
+  // Controls: view toggle, filter chips, player filter
+  const players = [...new Set(GAMES.flatMap(g=>[...g.teamA,...g.teamB]))].filter(p=>p && !p.startsWith('Outro')).sort((a,b)=>a.localeCompare(b));
+  if (GD_PLAYER && !players.includes(GD_PLAYER)) GD_PLAYER = '';
+  const chip = (key, label, cur, fn) => '<button type="button" class="gd-chip'+(cur===key?' on':'')+'" onclick="'+fn+'(\''+key+'\')">'+label+'</button>';
+  const controls = '<div class="gd-ctrl">'
+    + chip('all','All',GD_FILTER,'gdSetFilter') + chip('film','🎥 Filmed',GD_FILTER,'gdSetFilter')
+    + '<select class="gd-psel" onchange="gdSetPlayer(this.value)" aria-label="Filter by player"><option value="">All players</option>'
+    + players.map(p=>'<option'+(p===GD_PLAYER?' selected':'')+'>'+p+'</option>').join('') + '</select></div>';
+
+  let filtered = mFilter==='all' ? GAMES : GAMES.filter(g=>g.month===mFilter);
+  const scores = {}; GAMES.forEach(g => scores[g.id] = gdScore(g));
+  filtered = filtered.filter(g => {
+    const s = scores[g.id];
+    if (GD_FILTER==='film' && !s.filmed) return false;
+    if (GD_PLAYER && ![...g.teamA,...g.teamB].includes(GD_PLAYER)) return false;
+    return true;
+  });
   const sorted = [...filtered].sort((a,b) => (parseInt(b.id,10)||0) - (parseInt(a.id,10)||0));
   const byMonth = {};
-  sorted.forEach(g => { if (!byMonth[g.month]) byMonth[g.month]=[]; byMonth[g.month].push(g); });
-  const mn = {1:'January',2:'February',3:'March',4:'April',5:'May',6:'June',7:'July',8:'August',9:'September',10:'October',11:'November',12:'December'};
-  const hasStatsSet = new Set(GOAL_STATS.map(r=>r.gameId));
-
-  // Preserve month order by most recent first
+  sorted.forEach(g => { (byMonth[g.month] = byMonth[g.month] || []).push(g); });
   const monthKeys = Object.keys(byMonth).sort((a,b)=>b-a);
 
-  list.innerHTML = monthKeys.map(function(m) {
+  if (!monthKeys.length) {
+    list.innerHTML = controls + '<div class="gd-empty">No games match these filters. Try another chip or player.</div>';
+    return;
+  }
+
+  function compactHtml(g) {
+    const s = scores[g.id];
+    const w = s.filmed ? getGameMOTMWinners(g.id) : [];
+    const res = s.filmed ? '<b>'+s.A+' – '+s.B+'</b>' : '<b class="dim">Team '+g.winner+'</b>';
+    return '<div class="gd-row" onclick="openGameDetail(\''+g.id+'\')">'
+      + '<span class="gd-row-id">#'+g.id.slice(-3)+'</span>'
+      + '<span class="gd-row-d">'+g.date+'</span>'
+      + '<span class="gd-row-f" title="'+(s.filmed?'Filmed':'Not filmed')+'">'+(s.filmed?'🎥':'<i>—</i>')+'</span>'
+      + res
+      + '<span class="gd-row-m">'+(w.length?'🏅 '+w.map(x=>x.player).join(' & '):'')+'</span>'
+      + gdPlayerPill(g) + '</div>';
+  }
+
+  list.innerHTML = controls + monthKeys.map(m => {
     const games = byMonth[m];
-    const cards = games.map(function(g) {
-      const filmed = hasStatsSet.has(g.id);
-      let scoreA=0, scoreB=0;
-      if (filmed) {
-        GOAL_STATS.filter(r=>r.gameId===g.id).forEach(function(r) {
-          if (g.teamA.includes(r.player)) { scoreA+=r.goals; scoreB+=(r.ownGoals||0); }
-          else if (g.teamB.includes(r.player)) { scoreB+=r.goals; scoreA+=(r.ownGoals||0); }
-        });
-      }
-      const winA = g.winner==='A';
-      const scoreHtml = filmed
-        ? '<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:26px;font-weight:900;color:'+(winA?'var(--scp-green)':'var(--text)')+'">'+scoreA+'</span>'
-          +'<span style="color:var(--dim);font-size:16px;margin:0 6px;font-weight:300">–</span>'
-          +'<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:26px;font-weight:900;color:'+(!winA?'var(--scp-green)':'var(--text)')+'">'+scoreB+'</span>'
-        : '<span style="font-size:12px;font-weight:700;padding:4px 12px;border-radius:99px;background:rgba(0,102,51,0.1);color:var(--scp-green)">Team '+g.winner+' won</span>';
-
-      let badgesHtml = '';
-      if (filmed) {
-        const badges = gameCardBadgesHtml(g.id);
-        if (badges) badgesHtml = '<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;padding-top:10px;border-top:1px solid var(--border)">'+badges+'</div>';
-      }
-
-      const eloTag = g.eloAdjust ? '<span style="font-size:10px;color:var(--dim)">ELO ±'+Math.abs(g.eloAdjust).toFixed(1)+'</span>' : '';
-      return `<div class="card" onclick="openGameDetail('${g.id}')" style="padding:14px 16px;margin-bottom:10px;cursor:pointer">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <span style="font-size:11px;color:var(--dim);font-weight:700">#${g.id} · ${g.date}${filmed?' · 🎥':''}</span>
-          ${eloTag}
-        </div>
-        <div style="text-align:center;${badgesHtml?'margin-bottom:10px':''}">${scoreHtml}</div>
-        ${badgesHtml}
-      </div>`;
-    }).join('');
-    return '<div style="margin-bottom:20px">'
-      +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;font-weight:700;color:var(--scp-green);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">'+(mn[m]||'Month '+m)+' &middot; '+games.length+' game'+(games.length!==1?'s':'')+'</div>'
-      +cards+'</div>';
+    const head = '<div class="gd-mh"><span>'+(mn[m]||'Month '+m)+' · '+games.length+' game'+(games.length!==1?'s':'')+'</span></div>';
+    return '<div style="margin-bottom:16px">'+head+'<div class="card gd-compact">'+games.map(compactHtml).join('')+'</div></div>';
   }).join('');
 }
 
+// ══════════════════════════════════════════
+// GAME DETAIL POPUP
+// ══════════════════════════════════════════
+function gdMotmBreakdown(g, name, team, teamGoals) {
+  const r = GOAL_STATS.find(x=>x.gameId===g.id && x.player===name) || {};
+  const G = r.goals||0, A = r.assists||0, R = r.recoveries||0;
+  const pct = teamGoals>0 ? (G+A)/teamGoals*100 : 0;
+  const parts = [[G+' goals × 10', G*10], [A+' assists × 6', A*6], [R+' recoveries × 2', R*2], [Math.round(pct)+'% of team goals × 0.10', pct*0.10]];
+  const total = motmRound(G*10 + A*6 + R*2 + pct*0.10);
+  return '<div class="gd-mb">'
+    + parts.map(p=>'<div><span>'+p[0]+'</span><b>'+(Math.round(p[1]*10)/10)+'</b></div>').join('')
+    + '<div class="tot"><span>MOTM score</span><b>'+total+'</b></div>'
+    + '<div class="note">'+(G+A)+' G+A of '+teamGoals+' team goals</div></div>';
+}
+function gdToggleMotm(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+function gdToggleMenu() {
+  const m = document.getElementById('gd-more');
+  if (m) m.style.display = m.style.display === 'none' ? 'flex' : 'none';
+}
+function gdNeighbour(gameId, dir) {
+  const sorted = [...GAMES].sort((a,b)=>(parseInt(a.id,10)||0)-(parseInt(b.id,10)||0));
+  const i = sorted.findIndex(x=>x.id===gameId);
+  const n = sorted[i+dir];
+  return n ? n.id : null;
+}
+
 function openGameDetail(gameId) {
-  const g = GAMES.find(function(x){return x.id===gameId;});
+  GD_CURRENT_GAME = gameId;
+  const g = GAMES.find(x=>x.id===gameId);
   if (!g) return;
   const modal = document.getElementById('gd-modal');
   const overlay = document.getElementById('gd-modal-overlay');
   if (!modal || !overlay) return;
-  const winA = g.winner==='A';
-  const gsRows = GOAL_STATS.filter(function(r){return r.gameId===gameId;});
-  const hasStats = gsRows.length > 0;
-  let scoreA=0, scoreB=0;
-  if (hasStats) {
-    gsRows.forEach(function(r) {
-      if (g.teamA.includes(r.player)){scoreA+=r.goals; scoreB+=(r.ownGoals||0);}
-      else if (g.teamB.includes(r.player)){scoreB+=r.goals; scoreA+=(r.ownGoals||0);}
-    });
-  }
-  const winScore = winA?scoreA:scoreB, loseScore = winA?scoreB:scoreA;
+  const s = gdScore(g), winA = g.winner==='A';
+  const teamGoals = { A: s.A, B: s.B };
+  const motmRes = s.filmed ? computeGameMOTM(g.id) : [];
+  const motmWin = new Set(s.filmed ? getGameMOTMWinners(g.id).map(w=>w.player) : []);
+  const avgElo = t => { const arr=(g['team'+t+'elo']||[]).filter(e=>e.name && !e.name.startsWith('Outro')); return arr.length? Math.round(arr.reduce((x,e)=>x+e.elo,0)/arr.length) : null; };
+  const adjOf = (t,n) => { const e=(g['team'+t+'elo']||[]).find(x=>x.name===n); return e && typeof e.adj==='number' ? e.adj : null; };
 
-  // Team average ELO (shown once per team header, since per-player it's near-identical and redundant)
-  function teamAvgElo(team) {
-    const arr = team === 'A' ? (g.teamAelo||[]) : (g.teamBelo||[]);
-    const real = arr.filter(e => e.name && !e.name.startsWith('Outro'));
-    if (!real.length) return null;
-    return Math.round(real.reduce((s,e)=>s+e.elo,0) / real.length);
-  }
-  const avgEloA = teamAvgElo('A');
-  const avgEloB = teamAvgElo('B');
-
-  // Build player rows per team — always shows goals/assists (0 if no stats yet) so every row lines up evenly
-  function playerRow(name, team) {
-    const won = (team==='A'&&winA)||(team==='B'&&!winA);
-    const ps = gsRows.find(function(r){return r.player===name;});
-    const goals = ps ? ps.goals : 0;
-    const assists = ps ? ps.assists : 0;
-    var statHtml = hasStats
-      ? '<div style="display:flex;gap:10px;align-items:center;flex-shrink:0">'
-        +'<span style="min-width:20px;text-align:center;font-size:12px;font-weight:700;color:var(--scp-green)">'+goals+'⚽</span>'
-        +'<span style="min-width:20px;text-align:center;font-size:12px;font-weight:700;color:var(--amber)">'+assists+'🎯</span>'
-        +'</div>'
-      : '';
-    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--border)">'
-      +'<span style="font-size:13px;font-weight:'+(won?'700':'400')+';color:'+(won?'var(--scp-green)':'var(--text)')+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px">'+name+'</span>'
-      +statHtml+'</div>';
+  function teamBlock(t) {
+    const won = g.winner===t;
+    const head = '<div class="gd-pr gd-pr-h"><span class="n">'+(won?'🏆 ':'')+'Team '+t+(avgElo(t)!=null?' · '+avgElo(t)+' ELO':'')+'</span>'
+      + '<span>G</span><span>A</span><span>R</span><span>MOTM</span><span>ELO</span></div>';
+    const rows = g['team'+t].map((name,i) => {
+      const r = GOAL_STATS.find(x=>x.gameId===g.id && x.player===name);
+      const isOutro = !name || name.startsWith('Outro');
+      const m = motmRes.find(x=>x.player===name);
+      const adj = adjOf(t,name);
+      const bid = 'gd-mb-'+t+i;
+      const nameCell = isOutro
+        ? '<span class="n">'+name+'</span>'
+        : '<span class="n gd-plink" role="button" tabindex="0" onclick="openPlayerStatsFor(\''+gdEsc(name)+'\')">'+name+(motmWin.has(name)?' <b class="star">★</b>':'')+' <i>›</i></span>';
+      const motmCell = m
+        ? '<span class="gd-mlink" role="button" tabindex="0" onclick="gdToggleMotm(\''+bid+'\')">'+Math.round(m.score)+'</span>'
+        : '<span class="dim">–</span>';
+      const row = '<div class="gd-pr'+(won?' win':'')+'">'+nameCell
+        + '<span>'+(s.filmed? (r?r.goals:0) : '–')+'</span>'
+        + '<span>'+(s.filmed? (r?r.assists:0) : '–')+'</span>'
+        + '<span>'+(s.filmed? (r?(r.recoveries||0):0) : '–')+'</span>'
+        + motmCell
+        + '<span class="'+(adj>0?'up':adj<0?'down':'dim')+'">'+(adj==null||isOutro?'–':(adj>0?'+':'')+adj.toFixed(1))+'</span></div>';
+      return row + (m ? '<div id="'+bid+'" style="display:none">'+gdMotmBreakdown(g,name,t,teamGoals[t])+'</div>' : '');
+    }).join('');
+    return '<div class="gd-tb">'+head+rows+'</div>';
   }
 
-  // Score section
-  var scoreSection = '';
-  if (hasStats) {
-    scoreSection = '<div style="display:flex;justify-content:center;align-items:center;gap:32px;padding:20px 0 8px;border-bottom:1px solid var(--border)">'
-      +'<div style="text-align:center"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:'+(winA?'var(--scp-green)':'var(--muted)')+'">'+( winA?'🏆 Winner':'' )+' Team A</div>'
-      +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:52px;font-weight:900;line-height:1;color:'+(winA?'var(--scp-green)':'var(--muted)')+'">'+scoreA+'</div></div>'
-      +'<div style="font-size:28px;color:var(--dim);font-weight:300">–</div>'
-      +'<div style="text-align:center"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:'+(!winA?'var(--scp-green)':'var(--muted)')+'">'+(!winA?'🏆 Winner':'')+' Team B</div>'
-      +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:52px;font-weight:900;line-height:1;color:'+(!winA?'var(--scp-green)':'var(--muted)')+'">'+scoreB+'</div></div>'
-      +'</div>';
-  } else {
-    scoreSection = '<div style="text-align:center;padding:16px 0;border-bottom:1px solid var(--border)">'
-      +'<span style="padding:6px 20px;border-radius:99px;background:rgba(0,102,51,0.12);color:var(--scp-green);font-weight:700;font-size:14px">Team '+g.winner+' wins</span></div>';
-  }
-
-  var commentHtml = g.comment ? '<div style="margin:12px 16px 0;padding:10px 14px;background:rgba(0,102,51,0.07);border-left:3px solid var(--scp-green);border-radius:0 6px 6px 0;font-size:13px">'+g.comment+'</div>' : '';
-
-  // Top Performers — just the standout in each category, not a full list
-  var topPerformersHtml = '';
-  if (hasStats) {
-    const badges = gameCardBadgesHtml(g.id);
-    if (badges) {
-      topPerformersHtml = '<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:6px;justify-content:center">'+badges+'</div>';
-    }
-  }
-
-  var probHtml = g.probWinA ? '<span style="font-size:11px;color:rgba(255,255,255,0.7)">Predicted: A '+Math.round(g.probWinA*100)+'% · B '+Math.round((1-g.probWinA)*100)+'%</span>' : '';
-  var eloHtml  = g.eloAdjust ? '<span style="font-size:11px;color:rgba(255,255,255,0.7)">ELO ±'+Math.abs(g.eloAdjust).toFixed(1)+'</span>' : '';
-
-  var tArows = g.teamA.map(function(p){return playerRow(p,'A');}).join('');
-  var tBrows = g.teamB.map(function(p){return playerRow(p,'B');}).join('');
-
-  function teamHeader(team, won, avgElo, scoreVal) {
-    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:38px;box-sizing:border-box;font-size:10px;line-height:1;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:'+(won?'var(--scp-green)':'var(--muted)')+';border-bottom:1px solid var(--border)">'
-      +'<span style="display:flex;align-items:center;line-height:1"><span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:14px;flex-shrink:0;font-size:11px;line-height:1;overflow:hidden">'+(won?'🏆':'')+'</span>Team '+team+(hasStats?' <span style="font-weight:400;color:var(--dim);text-transform:none;letter-spacing:0">&middot; '+scoreVal+' goals</span>':'')+'</span>'
-      +(avgElo!=null?'<span style="font-weight:400;color:var(--dim);text-transform:none;letter-spacing:0;line-height:1">avg '+avgElo+' ELO</span>':'')
-      +'</div>';
-  }
+  const prev = gdNeighbour(g.id,-1), next = gdNeighbour(g.id,1);
+  const nav = (id, icon, label) => '<button type="button" class="gd-nav" aria-label="'+label+'" '+(id?'onclick="openGameDetail(\''+id+'\')"':'disabled')+'>'+icon+'</button>';
+  const scoreTxt = s.filmed ? s.A+' – '+s.B : 'Team '+g.winner+' won';
+  const commentHtml = g.comment ? '<div class="gd-comment">'+g.comment+'</div>' : '';
 
   modal.innerHTML =
-    '<div style="background:var(--scp-green);padding:18px 20px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:flex-start">'
-    +'<div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:22px;font-weight:800;color:#fff">Game #'+g.id+'</div>'
-    +'<div style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:2px">'+g.date+' &middot; '+(hasStats?'🎥 Stats recorded':'No stats')+'</div>'
-    +(probHtml||eloHtml ? '<div style="display:flex;gap:10px;margin-top:4px">'+probHtml+eloHtml+'</div>' : '')
-    +'</div>'
-    +'<button onclick="closeGameDetail()" style="background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:32px;height:32px;font-size:20px;cursor:pointer;color:#fff;line-height:1;flex-shrink:0">×</button>'
-    +'</div>'
-    +commentHtml
-    +scoreSection
-    +topPerformersHtml
-    +'<div style="display:grid;grid-template-columns:1fr 1fr">'
-    +'<div style="border-right:1px solid var(--border)">'
-    +teamHeader('A', winA, avgEloA, scoreA)
-    +tArows+'</div>'
-    +'<div>'
-    +teamHeader('B', !winA, avgEloB, scoreB)
-    +tBrows+'</div>'
-    +'</div>'
-    +'<div style="padding:12px 16px;text-align:center;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">'
-    +'<button onclick="openEditGameStats(\''+g.id+'\')" style="padding:8px 24px;border:1px solid var(--scp-green);border-radius:var(--radius-sm);background:none;cursor:pointer;font-family:\'Barlow\',sans-serif;font-size:13px;color:var(--scp-green);font-weight:600">'+(hasStats?'Edit stats':'+ Add goals/assists')+'</button>'
-    +'<button onclick="deleteGame(\''+g.id+'\')" style="padding:8px 24px;border:1px solid var(--red);border-radius:var(--radius-sm);background:none;cursor:pointer;font-family:\'Barlow\',sans-serif;font-size:13px;color:var(--red);font-weight:600">🗑 Delete game</button>'
-    +'<button onclick="closeGameDetail()" style="padding:8px 24px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:none;cursor:pointer;font-family:\'Barlow\',sans-serif;font-size:13px;color:var(--muted)">Close</button>'
-    +'</div>';
+    '<div class="gd-hd">'
+    +  nav(prev,'‹','Previous game')
+    +  '<div class="gd-hd-c"><div class="gd-hd-t">#'+g.id+' · '+g.date+(s.filmed?' · 🎥':'')+(g.eloAdjust?' · ELO ±'+Math.abs(g.eloAdjust).toFixed(1):'')+'</div>'
+    +  '<div class="gd-hd-s">'+scoreTxt+'</div></div>'
+    +  nav(next,'›','Next game')
+    + '</div>'
+    + '<div style="padding:10px 14px 4px">'+gdProbBar(g)+'</div>'
+    + commentHtml
+    + '<div class="gd-teams">'+teamBlock('A')+teamBlock('B')+'</div>'
+    + (s.filmed ? '<div class="gd-hint">Tap a MOTM score to see how it was calculated · tap a name to open their stats</div>' : '<div class="gd-hint">Tap a name to open their stats</div>')
+    + '<div class="gd-act">'
+    +  '<button type="button" class="gd-btn" onclick="gdShareImage(\''+g.id+'\')">📤 Share image</button>'
+    +  '<button type="button" class="gd-btn" aria-label="More options" onclick="gdToggleMenu()">⋯</button>'
+    +  '<button type="button" class="gd-btn" onclick="closeGameDetail()">Close</button>'
+    + '</div>'
+    + '<div id="gd-more" class="gd-more" style="display:none">'
+    +  '<button type="button" onclick="openEditGameStats(\''+g.id+'\')">'+(s.filmed?'Edit stats':'+ Add goals/assists')+'</button>'
+    +  '<button type="button" class="del" onclick="deleteGame(\''+g.id+'\')">🗑 Delete game</button>'
+    + '</div>';
 
   overlay.style.display = 'block';
   modal.style.display = 'block';
+  modal.scrollTop = 0;
   document.body.style.overflow = 'hidden';
+}
+
+// Share the game as a PNG (WhatsApp etc.)
+function gdShareImage(gameId) {
+  const g = GAMES.find(x=>x.id===gameId); if (!g) return;
+  const s = gdScore(g);
+  const motm = s.filmed ? getGameMOTMWinners(g.id).map(w=>w.player) : [];
+  const W = 1080, H = 1080, c = document.createElement('canvas'); c.width=W; c.height=H;
+  const x = c.getContext('2d');
+  x.fillStyle = '#f4f6f2'; x.fillRect(0,0,W,H);
+  x.fillStyle = '#006633'; x.fillRect(0,0,W,300);
+  x.fillStyle = '#c8a84b'; x.fillRect(0,300,W,10);
+  x.fillStyle = '#fff'; x.textAlign='center';
+  x.font = '600 36px Barlow, Arial, sans-serif'; x.fillText('FUTEBOL '+(g.year||'')+'  ·  #'+g.id+'  ·  '+g.date, W/2, 80);
+  x.font = '900 150px "Barlow Condensed", Arial Narrow, sans-serif';
+  x.fillText(s.filmed ? s.A+'  –  '+s.B : 'Team '+g.winner+' won', W/2, 240);
+  const col = (t, cx) => {
+    const won = g.winner===t;
+    x.fillStyle = won ? '#006633' : '#5a7060'; x.textAlign='center';
+    x.font = '800 44px "Barlow Condensed", Arial Narrow, sans-serif'; x.fillText((won?'🏆 ':'')+'TEAM '+t, cx, 390);
+    g['team'+t].forEach((n,i) => {
+      const r = GOAL_STATS.find(q=>q.gameId===g.id && q.player===n);
+      const y = 470 + i*95;
+      x.fillStyle = won ? '#0d1f0d' : '#3d4a40'; x.font = (won?'700 ':'500 ')+'44px Barlow, Arial, sans-serif';
+      x.fillText(n + (motm.includes(n)?' ★':''), cx, y);
+      if (s.filmed && r) { x.fillStyle='#5a7060'; x.font='500 30px Barlow, Arial, sans-serif'; x.fillText((r.goals||0)+' G  ·  '+(r.assists||0)+' A', cx, y+38); }
+    });
+  };
+  col('A', W*0.27); col('B', W*0.73);
+  x.strokeStyle='rgba(0,102,51,0.2)'; x.lineWidth=3; x.beginPath(); x.moveTo(W/2,350); x.lineTo(W/2,960); x.stroke();
+  if (motm.length) { x.fillStyle='#c8a84b'; x.fillRect(0,990,W,90); x.fillStyle='#3a2f0c'; x.textAlign='center'; x.font='800 44px "Barlow Condensed", Arial Narrow, sans-serif'; x.fillText('MAN OF THE MATCH  ·  '+motm.join(' & ').toUpperCase(), W/2, 1050); }
+  c.toBlob(async blob => {
+    if (!blob) return;
+    const file = new File([blob], 'game_'+g.id+'.png', {type:'image/png'});
+    try {
+      if (navigator.canShare && navigator.canShare({files:[file]})) { await navigator.share({files:[file], title:'Game #'+g.id}); return; }
+    } catch(e) { if (e && e.name==='AbortError') return; }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='game_'+g.id+'.png'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  }, 'image/png');
 }
 
 function deleteGame(gameId) {
@@ -5711,6 +5918,206 @@ function togglePlayerStats30pct(btn) {
   renderPlayerStats();
 }
 
+// ══════════════════════════════════════════
+// PLAYER PROFILE (Player Stats top section)
+// ══════════════════════════════════════════
+function psTier(p) { return p>=60 ? 'hi' : p>=45 ? 'mid' : 'lo'; }
+function psTierCol(p) { return p>=60 ? 'var(--scp-green)' : p>=45 ? 'var(--amber)' : 'var(--red)'; }
+function psAdj(w, g) { return g ? Math.round((w+10)/(g+20)*100) : 0; }
+function psWon(g, name) { return (g.teamA.includes(name)&&g.winner==='A')||(g.teamB.includes(name)&&g.winner==='B'); }
+function psTeamGoals(g) {
+  let gA=0,gB=0;
+  GOAL_STATS.filter(r=>r.gameId===g.id).forEach(r=>{
+    if(g.teamA.includes(r.player)){gA+=r.goals;gB+=(r.ownGoals||0);}
+    else if(g.teamB.includes(r.player)){gB+=r.goals;gA+=(r.ownGoals||0);}
+  });
+  return {A:gA,B:gB};
+}
+// Per-player metrics used by the profile and by the radar's group maximum
+function psPlayerMetrics(name) {
+  const my = GAMES.filter(g => [...g.teamA,...g.teamB].includes(name));
+  const wins = my.filter(g=>psWon(g,name)).length;
+  const filmed = my.filter(g => GOAL_STATS.some(r=>r.gameId===g.id && r.player===name));
+  let G=0,A=0,R=0,tg=0;
+  filmed.forEach(g=>{
+    const r = GOAL_STATS.find(x=>x.gameId===g.id&&x.player===name);
+    G += r.goals||0; A += r.assists||0; R += r.recoveries||0;
+    const tgl = psTeamGoals(g); tg += g.teamA.includes(name)?tgl.A:tgl.B;
+  });
+  const nf = filmed.length;
+  return {
+    games: my.length, wins, wp: my.length? wins/my.length*100 : 0,
+    nf, G, A, R,
+    gpg: nf? G/nf:0, apg: nf? A/nf:0, rpg: nf? R/nf:0,
+    share: tg? G/tg*100:0, elo: getElo(name)
+  };
+}
+
+function psRadarSvg(vals) {
+  const cx=80, cy=78, R0=58;
+  const pt=(i,k)=>{const a=-Math.PI/2+i*Math.PI/3;return [(cx+k*Math.cos(a)).toFixed(1),(cy+k*Math.sin(a)).toFixed(1)];};
+  const labels=['W%','G','A','R','%G','ELO'];
+  let s='';
+  [.25,.5,.75,1].forEach(k=>{ s+='<polygon points="'+labels.map((_,i)=>pt(i,R0*k).join(',')).join(' ')+'" fill="none" stroke="var(--border2)" stroke-width="1"/>'; });
+  s+='<polygon points="'+vals.map((v,i)=>pt(i,R0*Math.max(v,0.03)).join(',')).join(' ')+'" fill="var(--scp-green)" fill-opacity="0.22" stroke="var(--scp-green)" stroke-width="2"/>';
+  labels.forEach((l,i)=>{ const [x,y]=pt(i,R0+11); s+='<text x="'+x+'" y="'+(+y+4)+'" text-anchor="middle" font-size="10" font-weight="700" fill="var(--muted)" font-family="Barlow,sans-serif">'+l+'</text>'; });
+  return '<svg viewBox="0 0 160 156" style="width:100%;max-width:170px;display:block" role="img" aria-label="Radar compared with the best of the group">'+s+'</svg>';
+}
+
+function psNameLink(n) {
+  return n.startsWith('Outro') ? n : '<a href="javascript:void(0)" onclick="openPlayerStatsFor(\''+n.replace(/'/g,"\\'")+'\')" style="color:inherit;text-decoration:none;border-bottom:1px dotted var(--border2)">'+n+'</a>';
+}
+
+// Compact profile — returns the top part of the Player Stats page
+function buildPlayerProfileHtml(name, statCard, sectionLabel) {
+  const myGames = GAMES.filter(g => [...g.teamA,...g.teamB].includes(name));
+  if (!myGames.length) return '';
+  const me = psPlayerMetrics(name);
+  const losses = me.games - me.wins;
+  const adjPct = psAdj(me.wins, me.games);
+
+  const pObj = ALL_PLAYERS.find(p=>p.name===name);
+  const elo = getElo(name);
+  const elo0 = pObj && typeof pObj.initialElo==='number' ? pObj.initialElo : elo;
+  const eloD = Math.round(elo - elo0);
+
+  const probs = myGames.filter(g=>typeof g.probWinA==='number').map(g=>g.teamA.includes(name)?g.probWinA:1-g.probWinA);
+  const pred = probs.length ? probs.reduce((a,b)=>a+b,0)/probs.length*100 : null;
+  const dev = pred!==null ? me.wp - pred : null;
+  let verdict = null;
+  if (dev!==null && !name.startsWith('Outro')) {
+    verdict = dev<=-6 ? ['ELO overrated','var(--red)','var(--red-bg)']
+            : dev>=6  ? ['ELO underrated','#2764b0','rgba(39,100,176,0.10)']
+            :           ['ELO calibrated','var(--scp-green)','var(--green-bg)'];
+  }
+
+  const res = myGames.map(g=>psWon(g,name));
+  let cur=0; const last=res[res.length-1];
+  for (let i=res.length-1;i>=0 && res[i]===last;i--) cur++;
+  const curStr = (last?'W':'L')+cur;
+  const last10 = res.slice(-10);
+
+  // Radar — each axis = value ÷ best in the group (eligible players + this player)
+  const minG = minEligibleGames();
+  const group = PLAYER_STATS.filter(p=>!p.name.startsWith('Outro') && (p.games>=minG || p.name===name)).map(p=>psPlayerMetrics(p.name));
+  const keys=['wp','gpg','apg','rpg','share','elo'];
+  const mx={}; keys.forEach(k=>{ mx[k]=Math.max(...group.map(m=>m[k]), me[k], 0.0001); });
+  const radarVals = keys.map(k=>Math.min(1, me[k]/mx[k]));
+  const axisRows = [
+    ['Win %', Math.round(me.wp)+'%'], ['Goals/g', me.gpg.toFixed(2)], ['Assists/g', me.apg.toFixed(2)],
+    ['Recov./g', me.rpg.toFixed(2)], ['% team goals', Math.round(me.share)+'%'], ['ELO', Math.round(elo)]
+  ].map((r,i)=>'<div class="ps-ax"><span>'+r[0]+'</span><b>'+r[1]+'</b><i style="width:'+Math.round(radarVals[i]*100)+'%"></i></div>').join('');
+
+  // Months: Jan–Dec, future months "–"
+  const now = new Date();
+  const lastMonth = SELECTED_YEAR < now.getFullYear() ? 12 : SELECTED_YEAR > now.getFullYear() ? 0 : now.getMonth()+1;
+  const MO=['J','F','M','A','M','J','J','A','S','O','N','D'];
+  let cj=0,cw=0; const row1=[],row2=[];
+  MO.forEach((m,i)=>{
+    const k=i+1;
+    if (k>lastMonth) { row1.push('<div class="ps-mcell">–</div>'); row2.push('<div class="ps-mcell">–</div>'); return; }
+    const mg = myGames.filter(g=>g.month===k);
+    const mw = mg.filter(g=>psWon(g,name)).length;
+    cj+=mg.length; cw+=mw;
+    row1.push(mg.length ? '<div class="ps-mcell '+psTier(mw/mg.length*100)+'">'+mw+'/'+mg.length+'</div>' : '<div class="ps-mcell">0</div>');
+    row2.push(cj ? '<div class="ps-mcell '+psTier(psAdj(cw,cj))+'">'+psAdj(cw,cj)+'</div>' : '<div class="ps-mcell">–</div>');
+  });
+  const monthLbl = MO.map(m=>'<div class="ps-mlbl">'+m+'</div>').join('');
+
+  // Production
+  const filmed = myGames.filter(g=>GOAL_STATS.some(r=>r.gameId===g.id&&r.player===name));
+  const gaW=[], gaL=[];
+  let motmAwards=0, motmTot=0, motmN=0;
+  filmed.forEach(g=>{
+    const r=GOAL_STATS.find(x=>x.gameId===g.id&&x.player===name);
+    (psWon(g,name)?gaW:gaL).push((r.goals||0)+(r.assists||0));
+    const m = computeGameMOTM(g.id).find(x=>x.player===name);
+    if (m) { motmTot+=m.score; motmN++; }
+    if (isGameMOTMWinner(g.id,name)) motmAwards++;
+  });
+  const avg=a=>a.length? (a.reduce((x,y)=>x+y,0)/a.length).toFixed(1):'—';
+
+  // Partners / opponents (min 4 games)
+  const tm={}, op={};
+  myGames.forEach(g=>{
+    const onA=g.teamA.includes(name), won=psWon(g,name);
+    (onA?g.teamA:g.teamB).forEach(p=>{ if(p===name||p.startsWith('Outro'))return; tm[p]=tm[p]||[0,0]; tm[p][0]++; if(won) tm[p][1]++; });
+    (onA?g.teamB:g.teamA).forEach(p=>{ if(p.startsWith('Outro'))return; op[p]=op[p]||[0,0]; op[p][0]++; if(won) op[p][1]++; });
+  });
+  const list=(o,dir)=>Object.entries(o).filter(([,v])=>v[0]>=4).sort((a,b)=>dir*((b[1][1]/b[1][0])-(a[1][1]/a[1][0])) || b[1][0]-a[1][0]).slice(0,2);
+  const relBox=(t,arr)=>'<div class="ps-rel"><div class="ps-rel-t">'+t+'</div>'
+    +(arr.length? arr.map(([n,v])=>'<div>'+psNameLink(n)+' <span>'+v[1]+'/'+v[0]+'</span></div>').join('') : '<div><span>—</span></div>')+'</div>';
+
+  const pill=w=>'<span class="ps-pill '+(w?'hi':'lo')+'">'+(w?'W':'L')+'</span>';
+
+  return ''
+    + '<div class="ps-head"><div><div class="ps-head-name">'+name+'</div>'
+    +   '<div class="ps-head-sub">'+me.games+' of '+GAMES.length+' games · '+Math.round(me.games/GAMES.length*100)+'% attendance</div></div>'
+    +   '<div style="text-align:right"><div class="ps-head-elo">'+Math.round(elo)+'</div><div class="ps-head-sub">ELO '+(eloD>=0?'+':'')+eloD+'</div></div></div>'
+    + '<div class="ps-g3" style="margin-top:8px">'
+    +   statCard('W – L', me.wins+'–'+losses, '', Math.round(me.wp)+'% real')
+    +   statCard('Win rate adj', adjPct+'%', 'color:'+psTierCol(adjPct), 'real '+Math.round(me.wp)+'%')
+    +   statCard('Streak now', curStr, 'color:'+(last?'var(--scp-green)':'var(--red)'), 'missed '+(GAMES.length-me.games))
+    + '</div>'
+    + (pred!==null ? '<div class="ps-pred"><div class="ps-pred-bar"><i style="width:'+Math.min(100,me.wp)+'%;background:'+psTierCol(me.wp)+'"></i><b style="left:calc('+pred+'% - 1px)"></b></div>'
+      + '<div class="ps-pred-txt">'+Math.round(me.wp)+'% vs '+Math.round(pred)+'% predicted'
+      + (verdict ? ' <span style="background:'+verdict[2]+';color:'+verdict[1]+'">'+verdict[0]+' '+(dev>0?'+':'')+dev.toFixed(0)+'pp</span>' : '')+'</div></div>' : '')
+    // Radar + axis values side by side
+    + sectionLabel('Compared with the group · bar = % of the best')
+    + '<div class="ps-radar-row">'+psRadarSvg(radarVals)+'<div class="ps-axes">'+axisRows+'</div></div>'
+    // Form
+    + sectionLabel('Form')
+    + '<div style="display:flex;gap:3px;align-items:center;margin-bottom:6px"><span class="ps-mini">Last 10</span>'+last10.map(pill).join('')+'</div>'
+    + '<div class="ps-mrow"><span class="ps-mini">Wins</span><div class="ps-m12">'+row1.join('')+'</div></div>'
+    + '<div class="ps-mrow"><span class="ps-mini">Adj %</span><div class="ps-m12">'+row2.join('')+'</div></div>'
+    + '<div class="ps-mrow"><span class="ps-mini"></span><div class="ps-m12">'+monthLbl+'</div></div>'
+    // Production
+    + (filmed.length ? sectionLabel('Production · '+filmed.length+' of '+me.games+' games filmed') + '<div class="ps-g3">'
+      +   statCard('Goals', me.G, 'color:var(--scp-green)', me.gpg.toFixed(2)+'/game')
+      +   statCard('Assists', me.A, 'color:var(--amber)', me.apg.toFixed(2)+'/game')
+      +   statCard('G+A', me.G+me.A, '', (me.gpg+me.apg).toFixed(2)+'/game')
+      +   statCard('Recoveries', me.R, 'color:#4a7fb5', me.rpg.toFixed(2)+'/game')
+      +   statCard('G+A W / L', avg(gaW)+' / '+avg(gaL), '', 'per game')
+      +   statCard('MOTM', motmAwards, 'color:var(--scp-gold)', 'avg '+(motmN? (motmTot/motmN).toFixed(1) : '—')+' pts')
+      + '</div>' : '')
+    // Partners & opponents
+    + sectionLabel('Partners & opponents · min 4 games')
+    + '<div class="ps-g2">'
+    +   relBox('Best with', list(tm,1)) + relBox('Worst with', list(tm,-1))
+    +   relBox('Hardest vs', list(op,-1)) + relBox('Easiest vs', list(op,1))
+    + '</div>';
+}
+
+// Open a player's stats from anywhere (game detail, partner lists…)
+function openPlayerStatsFor(name) {
+  if (!name || name.startsWith('Outro')) return;
+  const gd = document.getElementById('gd-modal');
+  const fromGame = gd && gd.style.display === 'block';
+  const onPage = document.getElementById('tab-player-stats')?.classList.contains('active');
+  if (fromGame) {
+    PS_RETURN = { gameId: GD_CURRENT_GAME, prevPlayer: onPage ? playerStatsSelected : null, samePage: onPage };
+    closeGameDetail();
+  }
+  if (!onPage) navigateTo('player-stats');
+  renderPlayerStats();
+  const sel = document.getElementById('ps-main-select');
+  if (sel && ![...sel.options].some(o=>o.value===name)) {
+    const opt=document.createElement('option'); opt.value=name; opt.textContent=name; sel.appendChild(opt);
+  }
+  showPlayerStats(name, null);
+  window.scrollTo(0,0);
+  const sc = document.querySelector('#tab-player-stats > div > div:last-child'); if (sc) sc.scrollTop = 0;
+}
+
+function togglePsGames(btn) {
+  const box = document.getElementById('ps-games-box');
+  if (!box) return;
+  const open = box.style.display !== 'none';
+  box.style.display = open ? 'none' : 'block';
+  btn.setAttribute('aria-expanded', String(!open));
+  const ch = btn.querySelector('.ps-chev'); if (ch) ch.textContent = open ? '▾' : '▴';
+}
+
 function renderPlayerStats() {
   const chipsEl = document.getElementById('player-stats-chips');
   if (chipsEl) chipsEl.innerHTML = ''; // keep hidden, not used
@@ -5795,40 +6202,28 @@ function showPlayerStats(name, btn) {
   for(let i=myGames.length-1;i>=0;i--){const g=myGames[i];const won=(g.teamA.includes(name)&&g.winner==='A')||(g.teamB.includes(name)&&g.winner==='B');if(!won)curLNow++;else break;}
 
   function statCard(label, val, style, sub) {
-    return '<div style="background:var(--surface2);border-radius:var(--radius);padding:12px 14px;border:1px solid var(--border)">'
-      +'<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:4px">'+label+'</div>'
-      +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:26px;font-weight:800;line-height:1;'+style+'">'+val+'</div>'
-      +(sub?'<div style="font-size:10px;color:var(--dim);margin-top:3px">'+sub+'</div>':'')
-      +'</div>';
+    return '<div class="ps-sc"><div class="ps-sc-l">'+label+'</div>'
+      +'<div class="ps-sc-v" style="'+style+'">'+val+'</div>'
+      +(sub?'<div class="ps-sc-s">'+sub+'</div>':'')+'</div>';
   }
-  function sectionLabel(t) { return '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--scp-green);margin:20px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border2)">'+t+'</div>'; }
+  function sectionLabel(t) { return '<div class="ps-sec">'+t+'</div>'; }
+  function kv(label, val, col, sub) {
+    return '<div class="ps-kv"><span>'+label+'</span><b'+(col?' style="color:'+col+'"':'')+'>'+val+(sub?' <em>'+sub+'</em>':'')+'</b></div>';
+  }
 
   const summaryHtml =
-    sectionLabel('Season') +
-    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:4px">'
-    + statCard('Games played', myGames.length, '', `${Math.round(myGames.length/allGames.length*100)}% attendance`)
-    + statCard('Wins', wins, 'color:var(--scp-green)', wrPct+'% win rate')
-    + statCard('Losses', losses, 'color:var(--red)', '')
-    + statCard('Win rate adj', adjPct+'%', 'color:'+wCol, '')
-    + statCard('Missed', missed, 'color:var(--dim)', `of ${allGames.length} total`)
-    + '</div>'
-    + sectionLabel('Streaks (all-time best)')
-    + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:4px">'
-    + statCard('Best win streak', bestWin, 'color:var(--scp-green)', curWNow>0?'Current: '+curWNow:'')
-    + statCard('Worst loss streak', bestLoss, 'color:var(--red)', curLNow>0?'Current: '+curLNow:'')
-    + statCard('Best att. streak', bestAtt, 'color:var(--scp-green)', 'consecutive games')
-    + statCard('Longest absence', bestMiss, 'color:var(--muted)', 'games missed in a row')
-    + '</div>'
-    + (filmedGames.length ? sectionLabel('Filmed games') + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:4px">'
-    + statCard('Filmed games', filmedGames.length, '', `of ${myGames.length} played`)
-    + statCard('Goals', totalG, 'color:var(--scp-green)', (totalG/filmedGames.length).toFixed(2)+'/game')
-    + statCard('Assists', totalA, 'color:var(--amber)', (totalA/filmedGames.length).toFixed(2)+'/game')
-    + statCard('G+A', totalG+totalA, '', ((totalG+totalA)/filmedGames.length).toFixed(2)+'/game')
-    + (totalOG>0?statCard('Own goals', totalOG, 'color:var(--red)', ''):'')
-    + statCard('Scoring streak', bestSc, 'color:var(--scp-green)', curScNow>0?'Current: '+curScNow:'')
-    + statCard('No-score streak', bestNoSc, 'color:var(--red)', curNoScNow>0?'Current: '+curNoScNow:'')
-    + statCard('G+A streak', bestGA, 'color:var(--amber)', curGANow>0?'Current: '+curGANow:'')
-    + '</div>' : '');
+    buildPlayerProfileHtml(name, statCard, sectionLabel)
+    + sectionLabel('Streaks · best (now)')
+    + '<div class="ps-kvgrid">'
+    + kv('Wins', bestWin, 'var(--scp-green)', curWNow>0?'('+curWNow+')':'')
+    + kv('Losses', bestLoss, 'var(--red)', curLNow>0?'('+curLNow+')':'')
+    + kv('Attendance', bestAtt, 'var(--scp-green)', '')
+    + kv('Absence', bestMiss, 'var(--muted)', '')
+    + (filmedGames.length ? kv('Scoring', bestSc, 'var(--scp-green)', curScNow>0?'('+curScNow+')':'')
+      + kv('No score', bestNoSc, 'var(--red)', curNoScNow>0?'('+curNoScNow+')':'')
+      + kv('G+A', bestGA, 'var(--amber)', curGANow>0?'('+curGANow+')':'')
+      + (totalOG>0? kv('Own goals', totalOG, 'var(--red)', '') : '') : '')
+    + '</div>';
 
   // Per-game table — ALL games
   const thS = 'padding:5px 8px;font-size:10px;font-weight:700;color:var(--dim);border-bottom:2px solid var(--border2);white-space:nowrap;text-align:center;background:var(--surface)';
@@ -5986,45 +6381,36 @@ function showPlayerStats(name, btn) {
   if (minA_sg===Infinity) minA_sg='—';
 
   function gameResultLine(r) {
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--dim)">#${r.gameId} · ${r.date}</span>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--scp-green)">${r.scored}</span>
-        <span style="font-size:11px;color:var(--dim)">–</span>
-        <span style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--red)">${r.conceded}</span>
-        <span style="font-size:11px;font-weight:700;color:var(--muted)">Δ${r.margin}</span>
-      </div>
-    </div>`;
+    return '<div class="ps-res" onclick="openGameDetail(\''+r.gameId+'\')"><span>'+r.date+'</span><b><i style="color:var(--scp-green)">'+r.scored+'</i>–<i style="color:var(--red)">'+r.conceded+'</i></b><em>Δ'+r.margin+'</em></div>';
   }
+  const noneLine = '<div class="ps-res"><span>—</span></div>';
 
   const extendedHtml = filmedGames.length ? (
-    sectionLabel('Single game records (filmed)') +
-    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:4px">'
-    + statCard('Most goals', maxG_sg, 'color:var(--scp-green)', `game #${maxG_id}`)
-    + statCard('Most assists', maxA_sg, 'color:var(--amber)', `game #${maxA_id}`)
-    + statCard('Fewest goals', minG_sg, 'color:var(--muted)', `game #${minG_id}`)
-    + statCard('Fewest assists', minA_sg, 'color:var(--muted)', `game #${minA_id}`)
+    sectionLabel('Records & team (filmed)')
+    + '<div class="ps-kvgrid">'
+    + kv('Most goals', maxG_sg, 'var(--scp-green)', '#'+String(maxG_id).slice(-3))
+    + kv('Most assists', maxA_sg, 'var(--amber)', '#'+String(maxA_id).slice(-3))
+    + kv('Fewest goals', minG_sg, 'var(--muted)', '#'+String(minG_id).slice(-3))
+    + kv('Fewest assists', minA_sg, 'var(--muted)', '#'+String(minA_id).slice(-3))
+    + kv('Team scored', avgTeamGoals, 'var(--scp-green)', 'avg '+seasonAvgPerTeam)
+    + kv('Team conceded', avgOppGoals, 'var(--red)', 'avg '+seasonAvgPerTeam)
+    + kv('% team goals', avgPctGoals+(avgPctGoals!=='—'?'%':''), 'var(--scp-green)', '')
+    + kv('% assists', avgPctAss+(avgPctAss!=='—'?'%':''), 'var(--amber)', '')
+    + kv('% G+A', (totalTG>0?Math.round((totalPG+totalPA)/totalTG*100)+'%':'—'), '', '')
     + '</div>'
-    + sectionLabel('Team goal averages (filmed)') +
-    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:4px">'
-    + statCard('Avg scored', avgTeamGoals, 'color:var(--scp-green)', `season avg: ${seasonAvgPerTeam}`)
-    + statCard('Avg conceded', avgOppGoals, 'color:var(--red)', `season avg: ${seasonAvgPerTeam}`)
+    + sectionLabel('Biggest wins & losses (filmed)')
+    + '<div class="ps-g2">'
+    + '<div>'+(biggestWins.slice(0,3).map(gameResultLine).join('')||noneLine)+'</div>'
+    + '<div>'+(biggestLosses.slice(0,3).map(gameResultLine).join('')||noneLine)+'</div>'
     + '</div>'
-    + sectionLabel('Share of team goals & assists (filmed)') +
-    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:4px">'
-    + statCard('% of team goals', avgPctGoals+(avgPctGoals!=='—'?'%':''), 'color:var(--scp-green)', 'player goals / team goals')
-    + statCard('% assists of team goals', avgPctAss+(avgPctAss!=='—'?'%':''), 'color:var(--amber)', 'player assists / team goals')
-    + statCard('% G+A of team goals', (totalTG>0?Math.round((totalPG+totalPA)/totalTG*100)+'%':'—'), '', 'player G+A / team goals')
-    + '</div>'
-    + sectionLabel('3 biggest wins (filmed)') +
-    biggestWins.slice(0,3).map(gameResultLine).join('') + (biggestWins.length===0?'<div style="color:var(--dim);font-style:italic;font-size:12px">No wins in filmed games</div>':'')
-    + sectionLabel('3 biggest losses (filmed)') +
-    biggestLosses.slice(0,3).map(gameResultLine).join('') + (biggestLosses.length===0?'<div style="color:var(--dim);font-style:italic;font-size:12px">No losses in filmed games</div>':'')
   ) : '';
 
-  content.innerHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:26px;font-weight:900;margin-bottom:16px">'+name+'</div>' + summaryHtml + extendedHtml
-    + '<div class="ps-game-by-game">' + sectionLabel('Game by game') + tableHtml + '</div>'
-    + '<div class="ps-game-mobile">' + sectionLabel('Game by game')
+  content.innerHTML = summaryHtml + extendedHtml
+    + '<button type="button" class="ps-games-toggle" aria-expanded="false" onclick="togglePsGames(this)"><span>Game by game ('+myGames.length+' played · '+allGames.length+' total)</span><span class="ps-chev">▾</span></button>'
+    + '<div id="ps-games-box" style="display:none">'
+    + '<div style="font-size:10px;color:var(--dim);margin:8px 0 6px">🎥 = filmed · ⭐ = Man of the Match · tap a row to open that game</div>'
+    + '<div class="ps-game-by-game">' + tableHtml + '</div>'
+    + '<div class="ps-game-mobile">'
     + '<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%"><thead><tr>'
     + '<th style="padding:5px 6px;font-size:10px;font-weight:700;color:var(--dim);border-bottom:2px solid var(--border2);text-align:center">#</th>'
     + '<th style="padding:5px 6px;font-size:10px;font-weight:700;color:var(--dim);border-bottom:2px solid var(--border2);text-align:center">ID</th>'
@@ -6076,7 +6462,8 @@ function showPlayerStats(name, btn) {
             +'</tr>';
         }).join('');
       })()
-    + '</tbody></table></div></div>';
+    + '</tbody></table></div></div>'
+    + '</div>';
 }
 
 
