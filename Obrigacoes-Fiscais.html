@@ -1,0 +1,816 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Obrigações fiscais</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F1F4F2;--card:#FFFFFF;--ink:#15302A;--muted:#5C6E67;--line:#D8DFDB;--tile:#E6ECE8;
+  --accent:#1E5B49;--accent-ink:#FFFFFF;--on-strong:#FFFFFF;
+  --late:#B3261E;--late-bg:#FBE8E6;--soon:#955C0F;--soon-bg:#FBEFD9;--done:#2C7A4C;--done-bg:#E3F1E8;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0E1614;--card:#16211E;--ink:#E2EBE7;--muted:#93A49D;--line:#27342F;--tile:#1F2B28;
+  --accent:#72C3A4;--accent-ink:#0E1614;--on-strong:#0E1614;
+  --late:#F08A80;--late-bg:#3A1C1A;--soon:#E6B062;--soon-bg:#35291A;--done:#82CC9D;--done-bg:#1A3024;color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#0E1614;--card:#16211E;--ink:#E2EBE7;--muted:#93A49D;--line:#27342F;--tile:#1F2B28;
+  --accent:#72C3A4;--accent-ink:#0E1614;--on-strong:#0E1614;
+  --late:#F08A80;--late-bg:#3A1C1A;--soon:#E6B062;--soon-bg:#35291A;--done:#82CC9D;--done-bg:#1A3024;color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.45 Onest,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-family:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;font-weight:800;letter-spacing:.01em}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--paper);transition:box-shadow .15s}
+.top::before{content:"";position:absolute;left:0;right:0;bottom:100%;height:calc(env(safe-area-inset-top,0px) + 60px);background:var(--paper)}
+.top.scrolled{box-shadow:0 1px 0 var(--line),0 6px 16px rgba(0,0,0,.06)}
+main{position:relative;z-index:1}
+.top-in{max-width:880px;margin:0 auto;padding:14px 16px 8px;display:flex;gap:12px;align-items:center;justify-content:space-between}
+h1{font-size:24px;font-weight:700;margin:0;letter-spacing:-.02em}
+.today{font-size:13px;color:var(--muted)}
+.back{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-size:24px;line-height:1;flex:none;display:grid;place-items:center;padding:0 0 3px}
+.back[hidden]{display:none}
+.top-act{border:0;background:var(--accent);color:var(--accent-ink);border-radius:12px;height:40px;padding:0 14px;font-weight:600;display:flex;align-items:center;gap:6px}
+
+
+main{max-width:880px;margin:0 auto;padding:4px 16px 40px}
+h2{font-size:15px;font-weight:700;margin:26px 0 10px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+h2 small{font-size:13px;font-weight:600;color:var(--muted)}
+.sub{color:var(--muted);margin:0 0 12px;max-width:60ch;font-size:14px}
+
+/* Widgets */
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:720px){.grid.g4{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.w{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:14px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;aspect-ratio:1/1;min-width:0;overflow:hidden;position:relative}
+@media (min-width:720px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+button.w:active{transform:scale(.98)}
+.w .n{font-size:46px;line-height:.9}
+.w .l{font-weight:600;font-size:14px;margin-top:6px}
+.w .s{font-size:12px;color:var(--muted)}
+.w.late{background:var(--late);border-color:var(--late);color:var(--on-strong)}
+.w.late .s{color:inherit;opacity:.8}
+.w.soon .n{color:var(--soon)}
+.w.good .n{color:var(--done)}
+.w .ring{position:absolute;right:12px;top:12px;width:34px;height:34px}
+.w.wide{grid-column:1/-1;min-height:0}
+.w.span2{grid-column:span 2}
+.w.add{border-style:dashed;background:transparent;align-items:center;justify-content:center;text-align:center;color:var(--accent);font-weight:600;gap:4px}
+.w.add .plus{font-size:28px;line-height:1}
+.w .top2{display:flex;align-items:baseline;gap:10px}
+.w .prev{font-size:13px;margin-top:10px;display:grid;gap:3px;min-width:0}
+.w .prev span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.w .eyebrow{font-size:13px;font-weight:600;color:var(--muted)}
+.w.late .eyebrow{color:inherit;opacity:.85}
+.w .wnext{display:flex;gap:12px;align-items:center;margin-top:8px;min-width:0}
+.w .wnext .tile{flex:none}
+.w .wnext .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.w .en{font-weight:700;font-size:15px;line-height:1.25;padding-right:40px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.w.late .ring circle:first-child{stroke:rgba(255,255,255,.3)}
+.w.late .ring circle:last-child{stroke:var(--on-strong)}
+.grid.home{margin-top:6px}
+@media (min-width:720px){.grid.home{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.wi{width:28px;height:28px;color:var(--accent)}
+.w.late .wi{color:inherit}
+.w.soon .wi{color:var(--soon)}
+.w .n.sm{font-size:38px}
+.set{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px}
+.set h3{margin:0 0 2px;font-size:15px}
+.set p{margin:0;color:var(--muted);font-size:13px}
+.set .seg{margin:12px 0 0}
+.set .actions{margin:12px 0 0}
+.sel{position:relative;margin:2px 0 14px}
+.sel select{width:100%;appearance:none;-webkit-appearance:none;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 44px 12px 14px;font:inherit;font-weight:700;font-size:17px;color:var(--ink);min-height:50px}
+.sel::after{content:"";position:absolute;right:18px;top:50%;width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-70%) rotate(45deg);pointer-events:none}
+.mx{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--card);margin-top:12px}
+.mx table{border-collapse:separate;border-spacing:0;min-width:660px;width:100%;font-size:13px}
+.mx th,.mx td{padding:6px 3px;text-align:center;border-bottom:1px solid var(--line)}
+.mx tr:last-child td{border-bottom:0}
+.mx th{color:var(--muted);font-weight:600}
+.mx th:first-child,.mx td:first-child{position:sticky;left:0;background:var(--card);text-align:left;padding-left:12px;min-width:150px;max-width:180px;z-index:1}
+.mx td:first-child button{background:none;border:0;padding:0;text-align:left;font-weight:600;color:var(--ink);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.cell{width:34px;height:30px;border-radius:8px;border:0;font-weight:700;font-size:12px;display:inline-grid;place-items:center;padding:0}
+.c-feito{background:var(--done-bg);color:var(--done)}.c-atrasado{background:var(--late);color:var(--on-strong)}.c-breve{background:var(--soon-bg);color:var(--soon)}.c-na{background:var(--tile);color:var(--muted);font-size:10px}.c-futuro{background:transparent;color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin-top:10px}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend .cell{width:22px;height:20px;font-size:11px}
+.hg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
+@media (min-width:560px){.hg{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.hc{border:0;border-radius:14px;height:70px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-weight:700}
+.hc span{font-size:12px;font-weight:600;opacity:.85}
+.hc b{font-size:18px}
+.vrow{display:grid;grid-template-columns:1fr 1fr 32px;gap:8px;padding-bottom:8px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.stats{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.sec{font-size:13px;font-weight:600;color:var(--muted);margin:22px 2px 8px}
+
+.ec{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:10px;width:100%;text-align:left;display:block}
+.ec-h{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ec-h b{font-size:16px}
+.ec-st{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.pill{padding:4px 11px;border-radius:999px;font-weight:600;font-size:13px;background:var(--tile)}
+.pill.late{background:var(--late-bg);color:var(--late)}
+.pill.soon{background:var(--soon-bg);color:var(--soon)}
+.pill.ok{background:var(--done-bg);color:var(--done)}
+.ec-n{font-size:13px;color:var(--muted);margin-top:8px}
+.bar{height:5px;border-radius:3px;background:var(--tile);overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;background:var(--done)}
+.chev{width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);flex:none}
+
+.scroller{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin:0 -2px;scrollbar-width:none}
+.scroller::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 14px;font-weight:600;font-size:14px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.chip .dot{width:7px;height:7px;border-radius:50%;background:var(--late)}
+.chip.add{border-style:dashed}
+.head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 12px}
+.head b{font-size:20px;letter-spacing:-.01em}
+.head small{display:block;color:var(--muted);font-size:13px;font-weight:500}
+.gear{border:1px solid var(--line);background:var(--card);border-radius:12px;height:40px;padding:0 12px;font-weight:600;display:flex;gap:6px;align-items:center;color:var(--accent)}
+.seg{display:flex;background:var(--tile);border-radius:12px;padding:3px;margin:18px 0 6px}
+.seg button{flex:1;border:0;background:none;padding:8px;border-radius:9px;font-weight:600;font-size:14px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+
+/* Items */
+.item{display:grid;grid-template-columns:54px 1fr 40px;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:9px 10px 9px 9px;margin-bottom:8px;cursor:pointer;position:relative}
+.tile{width:54px;height:58px;border-radius:11px;background:var(--tile);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.tile b{font-size:30px}
+.tile span{font-size:11px;font-weight:600;margin-top:3px;opacity:.75}
+.st-atrasado .tile{background:var(--late);color:var(--on-strong)}
+.st-breve .tile{background:var(--soon-bg);color:var(--soon)}
+.st-feito .tile{opacity:.5}
+.st-na .tile{opacity:.35}
+.tx{min-width:0}
+.nm{font-weight:600;line-height:1.3}
+.st-feito .nm,.st-na .nm{color:var(--muted)}
+.meta{font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:2px 10px;margin-top:1px}
+.emp{font-weight:600;color:var(--ink)}
+.cd{font-size:13px;font-weight:600;margin-top:2px}
+.st-atrasado .cd{color:var(--late)} .st-breve .cd{color:var(--soon)} .st-feito .cd{color:var(--done)} .st-futuro .cd,.st-na .cd{color:var(--muted)}
+.chk{width:36px;height:36px;border-radius:50%;border:2px solid var(--line);background:none;display:grid;place-items:center;padding:0;justify-self:end}
+.chk svg{width:18px;height:18px;opacity:0}
+.chk:hover svg{opacity:.35}
+.st-feito .chk{background:var(--done);border-color:var(--done);color:var(--on-strong)}
+.st-feito .chk svg{opacity:1}
+.st-na .chk{border-style:dashed}
+.stamp{position:absolute;right:58px;top:50%;transform:translateY(-50%) rotate(-7deg);border:2px solid var(--late);color:var(--late);padding:1px 8px;border-radius:5px;font-weight:700;font-size:12px;opacity:.8;pointer-events:none;background:var(--card)}
+@media (max-width:560px){.stamp{display:none}}
+.mh{font-size:14px;font-weight:700;margin:20px 0 6px;display:flex;justify-content:space-between}
+.mh small{color:var(--muted);font-weight:600}
+.yr{display:flex;align-items:center;gap:8px;margin:12px 0 0}
+.yr b{font-size:22px;min-width:64px;text-align:center}
+.icon-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;font-size:18px}
+
+.row{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:8px;cursor:pointer;width:100%;text-align:left}
+.row .tx{flex:1}
+.row small{display:block;color:var(--muted);font-size:13px}
+.row .cnt{font-size:13px;font-weight:600;white-space:nowrap;color:var(--muted)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:10px 16px;font-weight:600}
+.btn.ghost{background:var(--card);color:var(--accent);box-shadow:inset 0 0 0 1px var(--line)}
+.btn.danger{background:none;color:var(--late);padding-left:4px}
+.empty{background:var(--card);border:1px dashed var(--line);border-radius:16px;padding:20px;margin-top:10px}
+.empty p{margin:0 0 4px;color:var(--muted);max-width:60ch}
+.empty strong{display:block;font-size:17px;margin-bottom:4px}
+.foot{color:var(--muted);font-size:12px;margin-top:28px}
+.loading{padding:40px 0;color:var(--muted)}
+
+dialog{border:0;border-radius:20px;padding:0;width:min(540px,calc(100% - 24px));max-height:calc(100% - 48px);background:var(--card);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(10,20,17,.45)}
+dialog[open]{display:flex;flex-direction:column}
+.sh-h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 18px 6px}
+.sh-h h3{margin:0;font-size:18px;line-height:1.25}
+.sh-h p{margin:3px 0 0;color:var(--muted);font-size:13px}
+.x{border:0;background:var(--tile);width:32px;height:32px;border-radius:50%;flex:none;font-size:18px;line-height:1}
+.sh-b{padding:4px 18px 14px;overflow:auto}
+.sh-f{display:flex;gap:8px;justify-content:space-between;align-items:center;padding:12px 18px 16px;border-top:1px solid var(--line)}
+.sh-f .r{display:flex;gap:8px;margin-left:auto}
+@media (max-width:640px){
+  dialog{margin:auto auto 0;width:100%;max-width:100%;border-radius:20px 20px 0 0;max-height:90%}
+  .sh-f{padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+}
+label.f{display:block;font-size:13px;font-weight:600;margin:14px 0 4px}
+.hint{font-size:12px;color:var(--muted);margin-top:4px}
+input[type=text],input[type=number],input[type=date],input[type=month],select.in,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);font:inherit;min-height:44px}
+textarea{min-height:70px;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ck{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.ck:last-child{border-bottom:0}
+.ck input{width:20px;height:20px;margin:1px 0 0;accent-color:var(--accent);flex:none}
+.ck small{display:block;color:var(--muted);font-size:12px}
+.switch{display:flex;gap:12px;align-items:center;justify-content:space-between;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:14px;cursor:pointer}
+.switch span{font-size:14px;font-weight:500}
+.switch input{appearance:none;-webkit-appearance:none;width:46px;height:28px;border-radius:14px;background:var(--line);position:relative;flex:none;margin:0;cursor:pointer;transition:background .15s}
+.switch input::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.switch input:checked{background:var(--accent)}
+.switch input:checked::after{transform:translateX(18px)}
+.cat{font-size:13px;font-weight:700;margin:16px 0 2px}
+.preview{background:var(--tile);border-radius:12px;padding:10px 12px;font-size:13px;margin-top:14px}
+.preview ul{margin:4px 0 0;padding-left:18px}
+.statusline{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;margin-top:6px}
+.s-atrasado{background:var(--late-bg);color:var(--late)} .s-breve{background:var(--soon-bg);color:var(--soon)} .s-feito{background:var(--done-bg);color:var(--done)} .s-futuro,.s-na{background:var(--tile);color:var(--muted)}
+.rad{display:flex;gap:6px;margin-top:14px}
+.rad label{flex:1;position:relative;border:1px solid var(--line);border-radius:10px;padding:9px 6px;text-align:center;font-weight:600;font-size:14px;cursor:pointer}
+.rad input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.rad label:has(input:checked){background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.rad label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:var(--ink);color:var(--paper);padding:10px 14px;border-radius:12px;display:flex;gap:14px;align-items:center;font-size:14px;z-index:20;transition:opacity .2s,transform .2s;max-width:calc(100% - 32px)}
+#toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+#toast button{background:none;border:0;color:var(--paper);font-weight:700;text-decoration:underline;padding:0}
+
+@media (max-width:640px){
+}
+@media (prefers-reduced-motion:reduce){#toast,.switch input,.switch input::after{transition:none}button.w:active{transform:none}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div style="display:flex;align-items:center;gap:10px;min-width:0"><button class="back" id="back" aria-label="Voltar ao início" hidden>‹</button><div style="min-width:0"><h1 id="title">Início</h1><div class="today" id="today"></div></div></div>
+    <div id="topAct"></div>
+  </div>
+</header>
+<main id="view"><div class="loading">A carregar…</div></main>
+<dialog id="sheet"></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const CATS=['IVA','Retenções e salários','Segurança Social','IRC','Banco de Portugal','Outras obrigações','Fecho mensal'];
+const CICLO={mensal:'Mensal',trimestral:'Trimestral',semestral:'Semestral',anual:'Anual'};
+const STEP={mensal:1,trimestral:3,semestral:6,anual:12};
+const CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+/* Lista base (Portugal): mês da 1.ª data limite relativo a janeiro do ano corrente, dia limite e ciclo. Prazos habituais, editáveis. */
+const BASE=[
+ ['b-iva-m-dec','IVA – declaração periódica (mensal)','IVA','mensal',3,20,2],
+ ['b-iva-m-pag','IVA – pagamento (mensal)','IVA','mensal',3,25,2],
+ ['b-iva-t-dec','IVA – declaração periódica (trimestral)','IVA','trimestral',5,20,2],
+ ['b-iva-t-pag','IVA – pagamento (trimestral)','IVA','trimestral',5,25,2],
+ ['b-rec','Declaração recapitulativa','IVA','mensal',2,20,1],
+ ['b-dmr','DMR – declaração mensal de remunerações','Retenções e salários','mensal',2,10,1],
+ ['b-ret','Retenções na fonte – pagamento','Retenções e salários','mensal',2,20,1],
+ ['b-m30','Modelo 30','Retenções e salários','mensal',3,0,2],
+ ['b-m10','Modelo 10','Retenções e salários','anual',2,10,2],
+ ['b-ss-dec','Segurança Social – declaração de remunerações','Segurança Social','mensal',2,10,1],
+ ['b-ss-pag','Segurança Social – pagamento','Segurança Social','mensal',2,20,1],
+ ['b-m22','Modelo 22 – IRC','IRC','anual',5,31,5],
+ ['b-ies','IES – declaração anual','IRC','anual',7,15,7],
+ ['b-saft','SAF-T de faturação','Outras obrigações','mensal',2,5,1],
+ ['b-inv','Comunicação de inventários','Outras obrigações','anual',1,31,1]
+];
+
+/* Dados iniciais (importados do Excel). Só são usados na primeira abertura, quando o navegador ainda não tem dados. */
+const SEED={"S": {"def": {"tema": "light"}, "empresas": [{"id": "emv1", "inicio": "2025-01", "nif": "", "nome": "Minutos Vanguardistas", "obr": ["x5", "x6", "x8", "x9", "x12", "x31", "x19", "x15", "x16", "x18"], "vig": {"x12": [{"ate": null, "de": "2025-01"}], "x15": [{"ate": null, "de": "2025-01"}], "x16": [{"ate": null, "de": "2025-01"}], "x18": [{"ate": null, "de": "2025-01"}], "x19": [{"ate": null, "de": "2025-01"}], "x31": [{"ate": null, "de": "2025-01"}], "x5": [{"ate": null, "de": "2025-01"}], "x6": [{"ate": null, "de": "2025-01"}], "x8": [{"ate": null, "de": "2025-01"}], "x9": [{"ate": null, "de": "2025-01"}]}}], "obrigacoes": [{"cat": "Banco de Portugal", "ciclo": "mensal", "data": "2025-02-23", "datas": {}, "dia": 23, "id": "x1", "nome": "Banco de Portugal", "nota": "Prazo por confirmar.", "ref": 1, "util": true}, {"cat": "Banco de Portugal", "ciclo": "mensal", "data": "2025-02-15", "datas": {}, "dia": 15, "id": "x2", "nome": "M. Responsabilidades de Crédito  BP", "nota": "Prazo por confirmar.", "ref": 1, "util": true}, {"cat": "Retenções e salários", "ciclo": "mensal", "data": "2025-02-10", "datas": {"2026-08": "2026-08-31"}, "dia": 10, "id": "x3", "nome": "DMR AT - Entregar", "nota": "", "ref": 1, "util": true}, {"cat": "Retenções e salários", "ciclo": "mensal", "data": "2025-02-20", "datas": {"2026-08": "2026-08-31"}, "dia": 20, "id": "x4", "nome": "DMR AT - Pagar", "nota": "", "ref": 1, "util": true}, {"cat": "Segurança Social", "ciclo": "mensal", "data": "2025-02-10", "datas": {"2026-08": "2026-08-31"}, "dia": 10, "id": "x5", "nome": "DRI SS - Entregar", "nota": "", "ref": 1, "util": true}, {"cat": "Segurança Social", "ciclo": "mensal", "data": "2025-02-20", "datas": {"2026-08": "2026-08-31"}, "dia": 20, "id": "x6", "nome": "DRI SS - Pagar", "nota": "", "ref": 1, "util": true}, {"cat": "Segurança Social", "ciclo": "mensal", "data": "2025-02-20", "datas": {}, "dia": 20, "id": "x7", "nome": "FCT", "nota": "Prazo por confirmar.", "ref": 1, "util": true}, {"cat": "IVA", "ciclo": "mensal", "data": "2025-03-20", "datas": {"2026-04": "2026-04-21", "2026-08": "2026-09-20"}, "dia": 20, "id": "x8", "nome": "IVA Mensal - Entrega", "nota": "", "ref": 2, "util": true}, {"cat": "IVA", "ciclo": "mensal", "data": "2025-03-25", "datas": {"2026-08": "2026-09-25"}, "dia": 25, "id": "x9", "nome": "IVA Mensal - Pagar", "nota": "", "ref": 2, "util": true}, {"cat": "IVA", "ciclo": "trimestral", "data": "2025-05-20", "datas": {}, "dia": 20, "id": "x10", "nome": "IVA Trimestral - Entrega", "nota": "", "ref": 2, "util": true}, {"cat": "IVA", "ciclo": "trimestral", "data": "2025-05-25", "datas": {}, "dia": 25, "id": "x11", "nome": "IVA Trimestral - Pagar", "nota": "", "ref": 2, "util": true}, {"cat": "Outras obrigações", "ciclo": "mensal", "data": "2025-02-05", "datas": {"2026-08": "2026-08-31"}, "dia": 5, "id": "x12", "nome": "SAFT", "nota": "", "ref": 1, "util": true}, {"cat": "IVA", "ciclo": "mensal", "data": "2025-02-20", "datas": {}, "dia": 20, "id": "x13", "nome": "Recapitulativa", "nota": "", "ref": 1, "util": true}, {"cat": "Outras obrigações", "ciclo": "anual", "data": "2024-12-31", "datas": {}, "dia": 0, "id": "x14", "nome": "IUC", "nota": "Prazo por confirmar. Depende do mês da matrícula de cada viatura.", "ref": 0, "util": true}, {"cat": "Retenções e salários", "ciclo": "anual", "data": "2025-02-15", "datas": {}, "dia": 15, "id": "x15", "nome": "Modelo 10", "nota": "", "ref": 2, "util": true}, {"cat": "IRC", "ciclo": "anual", "data": "2025-05-31", "datas": {}, "dia": 31, "id": "x16", "nome": "Modelo 22", "nota": "", "ref": 5, "util": true}, {"cat": "Retenções e salários", "ciclo": "mensal", "data": "2025-03-31", "datas": {}, "dia": 0, "id": "x17", "nome": "Modelo 30", "nota": "", "ref": 2, "util": true}, {"cat": "IRC", "ciclo": "anual", "data": "2025-07-15", "datas": {}, "dia": 15, "id": "x18", "nome": "IES", "nota": "", "ref": 7, "util": true}, {"cat": "Outras obrigações", "ciclo": "anual", "data": "2025-01-31", "datas": {}, "dia": 31, "id": "x19", "nome": "Inventários", "nota": "", "ref": 1, "util": true}, {"cat": "Outras obrigações", "ciclo": "anual", "data": "2025-05-31", "datas": {}, "dia": 31, "id": "x20", "nome": "IMI", "nota": "Prazo por confirmar. Prestações seguintes conforme a nota de cobrança.", "ref": 5, "util": true}, {"cat": "Retenções e salários", "ciclo": "mensal", "data": "2025-02-20", "datas": {"2026-08": "2026-08-31"}, "dia": 20, "id": "x21", "nome": "Retenções IRS/PERDIAIS", "nota": "", "ref": 1, "util": true}, {"cat": "IRC", "ciclo": "anual", "data": "2024-07-31", "datas": {}, "dia": 31, "id": "x22", "nome": "PPC e PAC", "nota": "Prazo por confirmar. Configurado para o 1.º pagamento (julho); duplica para setembro e dezembro se precisares.", "ref": -5, "util": true}, {"cat": "Outras obrigações", "ciclo": "anual", "data": "2025-04-15", "datas": {}, "dia": 15, "id": "x23", "nome": "Relatório Único", "nota": "Prazo por confirmar.", "ref": 4, "util": true}, {"cat": "Fecho mensal", "ciclo": "mensal", "data": "2025-03-15", "datas": {}, "dia": 15, "id": "x26", "nome": "Previsão de Iva a Pagar", "nota": "Prazo por confirmar.", "ref": 2, "util": true}, {"cat": "Fecho mensal", "ciclo": "mensal", "data": "2025-02-15", "datas": {}, "dia": 15, "id": "x27", "nome": "Iva Importação - Mês anterior", "nota": "Prazo por confirmar.", "ref": 1, "util": true}, {"cat": "Fecho mensal", "ciclo": "mensal", "data": "2025-02-10", "datas": {}, "dia": 10, "id": "x28", "nome": "Custos Posto no destino", "nota": "Prazo por confirmar.", "ref": 1, "util": true}, {"cat": "Fecho mensal", "ciclo": "mensal", "data": "2025-01-31", "datas": {}, "dia": 0, "id": "x29", "nome": "Faturas Redébitos", "nota": "Prazo por confirmar.", "ref": 0, "util": true}, {"cat": "Fecho mensal", "ciclo": "mensal", "data": "2025-02-10", "datas": {}, "dia": 10, "id": "x30", "nome": "Análise da conta 61", "nota": "Prazo por confirmar.", "ref": 1, "util": true}, {"cat": "Fecho mensal", "ciclo": "mensal", "data": "2025-02-05", "datas": {}, "dia": 5, "id": "x31", "nome": "Conciliação Bancária", "nota": "", "ref": 1, "util": true}, {"cat": "Fecho mensal", "ciclo": "mensal", "data": "2025-02-05", "datas": {}, "dia": 5, "id": "x32", "nome": "Fecho de Faturas de compras", "nota": "Prazo por confirmar.", "ref": 1, "util": true}, {"cat": "Retenções e salários", "ciclo": "mensal", "data": "2025-01-31", "datas": {}, "dia": 0, "id": "x33", "nome": "Processamento Salarial", "nota": "", "ref": 0, "util": true}, {"cat": "Fecho mensal", "ciclo": "mensal", "data": "2025-02-10", "datas": {}, "dia": 10, "id": "x34", "nome": "Relatório Seguradora", "nota": "Prazo por confirmar.", "ref": 1, "util": true}, {"cat": "Retenções e salários", "ciclo": "mensal", "data": "2025-02-20", "datas": {}, "dia": 20, "id": "x35", "nome": "Penhoras", "nota": "Prazo por confirmar.", "ref": 1, "util": true}], "v": 2}, "C": {"emv1": {"items": {"x12|2025-02": {"em": null, "feito": true, "na": false, "nota": ""}, "x12|2025-03": {"em": null, "feito": true, "na": false, "nota": ""}, "x12|2025-04": {"em": null, "feito": true, "na": false, "nota": ""}, "x12|2025-05": {"em": null, "feito": true, "na": false, "nota": ""}, "x12|2025-06": {"em": null, "feito": true, "na": false, "nota": ""}, "x12|2025-07": {"em": null, "feito": true, "na": false, "nota": ""}, "x12|2025-08": {"em": null, "feito": true, "na": false, "nota": ""}, "x12|2025-09": {"em": null, "feito": true, "na": false, "nota": ""}, "x12|2025-10": {"em": null, "feito": true, "na": false, "nota": ""}, "x12|2025-11": {"em": null, "feito": true, "na": false, "nota": ""}, "x12|2025-12": {"em": null, "feito": true, "na": false, "nota": ""}, "x12|2026-01": {"em": null, "feito": true, "na": false, "nota": ""}, "x12|2026-02": {"em": null, "feito": true, "na": false, "nota": ""}, "x15|2025-02": {"em": null, "feito": true, "na": false, "nota": ""}, "x16|2025-05": {"em": null, "feito": true, "na": false, "nota": ""}, "x18|2025-07": {"em": null, "feito": true, "na": false, "nota": ""}, "x19|2025-01": {"em": null, "feito": true, "na": false, "nota": ""}, "x19|2026-01": {"em": null, "feito": true, "na": false, "nota": ""}, "x31|2025-02": {"em": null, "feito": true, "na": false, "nota": ""}, "x31|2025-03": {"em": null, "feito": true, "na": false, "nota": ""}, "x31|2025-04": {"em": null, "feito": true, "na": false, "nota": ""}, "x31|2025-05": {"em": null, "feito": true, "na": false, "nota": ""}, "x31|2025-06": {"em": null, "feito": true, "na": false, "nota": ""}, "x31|2025-07": {"em": null, "feito": true, "na": false, "nota": ""}, "x31|2025-08": {"em": null, "feito": true, "na": false, "nota": ""}, "x31|2025-09": {"em": null, "feito": true, "na": false, "nota": ""}, "x31|2025-10": {"em": null, "feito": true, "na": false, "nota": ""}, "x31|2025-11": {"em": null, "feito": true, "na": false, "nota": ""}, "x31|2025-12": {"em": null, "feito": true, "na": false, "nota": ""}, "x31|2026-01": {"em": null, "feito": true, "na": false, "nota": ""}, "x5|2025-02": {"em": null, "feito": true, "na": false, "nota": ""}, "x5|2025-03": {"em": null, "feito": true, "na": false, "nota": ""}, "x5|2025-04": {"em": null, "feito": true, "na": false, "nota": ""}, "x5|2025-05": {"em": null, "feito": true, "na": false, "nota": ""}, "x5|2025-06": {"em": null, "feito": true, "na": false, "nota": ""}, "x5|2025-07": {"em": null, "feito": true, "na": false, "nota": ""}, "x5|2025-08": {"em": null, "feito": true, "na": false, "nota": ""}, "x5|2025-09": {"em": null, "feito": true, "na": false, "nota": ""}, "x5|2025-10": {"em": null, "feito": true, "na": false, "nota": ""}, "x5|2025-11": {"em": null, "feito": true, "na": false, "nota": ""}, "x5|2025-12": {"em": null, "feito": true, "na": false, "nota": ""}, "x5|2026-01": {"em": null, "feito": true, "na": false, "nota": ""}, "x5|2026-02": {"em": null, "feito": true, "na": false, "nota": ""}, "x6|2025-02": {"em": null, "feito": true, "na": false, "nota": ""}, "x6|2025-03": {"em": null, "feito": true, "na": false, "nota": ""}, "x6|2025-04": {"em": null, "feito": true, "na": false, "nota": ""}, "x6|2025-05": {"em": null, "feito": true, "na": false, "nota": ""}, "x6|2025-06": {"em": null, "feito": true, "na": false, "nota": ""}, "x6|2025-07": {"em": null, "feito": true, "na": false, "nota": ""}, "x6|2025-08": {"em": null, "feito": true, "na": false, "nota": ""}, "x6|2025-09": {"em": null, "feito": true, "na": false, "nota": ""}, "x6|2025-10": {"em": null, "feito": true, "na": false, "nota": ""}, "x6|2025-11": {"em": null, "feito": true, "na": false, "nota": ""}, "x6|2025-12": {"em": null, "feito": true, "na": false, "nota": ""}, "x6|2026-01": {"em": null, "feito": true, "na": false, "nota": ""}, "x6|2026-02": {"em": null, "feito": true, "na": false, "nota": ""}, "x8|2025-03": {"em": null, "feito": true, "na": false, "nota": ""}, "x8|2025-04": {"em": null, "feito": true, "na": false, "nota": ""}, "x8|2025-05": {"em": null, "feito": true, "na": false, "nota": ""}, "x8|2025-06": {"em": null, "feito": true, "na": false, "nota": ""}, "x8|2025-07": {"em": null, "feito": true, "na": false, "nota": ""}, "x8|2025-08": {"em": null, "feito": true, "na": false, "nota": ""}, "x8|2025-09": {"em": null, "feito": true, "na": false, "nota": ""}, "x8|2025-10": {"em": null, "feito": true, "na": false, "nota": ""}, "x8|2025-11": {"em": null, "feito": true, "na": false, "nota": ""}, "x8|2025-12": {"em": null, "feito": true, "na": false, "nota": ""}, "x8|2026-01": {"em": null, "feito": true, "na": false, "nota": ""}, "x8|2026-02": {"em": null, "feito": true, "na": false, "nota": ""}, "x9|2025-03": {"em": null, "feito": false, "na": true, "nota": ""}, "x9|2025-04": {"em": null, "feito": true, "na": false, "nota": ""}, "x9|2025-05": {"em": null, "feito": true, "na": false, "nota": ""}, "x9|2025-06": {"em": null, "feito": true, "na": false, "nota": ""}, "x9|2025-07": {"em": null, "feito": false, "na": true, "nota": ""}, "x9|2025-08": {"em": null, "feito": true, "na": false, "nota": ""}, "x9|2025-09": {"em": null, "feito": true, "na": false, "nota": ""}, "x9|2025-10": {"em": null, "feito": true, "na": false, "nota": ""}, "x9|2025-11": {"em": null, "feito": false, "na": true, "nota": ""}, "x9|2025-12": {"em": null, "feito": true, "na": false, "nota": ""}, "x9|2026-01": {"em": null, "feito": true, "na": false, "nota": ""}, "x9|2026-02": {"em": null, "feito": true, "na": false, "nota": ""}}}}};
+let S={v:2,obrigacoes:[],empresas:[]},C={},db=null,ready=false,OCS={};
+let ui=Object.assign({tab:'home',emp:null,seg:'falta',ano:new Date().getFullYear()},loadUI());
+
+function loadUI(){try{return JSON.parse(localStorage.getItem('of_ui2')||'{}')}catch(e){return{}}}
+function saveUI(){try{localStorage.setItem('of_ui2',JSON.stringify(ui))}catch(e){}}
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseISO=s=>{const[a,b,c]=String(s).split('-').map(Number);return new Date(a,(b||1)-1,c||1)};
+const hoje=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+const fmt=d=>`${d.getDate()} ${MES[d.getMonth()]} ${d.getFullYear()}`;
+const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const dias=d=>Math.round((d-hoje())/864e5);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const plural=(n,a,b)=>n===1?`1 ${a}`:`${n} ${b}`;
+
+/* Feriados nacionais */
+const ferCache={};
+function feriados(y){
+  if(ferCache[y])return ferCache[y];
+  const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),
+  h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+  mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;
+  const p=new Date(y,mo-1,da),add=n=>{const x=new Date(p);x.setDate(x.getDate()+n);return iso(x)};
+  const s=new Set(['01-01','04-25','05-01','06-10','08-15','10-05','11-01','12-01','12-08','12-25'].map(md=>y+'-'+md));
+  s.add(add(-2));s.add(add(60));
+  return ferCache[y]=s;
+}
+function diaUtil(d){while(d.getDay()===0||d.getDay()===6||feriados(d.getFullYear()).has(iso(d)))d.setDate(d.getDate()+1);return d}
+
+/* Modelo: cada obrigação tem data (1.ª data limite), ciclo, dia limite e regra de dia útil.
+   Cada ocorrência é identificada pelo mês nominal do prazo (AAAA-MM). */
+const midx=d=>d.getFullYear()*12+d.getMonth();
+function nominal(o,mi){
+  const y=Math.floor(mi/12),m=mi%12,dim=new Date(y,m+1,0).getDate(),dia=Number(o.dia)||0;
+  const d=new Date(y,m,(!dia||dia>dim)?dim:dia);
+  return o.util===false?d:diaUtil(d);
+}
+function slotKey(mi){return`${Math.floor(mi/12)}-${pad(mi%12+1)}`}
+function slotLabel(o,key){const[y,m]=key.split('-').map(Number);return o.ciclo==='anual'?`Prazo de ${MESES[m-1].toLowerCase()} ${y}`:`${MESES[m-1]} ${y}`}
+const kidx=k=>{const[y,m]=String(k).split('-').map(Number);return y*12+(m||1)-1};
+const curMonth=()=>slotKey(midx(hoje()));
+const mLabel=k=>{const i=kidx(k);return `${MES[i%12]} ${Math.floor(i/12)}`};
+function perIdx(o,mi){return mi-Number(o.ref||0)}
+function perLabel(o,mi){const p=perIdx(o,mi),y=Math.floor(p/12),m=((p%12)+12)%12;
+  if(o.ciclo==='anual')return `Exercício ${y}`;if(o.ciclo==='trimestral')return `${Math.floor(m/3)+1}.º trimestre ${y}`;if(o.ciclo==='semestral')return `${m<6?1:2}.º semestre ${y}`;return `${MESES[m]} ${y}`}
+function perShort(o,mi){const p=perIdx(o,mi),y=Math.floor(p/12),m=((p%12)+12)%12;
+  if(o.ciclo==='anual')return `${y}`;if(o.ciclo==='trimestral')return `T${Math.floor(m/3)+1}`;if(o.ciclo==='semestral')return `S${m<6?1:2}`;return MES[m]}
+const vigIdx=(o,mi)=>o.ciclo==='anual'?mi:perIdx(o,mi);
+const vigs=(e,oid)=>(e.vig&&e.vig[oid])||[];
+const emVigor=(e,oid,i)=>vigs(e,oid).some(v=>i>=kidx(v.de)&&(!v.ate||i<=kidx(v.ate)));
+const ativa=(e,oid)=>{const c=midx(hoje());return vigs(e,oid).some(v=>!v.ate||kidx(v.ate)>=c)};
+const ativas=e=>(e.obr||[]).filter(id=>ativa(e,id));
+function vigTxt(e,oid){const l=vigs(e,oid);if(!l.length)return'Sem períodos';return l.map(v=>v.ate?`${mLabel(v.de)} – ${mLabel(v.ate)}`:`desde ${mLabel(v.de)}`).join(', ')}
+function prazos(o,de,ate){
+  if(!o.data)return[];
+  const step=STEP[o.ciclo]||1,m0=midx(parseISO(o.data)),lo=midx(de)-3,hi=midx(ate)+1,out=[];
+  let mi=m0+Math.max(0,Math.ceil((lo-m0)/step))*step;
+  for(;mi<=hi;mi+=step){
+    const key=slotKey(mi);
+    const d=o.datas&&o.datas[key]?parseISO(o.datas[key]):nominal(o,mi);
+    if(d>=de&&d<=ate)out.push({key,d,mi});
+  }
+  return out;
+}
+function iniEmp(e){return parseISO((e.inicio||`${new Date().getFullYear()}-01`)+'-01')}
+function ocorrencias(emps,de,ate){
+  const out=[];
+  for(const e of emps){
+    const ini=iniEmp(e),from=de<ini?ini:de,rec=(C[e.id]&&C[e.id].items)||{};
+    for(const oid of (e.obr||[])){
+      const o=S.obrigacoes.find(x=>x.id===oid);if(!o)continue;
+      for(const p of prazos(o,from,ate)){if(!emVigor(e,o.id,vigIdx(o,p.mi)))continue;const k=o.id+'|'+p.key;out.push({e,o,key:p.key,mi:p.mi,k,d:p.d,r:rec[k]||null})}
+    }
+  }
+  return out.sort((a,b)=>a.d-b.d||a.e.nome.localeCompare(b.e.nome)||a.o.nome.localeCompare(b.o.nome));
+}
+function status(oc){if(oc.r&&oc.r.na)return'na';if(oc.r&&oc.r.feito)return'feito';const n=dias(oc.d);return n<0?'atrasado':n<=7?'breve':'futuro'}
+const isOpen=o=>{const s=status(o);return s!=='feito'&&s!=='na'};
+const stLabel=st=>({atrasado:'Em atraso',breve:'Próximos 7 dias',feito:'Feito',futuro:'Pendente',na:'Não aplicável'}[st]);
+function cdText(oc,st){
+  const n=dias(oc.d);
+  if(st==='na')return'Não aplicável';
+  if(st==='feito'){const em=oc.r.em?parseISO(oc.r.em):null;return em?`Feito a ${fmt(em)}${em>oc.d?', fora do prazo':''}`:'Feito'}
+  if(n<0)return -n===1?'1 dia em atraso':`${-n} dias em atraso`;
+  if(n===0)return'Termina hoje';if(n===1)return'Termina amanhã';return`Faltam ${n} dias`;
+}
+function regra(o){
+  if(!o.data)return'Sem data definida';
+  const dia=Number(o.dia)||0;
+  const r=Number(o.ref||0),rt=o.ciclo==='anual'?'':r===0?', do próprio mês':r===1?', do mês anterior':`, de ${r} meses antes`;
+  return `${CICLO[o.ciclo]||o.ciclo}, ${dia?'dia '+dia:'último dia do mês'}${rt}`;
+}
+const late=emps=>ocorrencias(emps,new Date(1990,0,1),new Date(hoje()-864e5)).filter(isOpen);
+function empStats(e){
+  const t=hoje(),y=t.getFullYear();
+  const a=late([e]).length;
+  const up=ocorrencias([e],t,new Date(y+1,11,31)).filter(isOpen);
+  const s7=up.filter(o=>dias(o.d)<=7).length,s60=up.filter(o=>dias(o.d)<=60).length;
+  const yr=ocorrencias([e],new Date(y,0,1),new Date(y,11,31)).filter(o=>status(o)!=='na');
+  const done=yr.filter(o=>status(o)==='feito').length;
+  return{a,s7,s60,next:up[0]||null,done,tot:yr.length};
+}
+
+/* Migração do modelo anterior (período + meses após) */
+function migrate(){
+  if(S.v===2)return false;
+  const y0=Math.min(...S.empresas.map(e=>iniEmp(e).getFullYear()),new Date().getFullYear());
+  const endOf=(o,k)=>{if(o.per==='trimestral'){const[y,q]=k.split('-T').map(Number);return[y,q*3]}if(o.per==='semestral'){const[y,s]=k.split('-S').map(Number);return[y,s*6]}if(o.per==='anual')return[Number(k),12];const[y,m]=k.split('-').map(Number);return[y,m]};
+  const slot=(o,y,m)=>y*12+(m-1)+Number(o.off||0);
+  const nw={};
+  S.obrigacoes.forEach(o=>{
+    if(o.ciclo){nw[o.id]={n:o,old:o};return}
+    const per=o.per||'mensal',first=per==='anual'?slot(o,y0-1,12):slot(o,y0,STEP[per]);
+    const n={id:o.id,nome:o.nome,cat:o.cat,ciclo:per,dia:Number(o.dia)||0,util:o.util!==false,nota:o.nota||'',datas:{}};
+    const y=Math.floor(first/12),m=first%12,dim=new Date(y,m+1,0).getDate();
+    n.data=iso(new Date(y,m,(!n.dia||n.dia>dim)?dim:n.dia));
+    Object.entries(o.datas||{}).forEach(([k,v])=>{const[yy,mm]=endOf(o,k),mi=slot(o,yy,mm);
+      if(v!==iso(nominal(n,mi))&&v!==iso(nominal({...n,util:false},mi)))n.datas[slotKey(mi)]=v});
+    nw[o.id]={n,old:o};
+  });
+  Object.values(C).forEach(c=>{const ni={};Object.entries(c.items||{}).forEach(([k,v])=>{const[oid,pk]=k.split('|'),m=nw[oid];
+    if(m&&m.old&&!m.old.ciclo){const[yy,mm]=endOf(m.old,pk);ni[oid+'|'+slotKey(slot(m.old,yy,mm))]=v}else ni[k]=v});c.items=ni});
+  Object.keys(nw).forEach(id=>{if(nw[id].n)nw[id]=nw[id].n});
+  S.obrigacoes=S.obrigacoes.map(o=>nw[o.id]);S.v=2;
+  return true;
+}
+
+/* Persistência */
+let tCfg,tC={};
+function saveCfg(){clearTimeout(tCfg);tCfg=setTimeout(async()=>{try{localStorage.setItem('of_cfg',JSON.stringify(S))}catch(e){toast('Não foi possível guardar as alterações. Tenta novamente.')}},300)}
+function saveC(eid){clearTimeout(tC[eid]);tC[eid]=setTimeout(async()=>{try{localStorage.setItem('of_c',JSON.stringify(C))}catch(e){toast('Não foi possível guardar o estado. Tenta novamente.')}},300)}
+
+/* Render */
+function render(){
+  const t=hoje();$('#today').textContent=`${t.getDate()} de ${MESES[t.getMonth()].toLowerCase()} de ${t.getFullYear()}`;
+  if(!['home','empresas','obr','prox','late','emp','def','mapa','hist','porobr'].includes(ui.tab))ui.tab='home';
+  if(ui.tab==='hist'&&!S.obrigacoes.some(o=>o.id===ui.obr))ui.tab='emp';
+  $('#title').textContent={home:'Obrigações fiscais',empresas:'Empresas',obr:'Obrigações',prox:'Próximos prazos',late:'Em atraso',emp:'Por empresa',def:'Definições',mapa:'Mapa anual',porobr:'Por obrigação',hist:(S.obrigacoes.find(o=>o.id===ui.obr)||{}).nome||''}[ui.tab];$('#back').hidden=ui.tab==='home';$('#today').hidden=ui.tab!=='home';
+  $('#topAct').innerHTML=ui.tab==='obr'?'<button class="top-act" data-act="novaObr">+ Nova</button>':ui.tab==='empresas'?'<button class="top-act" data-act="novaEmp">+ Nova</button>':'';
+  if(!ready)return;
+  if(!S.empresas.some(e=>e.id===ui.emp))ui.emp=S.empresas[0]?S.empresas[0].id:null;
+  OCS={};
+  $('#view').innerHTML=({home:renderHome,empresas:renderEmpresas,obr:renderObr,prox:renderProx,late:renderLate,emp:renderEmp,def:renderDef,mapa:renderMapa,hist:renderHist,porobr:renderPorObr})[ui.tab]()+
+    `<p class="foot">Os dados ficam guardados neste navegador. Exporta uma cópia de segurança em Definições de vez em quando.</p>`;
+  saveUI();
+}
+function reg(list){list.forEach(o=>OCS[o.e.id+'::'+o.k]=o)}
+function itemHTML(oc,showEmp){
+  const st=status(oc);
+  return `<div class="item st-${st}" data-oc="${esc(oc.e.id+'::'+oc.k)}" role="button" tabindex="0" aria-label="${esc(oc.o.nome)}, prazo ${fmt(oc.d)}, ${cdText(oc,st)}">
+  <div class="tile" aria-hidden="true"><b class="num">${oc.d.getDate()}</b><span>${MES[oc.d.getMonth()]}</span></div>
+  <div class="tx"><div class="nm">${esc(oc.o.nome)}</div>
+  <div class="meta">${showEmp?`<span class="emp">${esc(oc.e.nome)}</span>`:''}<span>${esc(perLabel(oc.o,oc.mi))}</span></div>
+  <div class="cd">${cdText(oc,st)}</div></div>
+  <button class="chk" data-act="tog" aria-label="${st==='feito'?'Marcar como pendente':'Marcar como feito'}">${CHECK}</button>
+  ${st==='atrasado'?'<span class="stamp" aria-hidden="true">Em atraso</span>':''}</div>`;
+}
+function ring(p){const r=14,c=2*Math.PI*r;return `<svg class="ring" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="${r}" fill="none" stroke="var(--tile)" stroke-width="4"/><circle cx="17" cy="17" r="${r}" fill="none" stroke="var(--done)" stroke-width="4" stroke-linecap="round" stroke-dasharray="${c*p} ${c}" transform="rotate(-90 17 17)"/></svg>`}
+function onboarding(){
+  if(!S.obrigacoes.length)return `<div class="empty"><strong>Começa pela lista de obrigações</strong><p>Define cada obrigação com a data, o ciclo e o dia limite. Podes partir da lista base portuguesa.</p>
+  <div class="actions"><button class="btn" data-act="base">Usar lista base</button><button class="btn ghost" data-act="novaObr">Criar obrigação</button></div></div>`;
+  if(!S.empresas.length)return `<div class="empty"><strong>Cria a primeira empresa</strong><p>Depois escolhes quais das obrigações se aplicam.</p><div class="actions"><button class="btn" data-act="novaEmp">Nova empresa</button></div></div>`;
+  return '';
+}
+
+const ICO={
+ emp:'<path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16M15 10h4a1 1 0 0 1 1 1v10M3 21h18M8 8h3M8 12h3M8 16h3"/>',
+ obr:'<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/>',
+ prox:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+ late:'<circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/>',
+ sel:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+ def:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'
+};
+const ico=k=>`<svg class="wi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICO[k]}</svg>`;
+const janela=()=>Number((S.def&&S.def.janela)||30);
+function renderHome(){
+  const t=hoje(),all=S.empresas,J=janela();
+  const L=late(all),P=ocorrencias(all,t,new Date(t.getTime()+J*864e5)).filter(isOpen);
+  const cur=all.find(e=>e.id===ui.emp)||all[0],cl=cur?late([cur]).length:0;
+  const cats=new Set(S.obrigacoes.map(o=>o.cat)).size;
+  const W=(k,attrs,cls,mid,l,sub)=>`<button class="w ${cls}" ${attrs}>${ico(k)}<span>${mid}<span class="l" style="display:block">${l}</span><span class="s" style="display:block">${sub}</span></span></button>`;
+  const lateEmps=new Set(L.map(o=>o.e.id)).size;
+  let h=`<div class="grid home">`;
+  h+=W('emp','data-act="tab" data-t="empresas"','',`<span class="n num sm">${all.length}</span>`,'Empresas',all.length?esc(all.map(e=>e.nome).join(', ')):'Nenhuma ainda');
+  h+=W('obr','data-act="tab" data-t="obr"','',`<span class="n num sm">${S.obrigacoes.length}</span>`,'Obrigações',S.obrigacoes.length?plural(cats,'categoria','categorias'):'Nenhuma ainda');
+  h+=W('sel','data-act="tab" data-t="emp"',cl?'late':'',cur?`<span class="en" style="padding:0">${esc(cur.nome)}</span>`:'','Por empresa',cur?(cl?cl+' em atraso':'Em dia'):'Cria uma empresa');
+  h+=W('def','data-act="tab" data-t="def"','','','Definições','Tema, prazos, cópias');
+  return h+`</div>`;
+}
+function renderEmpresas(){
+  if(!S.empresas.length)return onboarding();
+  return `<p class="sub">Toca numa empresa para editar os dados e escolher as obrigações.</p>`+S.empresas.map(e=>{const s=empStats(e);
+    return `<button class="row" data-act="editEmp" data-id="${esc(e.id)}"><span class="tx">${esc(e.nome)}<small>${e.nif?'NIF '+esc(e.nif)+', ':''}${plural(ativas(e).length,'obrigação','obrigações')}</small></span>${s.a?`<span class="pill late">${s.a} em atraso</span>`:'<span class="pill ok">Em dia</span>'}<span class="chev"></span></button>`}).join('');
+}
+function renderProx(){
+  const ob=onboarding();if(ob)return ob;
+  const t=hoje(),J=janela(),all=S.empresas,multi=all.length>1;
+  const P=ocorrencias(all,t,new Date(t.getTime()+J*864e5)).filter(isOpen);reg(P);
+  if(!P.length)return `<div class="empty"><p>Nada por fazer nos próximos ${J} dias.</p></div>`;
+  const a=P.filter(o=>dias(o.d)<=7),b=P.filter(o=>dias(o.d)>7);
+  let h=`<p class="sub">Prazos por cumprir nos próximos ${J} dias. Podes mudar o período em Definições.</p>`;
+  if(a.length)h+=`<h2>Próximos 7 dias <small>${a.length}</small></h2>`+a.map(o=>itemHTML(o,multi)).join('');
+  if(b.length)h+=`<h2>Depois <small>${b.length}</small></h2>`+b.map(o=>itemHTML(o,multi)).join('');
+  return h;
+}
+function renderLate(){
+  const ob=onboarding();if(ob)return ob;
+  const L=late(S.empresas);reg(L);
+  if(!L.length)return `<div class="empty"><strong>Tudo em dia</strong><p>Não há obrigações em atraso.</p></div>`;
+  let h='';
+  for(const e of S.empresas){const l=L.filter(o=>o.e.id===e.id);if(!l.length)continue;
+    h+=`<h2>${esc(e.nome)} <small>${l.length}</small></h2>`+l.map(o=>itemHTML(o)).join('')}
+  return h;
+}
+function renderDef(){
+  const d=S.def||{},tema=d.tema||'auto',J=janela();
+  return `<div class="set"><h3>Tema</h3><p>Aspeto da app.</p><div class="seg" role="group" aria-label="Tema">${[['auto','Automático'],['light','Claro'],['dark','Escuro']].map(([k,l])=>`<button data-act="def" data-k="tema" data-v="${k}" aria-pressed="${tema===k}">${l}</button>`).join('')}</div></div>
+  <div class="set"><h3>Próximos prazos</h3><p>Quantos dias à frente o widget mostra.</p><div class="seg" role="group" aria-label="Dias">${[7,15,30,60].map(n=>`<button data-act="def" data-k="janela" data-v="${n}" aria-pressed="${J===n}">${n} dias</button>`).join('')}</div></div>
+  <div class="set"><h3>Lista base</h3><p>Obrigações habituais em Portugal, para acrescentar à tua lista.</p><div class="actions"><button class="btn ghost" data-act="base">Adicionar da lista base</button></div></div>
+  <div class="set"><h3>Cópia de segurança</h3><p>Guarda todos os dados num ficheiro ou repõe a partir de um ficheiro exportado.</p><div class="actions"><button class="btn ghost" data-act="exp">Exportar</button><button class="btn ghost" data-act="imp">Importar</button><input type="file" id="impFile" accept=".json,application/json" hidden></div></div>`;
+}
+function exportar(){
+  try{const blob=new Blob([JSON.stringify({S,C},null,1)],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=u;a.download=`obrigacoes-fiscais-${iso(hoje())}.json`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);toast('Cópia exportada')}
+  catch(e){toast('Não foi possível exportar.')}
+}
+function importar(file){
+  const r=new FileReader();
+  r.onload=()=>{let x;try{x=JSON.parse(r.result)}catch(e){toast('O ficheiro não é uma cópia válida.');return}
+    if(!x||!x.S||!Array.isArray(x.S.obrigacoes)||!Array.isArray(x.S.empresas)){toast('O ficheiro não é uma cópia válida.');return}
+    sheet('Repor cópia',`${plural(x.S.empresas.length,'empresa','empresas')} e ${plural(x.S.obrigacoes.length,'obrigação','obrigações')}`,
+      '<p class="sub">Os dados atuais são substituídos pelos do ficheiro.</p>',`<div class="r"><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="save">Repor</button></div>`);
+    $('#save').onclick=()=>{const old=S.empresas.map(e=>e.id);S=x.S;C=x.C||{};S.empresas.forEach(e=>{C[e.id]=C[e.id]||{items:{}}});migrate();
+      saveCfg();S.empresas.forEach(e=>saveC(e.id));old.filter(id=>!C[id]).forEach(id=>{});
+      applyTheme();dlg.close();render();toast('Cópia reposta')}};
+  r.readAsText(file);
+}
+function applyTheme(){const t=(S.def&&S.def.tema)||'auto';if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.dataset.theme=t}
+const SYM={feito:'✓',atrasado:'✗',breve:'!',futuro:'·',na:'N/A'};
+function occAll(e,o,y){return ocorrencias([{...e,obr:[o.id]}],new Date(y-2,0,1),new Date(y+2,11,31))}
+const colIdx=oc=>oc.o.ciclo==='anual'?oc.mi:perIdx(oc.o,oc.mi);
+function occYear(e,o,y){return occAll(e,o,y).filter(x=>Math.floor(colIdx(x)/12)===y)}
+function occPer(e,o,y){return occAll(e,o,y).filter(x=>Math.floor(perIdx(x.o,x.mi)/12)===y)}
+function renderEmp(){
+  if(!S.empresas.length)return onboarding()||'';
+  const e=S.empresas.find(x=>x.id===ui.emp),t=hoje(),J=janela();
+  let h=`<label class="sel"><span style="position:absolute;left:-9999px">Empresa</span><select id="empPick">${S.empresas.map(x=>`<option value="${esc(x.id)}" ${x.id===e.id?'selected':''}>${esc(x.nome)}</option>`).join('')}</select></label>`;
+  const s=empStats(e),P=ocorrencias([e],t,new Date(t.getTime()+J*864e5)).filter(isOpen);
+  const W=(k,attrs,cls,mid,l,sub)=>`<button class="w ${cls}" ${attrs}>${ico(k)}<span>${mid}<span class="l" style="display:block">${l}</span><span class="s" style="display:block">${sub}</span></span></button>`;
+  h+=`<div class="grid home">`+
+    W('obr',`data-act="atribuir" data-id="${esc(e.id)}"`,'',`<span class="n num sm">${ativas(e).length}</span>`,'Obrigações da empresa','Escolher quais se aplicam')+
+    W('late',`data-act="lista" data-l="late" data-e="${esc(e.id)}"`,s.a?'late':'',`<span class="n num sm">${s.a}</span>`,'Em atraso',s.a?'Toca para ver':'Tudo em dia')+
+    W('prox',`data-act="lista" data-l="prox" data-e="${esc(e.id)}"`,P.length?'soon':'',`<span class="n num sm">${P.length}</span>`,'Próximos prazos',P[0]?`Próximo a ${P[0].d.getDate()} ${MES[P[0].d.getMonth()]}`:`Nada em ${J} dias`)+
+    W('sel',`data-act="tab" data-t="porobr"`,'',`<span class="n num sm">${(e.obr||[]).length}</span>`,'Por obrigação','Histórico de cada uma')+
+    W('prox',`data-act="tab" data-t="mapa"`,'',`<span class="n num sm">${s.done}<span style="font-size:22px;opacity:.5">/${s.tot}</span></span>`,'Mapa anual',`Feitas em ${t.getFullYear()}`)+
+    `</div>`;
+  return h;
+}
+function renderPorObr(){
+  const e=S.empresas.find(x=>x.id===ui.emp);if(!e)return'';
+  const t=hoje(),ob=S.obrigacoes.filter(o=>(e.obr||[]).includes(o.id));
+  let h=`<p class="sub">${esc(e.nome)}. Toca numa obrigação para ver o histórico.</p>`;
+  if(!ob.length)return h+`<div class="empty"><strong>Ainda sem obrigações</strong><p>Escolhe as obrigações desta empresa.</p><div class="actions"><button class="btn" data-act="atribuir" data-id="${esc(e.id)}">Escolher obrigações</button></div></div>`;
+  const cats=catsAll();
+  ob.sort((a,b)=>cats.indexOf(a.cat)-cats.indexOf(b.cat)||a.nome.localeCompare(b.nome));
+  h+=`<div class="grid home">`+ob.map(o=>{
+    const one={...e,obr:[o.id]},L=late([one]).length,nx=ocorrencias([one],t,new Date(t.getFullYear()+2,0,1)).filter(isOpen)[0];
+    return `<button class="w ${L?'late':''}" data-act="hist" data-id="${esc(o.id)}"><span class="eyebrow">${esc(o.cat)}</span><span><span class="en" style="padding:0">${esc(o.nome)}</span>
+      <span class="s" style="display:block;margin-top:4px;font-weight:600">${L?L+' em atraso':!ativa(e,o.id)?'Não obrigada agora':nx?'Próximo a '+nx.d.getDate()+' '+MES[nx.d.getMonth()]:'Sem prazos'}</span></span></button>`}).join('');
+  return h+`</div>`;
+}
+function legend(){return `<div class="legend">${[['feito','Feito'],['atrasado','Em atraso'],['breve','Próximos 7 dias'],['futuro','Por vencer'],['na','Não aplicável']].map(([k,l])=>`<span><i class="cell c-${k}">${SYM[k]}</i>${l}</span>`).join('')}</div>`}
+function yearNav(){return `<div class="yr"><button class="icon-btn" data-act="ano" data-d="-1" aria-label="Ano anterior">‹</button><b class="num">${ui.ano}</b><button class="icon-btn" data-act="ano" data-d="1" aria-label="Ano seguinte">›</button></div>`}
+function renderMapa(){
+  const e=S.empresas.find(x=>x.id===ui.emp);if(!e)return'';
+  const ob=S.obrigacoes.filter(o=>(e.obr||[]).includes(o.id)).sort((a,b)=>a.nome.localeCompare(b.nome));
+  let h=`<p class="sub">${esc(e.nome)}. Nas obrigações mensais e trimestrais a coluna é o mês do período (como no Excel); nas anuais é o mês do prazo. Toca numa célula para marcar ou ver o detalhe.</p>`+yearNav();
+  if(!ob.length)return h+`<div class="empty"><p>Esta empresa ainda não tem obrigações.</p></div>`;
+  h+=`<div class="mx"><table><thead><tr><th scope="col">Obrigação</th>${MES.map(m=>`<th scope="col">${m}</th>`).join('')}</tr></thead><tbody>`;
+  for(const o of ob){
+    const oc=occYear(e,o,ui.ano);reg(oc);
+    h+=`<tr><td><button data-act="hist" data-id="${esc(o.id)}">${esc(o.nome)}</button></td>`+MES.map((_,i)=>{const c=oc.find(x=>((colIdx(x)%12)+12)%12===i);if(!c)return'<td></td>';const st=status(c);
+      return `<td><button class="cell c-${st}" data-act="oc" data-id="${esc(c.e.id+'::'+c.k)}" aria-label="${esc(o.nome)}, ${MESES[i]}: ${stLabel(st)}">${SYM[st]}</button></td>`}).join('')+`</tr>`;
+  }
+  return h+`</tbody></table></div>`+legend();
+}
+function renderHist(){
+  const e=S.empresas.find(x=>x.id===ui.emp),o=S.obrigacoes.find(x=>x.id===ui.obr);if(!e||!o)return'';
+  const oc=occPer(e,o,ui.ano);reg(oc);
+  const all=ocorrencias([{...e,obr:[o.id]}],new Date(1990,0,1),new Date(hoje().getFullYear()+1,11,31));
+  const fd=all.filter(x=>status(x)==='feito'),fora=fd.filter(x=>x.r.em&&parseISO(x.r.em)>x.d).length,L=all.filter(x=>status(x)==='atrasado').length;
+  let h=`<p class="sub">${esc(e.nome)}. ${esc(regra(o))}.${ativa(e,o.id)?'':' Neste momento a empresa não está obrigada.'}</p>
+  <div class="stats">${L?`<span class="pill late">${L} em atraso</span>`:'<span class="pill ok">Em dia</span>'}<span class="pill">${fd.length} feitas no total</span>${fora?`<span class="pill soon">${fora} fora do prazo</span>`:''}</div>`+yearNav();
+  h+=vigBlock(e,o);
+  if(!oc.length)return h+`<div class="empty"><p>Sem períodos obrigatórios em ${ui.ano}.</p></div>`;
+  h+=`<div class="hg">`+oc.map(c=>{const st=status(c);
+    return `<button class="hc c-${st}" data-act="oc" data-id="${esc(c.e.id+'::'+c.k)}" aria-label="${esc(perLabel(o,c.mi))}: ${stLabel(st)}"><span>${perShort(o,c.mi)}</span><b>${SYM[st]}</b></button>`}).join('')+`</div>`+legend();
+  h+=`<h2>Histórico de ${ui.ano}</h2>`+oc.slice().reverse().map(c=>itemHTML(c)).join('');
+  h+=`<div class="actions"><button class="btn ghost" data-act="editObr" data-id="${esc(o.id)}">Editar obrigação</button></div>`;
+  return h;
+}
+function vigBlock(e,o){
+  const l=vigs(e,o.id);
+  return `<h2>Períodos em que a empresa está obrigada</h2><div class="set" style="padding:10px 14px">${l.map((v,i)=>`<div class="vrow"><div><label class="f" style="margin-top:4px">Desde</label><input type="month" data-vig="de" data-i="${i}" value="${esc(v.de)}"></div>
+    <div><label class="f" style="margin-top:4px">Até</label><input type="month" data-vig="ate" data-i="${i}" value="${esc(v.ate||'')}"></div>
+    <button class="x" data-act="vigDel" data-i="${i}" aria-label="Remover período" style="align-self:end;margin-bottom:6px">×</button></div>`).join('')||'<p class="sub" style="margin:4px 0">Sem períodos. A obrigação não se aplica.</p>'}
+    <div class="hint">Deixa "Até" vazio se ainda está obrigada. O histórico dos períodos anteriores mantém-se.</div>
+    <div class="actions"><button class="btn ghost" data-act="vigAdd">Adicionar período</button></div></div>`;
+}
+function vigEdit(e,o){e.vig=e.vig||{};e.vig[o.id]=(e.vig[o.id]||[]).filter(v=>v.de).sort((a,b)=>kidx(a.de)-kidx(b.de));saveCfg()}
+function atribuir(id){
+  const e=S.empresas.find(x=>x.id===id);if(!e)return;
+  const cm=curMonth(),pm=slotKey(midx(hoje())-1);
+  const lista=catsAll().map(c=>{const l=S.obrigacoes.filter(o=>(o.cat||'Outras obrigações')===c);if(!l.length)return'';
+    return `<div class="cat">${esc(c)}</div>`+l.map(o=>{const on=ativa(e,o.id),has=vigs(e,o.id).length;
+      return `<div class="ck" style="display:block"><label style="display:flex;gap:10px;cursor:pointer"><input type="checkbox" value="${esc(o.id)}" data-was="${on?1:0}" ${on?'checked':''}><span>${esc(o.nome)}<small>${has?esc(vigTxt(e,o.id)):esc(regra(o))}</small></span></label>
+      <div class="vx" hidden data-for="${esc(o.id)}"><label class="f" style="margin-top:8px">${on?'Último período obrigado':'Obrigada desde'}</label><input type="month" value="${on?pm:(has?cm:(e.inicio||cm))}"></div></div>`}).join('')}).join('');
+  sheet('Obrigações da empresa',esc(e.nome),S.obrigacoes.length?`<p class="hint" style="margin:4px 0 0">Ao desmarcar, o histórico fica guardado. Podes voltar a marcar mais tarde.</p><div id="aObr">${lista}</div>`:'<p class="sub">Ainda não há obrigações. Cria-as no widget Obrigações.</p>',
+    `<span class="hint" id="aCnt"></span><div class="r"><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="save">Guardar</button></div>`);
+  const cnt=()=>{const n=$('#aCnt');if(n)n.textContent=plural(dlg.querySelectorAll('#aObr input[type=checkbox]:checked').length,'selecionada','selecionadas')};
+  dlg.querySelector('#aObr')?.addEventListener('change',ev=>{const cb=ev.target;if(cb.type==='checkbox'){const box=dlg.querySelector(`.vx[data-for="${CSS.escape(cb.value)}"]`);box.hidden=(cb.checked?'1':'0')===cb.dataset.was}cnt()});cnt();
+  $('#save').onclick=()=>{
+    e.vig=e.vig||{};e.obr=e.obr||[];
+    dlg.querySelectorAll('#aObr input[type=checkbox]').forEach(cb=>{
+      const oid=cb.value,was=cb.dataset.was==='1',now=cb.checked;if(was===now)return;
+      const m=dlg.querySelector(`.vx[data-for="${CSS.escape(oid)}"] input`).value||cm;
+      const l=e.vig[oid]=e.vig[oid]||[];
+      if(now){l.push({de:m,ate:null});if(!e.obr.includes(oid))e.obr.push(oid)}
+      else{const c=midx(hoje());l.forEach(v=>{if(!v.ate||kidx(v.ate)>=c)v.ate=m});e.vig[oid]=l.filter(v=>kidx(v.ate||'9999-12')>=kidx(v.de))}
+      e.vig[oid].sort((a,b)=>kidx(a.de)-kidx(b.de));
+      const rec=(C[e.id]&&C[e.id].items)||{};
+      if(!e.vig[oid].length&&!Object.keys(rec).some(k=>k.startsWith(oid+'|')))e.obr=e.obr.filter(x=>x!==oid);
+    });
+    saveCfg();dlg.close();render();toast('Obrigações atualizadas')};
+}
+function renderCal(e){
+  const base=ocorrencias([e],new Date(ui.ano,0,1),new Date(ui.ano,11,31));reg(base);
+  let h=`<div class="yr"><button class="icon-btn" data-act="ano" data-d="-1" aria-label="Ano anterior">‹</button><b class="num">${ui.ano}</b><button class="icon-btn" data-act="ano" data-d="1" aria-label="Ano seguinte">›</button></div>`;
+  let any=false;
+  for(let m=0;m<12;m++){
+    const mo=base.filter(o=>o.d.getMonth()===m);if(!mo.length)continue;any=true;
+    const dn=mo.filter(o=>status(o)==='feito').length,mt=mo.filter(o=>status(o)!=='na').length;
+    h+=`<div class="mh"><span>${MESES[m]}</span><small>${dn} de ${mt} feitas</small></div>`+mo.map(o=>itemHTML(o)).join('');
+  }
+  if(!any)h+=`<div class="empty"><p>Sem prazos em ${ui.ano}.</p></div>`;
+  return h;
+}
+function renderEmpObr(e){
+  const l=S.obrigacoes.filter(o=>(e.obr||[]).includes(o.id));
+  return `<div style="margin-top:12px">`+l.map(o=>`<button class="row" data-act="editObr" data-id="${esc(o.id)}"><span class="tx">${esc(o.nome)}<small>${esc(regra(o))}</small></span><span class="chev"></span></button>`).join('')+
+    `</div><div class="actions"><button class="btn ghost" data-act="editEmp" data-id="${esc(e.id)}">Escolher obrigações</button></div>`;
+}
+const catsAll=()=>[...CATS,...new Set(S.obrigacoes.map(o=>o.cat).filter(c=>!CATS.includes(c)))];
+function renderObr(){
+  if(!S.obrigacoes.length)return onboarding();
+  let h=`<p class="sub">Cada obrigação tem uma data, um ciclo e um dia limite. Toca para editar.</p>`;
+  for(const c of catsAll()){
+    const l=S.obrigacoes.filter(o=>(o.cat||'Outras obrigações')===c).sort((a,b)=>a.nome.localeCompare(b.nome));if(!l.length)continue;
+    h+=`<h2>${esc(c)} <small>${l.length}</small></h2>`+l.map(o=>{const n=S.empresas.filter(e=>ativa(e,o.id)).length;
+      return `<button class="row" data-act="editObr" data-id="${esc(o.id)}"><span class="tx">${esc(o.nome)}<small>${esc(regra(o))}${o.util!==false?'':', sem ajuste a dia útil'}</small></span><span class="cnt">${plural(n,'empresa','empresas')}</span><span class="chev"></span></button>`}).join('');
+  }
+  return h;
+}
+function openCat(c){
+  const l=S.obrigacoes.filter(o=>(o.cat||'Outras obrigações')===c).sort((a,b)=>a.nome.localeCompare(b.nome));
+  sheet(esc(c),plural(l.length,'obrigação','obrigações'),l.map(o=>{const n=S.empresas.filter(e=>ativa(e,o.id)).length;
+    return `<button class="row" data-act="editObr" data-id="${esc(o.id)}"><span class="tx">${esc(o.nome)}<small>${esc(regra(o))}${o.util!==false?'':', sem ajuste a dia útil'}</small></span><span class="cnt">${plural(n,'empresa','empresas')}</span><span class="chev"></span></button>`}).join(''),'');
+}
+
+/* Sheets */
+const dlg=$('#sheet');
+function sheet(title,sub,body,foot){
+  dlg.innerHTML=`<div class="sh-h"><div><h3>${title}</h3>${sub?`<p>${sub}</p>`:''}</div><button class="x" data-close aria-label="Fechar">×</button></div><div class="sh-b">${body}</div>${foot?`<div class="sh-f">${foot}</div>`:''}`;
+  dlg.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>dlg.close());
+  if(!dlg.open)dlg.showModal();
+  dlg.querySelector('.sh-b').scrollTop=0;
+}
+dlg.addEventListener('click',e=>{if(e.target===dlg)dlg.close()});
+function armDelete(btn,fn){btn.onclick=()=>{if(btn.dataset.armed)fn();else{btn.dataset.armed=1;btn.textContent='Confirmar eliminação'}}}
+const footSave=(del)=>`${del?'<button class="btn danger" id="del">Eliminar</button>':''}<div class="r"><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="save">Guardar</button></div>`;
+
+let lastLista=null;
+function openLista(tipo,eid){
+  lastLista=[tipo,eid];
+  const t=hoje(),all=eid?S.empresas.filter(e=>e.id===eid):S.empresas;
+  const y=t.getFullYear(),m=t.getMonth();
+  const l=tipo==='late'?late(all):tipo==='mes'?ocorrencias(all,new Date(y,m,1),new Date(y,m+1,0)):ocorrencias(all,t,new Date(t.getTime()+(tipo==='prox'?janela():tipo==='s60'?60:7)*864e5)).filter(isOpen);
+  reg(l);
+  sheet({late:'Em atraso',s7:'Próximos 7 dias',s60:'Até 60 dias',prox:'Próximos prazos',mes:MESES[m]+' '+y}[tipo]+(eid?' – '+esc(all[0].nome):''),plural(l.length,'obrigação','obrigações'),
+    l.length?l.map(o=>itemHTML(o,!eid&&all.length>1)).join(''):'<p class="sub">Nada para mostrar.</p>','');
+}
+function openOc(id){
+  lastLista=null;
+  const oc=OCS[id];if(!oc)return;
+  const st=status(oc),r=oc.r||{},nom=iso(nominal(oc.o,oc.mi));
+  sheet(esc(oc.o.nome),`${esc(oc.e.nome)}, ${esc(perLabel(oc.o,oc.mi))}`,
+   `<span class="statusline s-${st}">${stLabel(st)}: ${cdText(oc,st)}</span>
+    <div class="rad" role="radiogroup" aria-label="Estado">${[['pend','Pendente'],['feito','Feito'],['na','Não aplicável']].map(([v,l])=>`<label><input type="radio" name="fSt" value="${v}" ${(r.na?'na':r.feito?'feito':'pend')===v?'checked':''}>${l}</label>`).join('')}</div>
+    <div class="two"><div><label class="f" for="fEm">Data de cumprimento</label><input type="date" id="fEm" value="${esc(r.em||iso(hoje()))}"></div>
+    <div><label class="f" for="fPz">Data limite</label><input type="date" id="fPz" value="${iso(oc.d)}"></div></div>
+    <div class="hint">Alterar a data limite aplica-se a esta ocorrência em todas as empresas (útil para prorrogações). Pela regra seria ${fmt(parseISO(nom))}.</div>
+    <label class="f" for="fNota">Nota</label><textarea id="fNota" placeholder="Ex.: referência de pagamento, valor, n.º de declaração">${esc(r.nota||'')}</textarea>`,
+   footSave(false));
+  $('#save').onclick=()=>{
+    const it=C[oc.e.id].items,v=dlg.querySelector('input[name=fSt]:checked').value,nota=$('#fNota').value.trim();
+    if(v==='pend'&&!nota)delete it[oc.k];else it[oc.k]={feito:v==='feito',na:v==='na',em:v==='feito'?($('#fEm').value||iso(hoje())):null,nota};
+    const pz=$('#fPz').value;oc.o.datas=oc.o.datas||{};
+    if(pz&&pz!==nom){if(oc.o.datas[oc.key]!==pz){oc.o.datas[oc.key]=pz;saveCfg()}}else if(oc.o.datas[oc.key]){delete oc.o.datas[oc.key];saveCfg()}
+    saveC(oc.e.id);dlg.close();render();toast(v==='feito'?'Marcado como feito':v==='na'?'Marcado como não aplicável':'Guardado');
+  };
+}
+function toggle(id){
+  const oc=OCS[id];if(!oc)return;
+  const it=C[oc.e.id].items,prev=it[oc.k]?{...it[oc.k]}:null;
+  if(prev&&prev.feito)it[oc.k]={...prev,feito:false,em:null};else it[oc.k]={...(prev||{}),feito:true,na:false,em:iso(hoje())};
+  const now=it[oc.k].feito,inList=dlg.open&&lastLista&&!dlg.querySelector('#save');
+  const refresh=()=>{render();if(inList&&dlg.open)openLista(...lastLista)};
+  saveC(oc.e.id);refresh();
+  toast(now?'Marcado como feito':'Marcado como pendente',()=>{if(prev)it[oc.k]=prev;else delete it[oc.k];saveC(oc.e.id);refresh()});
+}
+function editObr(id){
+  const y=new Date().getFullYear();
+  const o=id?S.obrigacoes.find(x=>x.id===id):{nome:'',cat:'IVA',ciclo:'mensal',data:iso(new Date(y,new Date().getMonth(),20)),dia:20,ref:1,util:true,nota:'',datas:{}};
+  const n=S.empresas.filter(e=>ativa(e,o.id)).length;
+  sheet(id?'Editar obrigação':'Nova obrigação',id?plural(n,'empresa usa','empresas usam')+' esta obrigação':'',
+   `<label class="f" for="oNome">Nome</label><input type="text" id="oNome" value="${esc(o.nome)}" placeholder="Ex.: IVA Mensal - Entrega">
+    <label class="f" for="oCat">Categoria</label><select class="in" id="oCat">${[...new Set([...CATS,o.cat])].map(c=>`<option ${c===o.cat?'selected':''}>${esc(c)}</option>`).join('')}</select>
+    <label class="f" for="oData">Data</label><input type="date" id="oData" value="${esc(o.data||'')}"><div class="hint">A primeira data limite. As seguintes são calculadas a partir desta, conforme o ciclo.</div>
+    <div class="two"><div><label class="f" for="oCiclo">Ciclo</label><select class="in" id="oCiclo">${Object.entries(CICLO).map(([k,l])=>`<option value="${k}" ${k===o.ciclo?'selected':''}>${l}</option>`).join('')}</select></div>
+    <div><label class="f" for="oDia">Dia limite</label><input type="number" id="oDia" min="0" max="31" inputmode="numeric" value="${esc(o.dia)}"><div class="hint">0 = último dia do mês</div></div></div>
+    <label class="f" for="oRef">Meses entre o período e o prazo</label><input type="number" id="oRef" min="-11" max="24" inputmode="numeric" value="${esc(o.ref??1)}">
+    <div class="hint" id="oRefH"></div>
+    <label class="switch"><span>Se o dia limite calhar ao fim de semana ou feriado, passa para o dia útil seguinte</span><input type="checkbox" id="oUtil" ${o.util!==false?'checked':''}></label>
+    <label class="f" for="oNota">Notas</label><textarea id="oNota" placeholder="Entidade, portal, observações">${esc(o.nota||'')}</textarea>
+    <div class="preview" id="oPrev"></div>`,
+   footSave(!!id));
+  const read=()=>({nome:$('#oNome').value.trim(),cat:$('#oCat').value,data:$('#oData').value,ciclo:$('#oCiclo').value,dia:Math.min(31,Math.max(0,parseInt($('#oDia').value)||0)),util:$('#oUtil').checked,nota:$('#oNota').value.trim(),ref:parseInt($('#oRef').value)||0});
+  const prev=()=>{const x={...read(),datas:o.datas||{}};
+    if(!x.data){$('#oPrev').textContent='Indica a data para ver os próximos prazos.';$('#oRefH').textContent='';return}
+    const t=hoje(),l=prazos(x,t<parseISO(x.data)?parseISO(x.data):t,new Date(t.getFullYear()+3,0,1)).slice(0,4);
+    $('#oRefH').textContent=x.ciclo==='anual'?'Meses entre dezembro do exercício e o prazo. Ex.: Modelo 22 = 5 (maio do ano seguinte).':'Ex.: IVA mensal = 2 (agosto entrega-se em outubro); DMR = 1; 0 = mesmo mês.';
+    $('#oPrev').innerHTML=`Próximas datas limite:<ul>${l.map(p=>`<li>${esc(perLabel(x,p.mi))}: ${fmt(p.d)}${x.datas[p.key]?' (alterada)':''}</li>`).join('')}</ul>`};
+  $('#oData').addEventListener('change',()=>{const v=$('#oData').value;if(v)$('#oDia').value=parseISO(v).getDate();prev()});
+  dlg.querySelectorAll('#oCiclo,#oDia,#oUtil,#oRef').forEach(el=>el.addEventListener('input',prev));prev();
+  $('#save').onclick=()=>{const x=read();
+    if(!x.nome){$('#oNome').focus();toast('Indica o nome da obrigação.');return}
+    if(!x.data){$('#oData').focus();toast('Indica a data.');return}
+    if(id)Object.assign(o,x);else S.obrigacoes.push({id:uid('o'),...x,datas:{}});
+    saveCfg();dlg.close();render();toast('Obrigação guardada')};
+  if(id)armDelete($('#del'),()=>{S.obrigacoes=S.obrigacoes.filter(x=>x.id!==id);S.empresas.forEach(e=>{e.obr=(e.obr||[]).filter(x=>x!==id);if(e.vig)delete e.vig[id]});saveCfg();dlg.close();render();toast('Obrigação eliminada')});
+}
+function editEmp(id){
+  const e=id?S.empresas.find(x=>x.id===id):{nome:'',nif:'',inicio:`${new Date().getFullYear()}-01`,obr:[]};
+  const cats=[...CATS,...new Set(S.obrigacoes.map(o=>o.cat).filter(c=>!CATS.includes(c)))];
+  const lista=cats.map(c=>{const l=S.obrigacoes.filter(o=>(o.cat||'Outras obrigações')===c);if(!l.length)return'';
+    return `<div class="cat">${esc(c)}</div>`+l.map(o=>`<label class="ck"><input type="checkbox" value="${esc(o.id)}" ${(e.obr||[]).includes(o.id)?'checked':''}><span>${esc(o.nome)}<small>${esc(regra(o))}</small></span></label>`).join('')}).join('');
+  sheet(id?'Editar empresa':'Nova empresa','',
+   `<label class="f" for="eNome">Nome</label><input type="text" id="eNome" value="${esc(e.nome)}">
+    <div class="two"><div><label class="f" for="eNif">NIF</label><input type="text" id="eNif" inputmode="numeric" value="${esc(e.nif||'')}"></div>
+    <div><label class="f" for="eIni">Acompanhar desde</label><input type="month" id="eIni" value="${esc(e.inicio||'')}"></div></div>
+    <div class="hint">Só aparecem prazos a partir deste mês.</div>
+    ${id?`<label class="f">Obrigações</label><p class="sub" style="margin:0 0 6px">${plural(ativas(e).length,'obrigação ativa','obrigações ativas')}.</p><button class="btn ghost" data-act2="atr">Escolher obrigações</button>`:'<p class="hint">Depois de guardar escolhes as obrigações desta empresa.</p>'}`,
+   footSave(!!id));
+  dlg.querySelector('[data-act2="atr"]')?.addEventListener('click',()=>atribuir(id));
+  $('#save').onclick=()=>{
+    const nome=$('#eNome').value.trim();if(!nome){$('#eNome').focus();toast('Indica o nome da empresa.');return}
+    const x={nome,nif:$('#eNif').value.trim(),inicio:$('#eIni').value||`${new Date().getFullYear()}-01`};
+    if(id){Object.assign(e,x);saveCfg();dlg.close();render();toast('Empresa guardada')}else{const n={id:uid('e'),...x,obr:[],vig:{}};S.empresas.push(n);C[n.id]={items:{}};ui.emp=n.id;saveCfg();render();atribuir(n.id)}
+  };
+  if(id)armDelete($('#del'),async()=>{S.empresas=S.empresas.filter(x=>x.id!==id);delete C[id];saveCfg();
+    try{localStorage.setItem('of_c',JSON.stringify(C))}catch(err){}
+    dlg.close();render();toast('Empresa eliminada')});
+}
+function openBase(){
+  const y=new Date().getFullYear();
+  const miss=BASE.filter(b=>!S.obrigacoes.some(o=>o.id===b[0]));
+  if(!miss.length){toast('Já tens todas as obrigações da lista base.');return}
+  const mk=b=>{const d=new Date(y,b[4]-1,1),dim=new Date(y,b[4],0).getDate();return{id:b[0],nome:b[1],cat:b[2],ciclo:b[3],dia:b[5],ref:b[6],data:iso(new Date(y,b[4]-1,(!b[5]||b[5]>dim)?dim:b[5])),util:true,nota:'',datas:{}}};
+  sheet('Lista base','Prazos habituais em Portugal. Confirma-os e ajusta depois se precisares.',
+   CATS.map(c=>{const l=miss.filter(b=>b[2]===c);if(!l.length)return'';return `<div class="cat">${esc(c)}</div>`+l.map(b=>`<label class="ck"><input type="checkbox" value="${b[0]}" checked><span>${esc(b[1])}<small>${esc(regra(mk(b)))}</small></span></label>`).join('')}).join(''),
+   `<div class="r"><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="save">Adicionar selecionadas</button></div>`);
+  $('#save').onclick=()=>{const ids=[...dlg.querySelectorAll('input:checked')].map(i=>i.value);
+    miss.filter(b=>ids.includes(b[0])).forEach(b=>S.obrigacoes.push(mk(b)));saveCfg();dlg.close();render();toast(`${ids.length} obrigações adicionadas`)};
+}
+
+/* Eventos */
+function act(a,e){
+  const k=a.dataset.act;
+  if(k==='tog'){e.stopPropagation();toggle(a.closest('.item').dataset.oc);return true}
+  if(k==='tab'){ui.tab=a.dataset.t;render();scrollTo(0,0);return true}
+  if(k==='abrirEmp'){ui.emp=a.dataset.id;ui.tab='emp';ui.seg='falta';render();scrollTo(0,0);return true}
+  if(k==='selEmp'){ui.emp=a.dataset.id;render();return true}
+  if(k==='seg'){ui.seg=a.dataset.s;render();return true}
+  if(k==='ano'){ui.ano+=Number(a.dataset.d);render();return true}
+  if(k==='lista'){openLista(a.dataset.l,a.dataset.e);return true}
+  if(k==='atribuir'){atribuir(a.dataset.id);return true}
+  if(k==='vigAdd'||k==='vigDel'){const e=S.empresas.find(x=>x.id===ui.emp),o=S.obrigacoes.find(x=>x.id===ui.obr);e.vig=e.vig||{};const l=e.vig[o.id]=e.vig[o.id]||[];
+    if(k==='vigAdd'){l.push({de:curMonth(),ate:null});if(!(e.obr||[]).includes(o.id))(e.obr=e.obr||[]).push(o.id)}else l.splice(Number(a.dataset.i),1);vigEdit(e,o);render();return true}
+  if(k==='hist'){ui.obr=a.dataset.id;ui.from=ui.tab==='mapa'?'mapa':'porobr';ui.tab='hist';if(dlg.open)dlg.close();render();scrollTo(0,0);return true}
+  if(k==='novaObr'){editObr(null);return true}
+  if(k==='editObr'){editObr(a.dataset.id);return true}
+  if(k==='novaEmp'){editEmp(null);return true}
+  if(k==='editEmp'){editEmp(a.dataset.id);return true}
+  if(k==='base'){openBase();return true}
+  if(k==='cat'){openCat(a.dataset.c);return true}
+  if(k==='def'){S.def={...(S.def||{}),[a.dataset.k]:a.dataset.k==='janela'?Number(a.dataset.v):a.dataset.v};saveCfg();applyTheme();render();return true}
+  if(k==='exp'){exportar();return true}
+  if(k==='imp'){const f=$('#impFile');f.value='';f.onchange=()=>{if(f.files[0])importar(f.files[0])};f.click();return true}
+  if(k==='oc'){openOc(a.dataset.id);return true}
+}
+$('#back').addEventListener('click',()=>{ui.tab=ui.tab==='hist'?(ui.from||'porobr'):(ui.tab==='mapa'||ui.tab==='porobr')?'emp':'home';render();scrollTo(0,0)});
+$('#view').addEventListener('change',ev=>{if(ev.target.id==='empPick'){ui.emp=ev.target.value;render();return}
+  const t=ev.target.closest('[data-vig]');if(t&&ui.tab==='hist'){const e=S.empresas.find(x=>x.id===ui.emp),o=S.obrigacoes.find(x=>x.id===ui.obr),v=vigs(e,o.id)[Number(t.dataset.i)];
+    if(!v)return;if(t.dataset.vig==='de'){if(!t.value){toast('Indica o mês de início.');render();return}v.de=t.value}else v.ate=t.value||null;
+    if(v.ate&&kidx(v.ate)<kidx(v.de)){toast('"Até" não pode ser anterior a "Desde".');v.ate=null}
+    vigEdit(e,o);render();}});
+$('#topAct').addEventListener('click',e=>{const a=e.target.closest('[data-act]');if(a)act(a,e)});
+function onClick(e){const a=e.target.closest('[data-act]');if(a&&act(a,e))return;const it=e.target.closest('.item');if(it)openOc(it.dataset.oc)}
+$('#view').addEventListener('click',onClick);
+dlg.addEventListener('click',e=>{if(e.target.closest('.sh-b [data-act], .sh-b .item'))onClick(e)});
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('item')){e.preventDefault();openOc(e.target.dataset.oc)}});
+function toast(msg,undo){const t=$('#toast');t.innerHTML=`<span>${esc(msg)}</span>${undo?'<button>Anular</button>':''}`;t.classList.add('on');
+  if(undo)t.querySelector('button').onclick=()=>{undo();t.classList.remove('on')};clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),4500)}
+
+async function init(){
+  render();
+  try{const a=JSON.parse(localStorage.getItem('of_cfg')||'null');if(a){S={v:a.v||1,...a};C=JSON.parse(localStorage.getItem('of_c')||'{}')||{}}else{S=clone(SEED.S);C=clone(SEED.C);localStorage.setItem('of_cfg',JSON.stringify(S));localStorage.setItem('of_c',JSON.stringify(C))}}
+  catch(e){S=clone(SEED.S);C=clone(SEED.C);toast('Este navegador não permite guardar dados. Exporta uma cópia antes de fechar.')}
+  S.empresas.forEach(e=>{C[e.id]=C[e.id]||{items:{}};C[e.id].items=C[e.id].items||{}});
+  if(!S.obrigacoes.length&&!S.empresas.length)S.v=2;
+  let ch=migrate();
+  S.obrigacoes.forEach(o=>{if(o.ref===undefined){o.ref=o.ciclo==='anual'?0:o.ciclo==='mensal'?1:2;ch=true}});
+  S.empresas.forEach(e=>{if(!e.vig){e.vig={};(e.obr||[]).forEach(id=>e.vig[id]=[{de:e.inicio||curMonth(),ate:null}]);ch=true}});
+  if(ch){saveCfg();S.empresas.forEach(e=>saveC(e.id))}
+  applyTheme();ready=true;render();
+}
+addEventListener('scroll',()=>$('.top').classList.toggle('scrolled',scrollY>4),{passive:true});
+init();
+</script>
+</body>
+</html>
