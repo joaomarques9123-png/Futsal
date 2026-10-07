@@ -74,6 +74,30 @@ button.w:active{transform:scale(.98)}
 .qgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .qbtn{border:0;border-radius:14px;background:var(--surface);color:var(--ink);font-family:var(--display);font-weight:700;font-size:22px;text-align:left;padding:12px 14px;min-height:64px;line-height:1.05}
 .qbtn small{display:block;font-family:var(--body);font-weight:500;font-size:13px;color:var(--muted);margin-top:4px}
+.food-w{gap:12px}
+.fw-top,.fw-nums,.fw-sug{border:0;background:none;color:inherit;padding:0;text-align:left;width:100%}
+.fw-top{display:flex;justify-content:space-between;align-items:center}
+.fw-go{font-weight:600;font-size:14px;color:var(--accent)}
+.fw-nums{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fw-nums>span{display:block}
+.fw-nums .ws2{display:block}
+.fw-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.fw-chip{border:0;background:var(--surface);color:var(--ink);border-radius:12px;min-height:44px;font-weight:600;font-size:14px}
+.fw-chip b{background:var(--heat);color:#fff;border-radius:8px;padding:1px 6px;font-size:12px;margin-left:2px}
+.fw-sug{display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:12px;padding:10px 12px;font-size:14px}
+.fw-sug .dot{width:10px;height:28px;border-radius:5px;flex:none}
+.flist{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow:auto;margin-bottom:10px}
+.fitem{display:flex;align-items:center;gap:10px;border:0;background:var(--surface);border-radius:12px;padding:10px 12px;text-align:left;width:100%}
+.addp{width:32px;height:32px;border-radius:10px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;flex:none}
+.plate{background:var(--surface);border-radius:16px;padding:14px;margin-top:12px}
+.empty-plate{border:2px dashed var(--line);background:transparent}
+.prow{display:flex;gap:8px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.prow:first-of-type{border-top:0}
+.mini-sel{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface2);border-radius:8px;min-height:36px;padding:0 6px;font-size:14px}
+.ptot{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px;background:var(--surface2);border-radius:12px;padding:10px}
+.ptot div{text-align:center}
+.ptot b{display:block;font-family:var(--display);font-size:22px;font-variant-numeric:tabular-nums}
+.ptot span{font-size:12px;color:var(--muted)}
 .plus{width:52px;height:52px;border-radius:16px;border:0;background:var(--ink);color:var(--surface);font-size:30px;font-weight:600;line-height:1;flex:none}
 .wfig{width:100%;height:78px;margin:-6px 0 -8px}
 .rec{padding-left:24px}
@@ -179,7 +203,8 @@ label.lbl{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 .sheet .grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:4px auto 10px}
 .sheet .sh-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
 .sheet h2{font-family:var(--display);font-weight:700;font-size:30px;line-height:1.02;margin:0}
-.stage{background:var(--surface);border-radius:16px;overflow:hidden;margin-bottom:12px}
+.stage{background:var(--surface);border-radius:16px;overflow:hidden;margin-bottom:12px;position:relative}
+.viewtag{position:absolute;left:10px;top:10px;background:var(--surface2);color:var(--muted);font-size:12px;font-weight:600;padding:4px 8px;border-radius:8px}
 .stage svg{display:block;width:100%;height:auto}
 ol.steps{margin:6px 0 0;padding-left:22px}
 ol.steps li{margin-bottom:6px}
@@ -279,6 +304,11 @@ const POSES={
   gkick:{A:{W:[132,126],E:[132,110],N:[132,94],H:[146,88],P:[86,96],K:[86,126],F:[62,126],K2:[86,126],F2:[62,126]},B:{K:[62,92],F:[38,88]}},
   superman:{A:{F:[40,126],K:[66,126],P:[92,126],N:[140,126],H:[154,122],E:[164,126],W:[184,126]},B:{F:[42,114],K:[66,121],N:[138,118],H:[152,110],E:[162,108],W:[182,102]}},
   twist:{A:{F:[64,112],K:[80,100],P:[100,124],N:[118,88],H:[124,74],E:[128,104],W:[140,100]},B:{E:[112,104],W:[100,108]}},
+  flytop:{front:1,view:'Vista de cima',nofloor:1,extra:'<rect x="30" y="54" width="128" height="32" rx="6" fill="var(--fig2)" opacity=".45"/>',A:{H:[162,70],N:[146,70],P:[86,70],K:[60,63],F:[36,61],K2:[60,77],F2:[36,79],E:[140,60],W:[132,63],E2:[140,80],W2:[132,77]},B:{E:[142,38],W:[134,14],E2:[142,102],W2:[134,126]}},
+  peckfront:{front:1,extra:'<rect x="82" y="26" width="36" height="66" rx="6" fill="var(--fig2)" opacity=".45"/><rect x="74" y="84" width="52" height="8" rx="3" fill="var(--fig2)"/>',A:{H:[100,20],N:[100,34],P:[100,80],K:[92,94],F:[90,126],K2:[108,94],F2:[110,126],E:[72,40],W:[72,16],E2:[128,40],W2:[128,16]},B:{E:[88,44],W:[97,20],E2:[112,44],W2:[103,20]}},
+  pressfront:{front:1,A:{...STAND,...FRONTLEGS,E:[78,42],W:[80,22],E2:[122,42],W2:[120,22]},B:{E:[88,14],W:[92,-6],E2:[112,14],W2:[108,-6]}},
+  abductseat:{front:1,extra:'<rect x="76" y="80" width="48" height="8" rx="3" fill="var(--fig2)"/>',A:{H:[100,22],N:[100,36],P:[100,80],K:[93,94],F:[92,126],K2:[107,94],F2:[108,126],E:[86,58],W:[88,80],E2:[114,58],W2:[112,80]},B:{K:[78,92],F:[82,126],K2:[122,92],F2:[118,126]}},
+  twistfront:{front:1,A:{H:[92,58],N:[96,72],P:[100,112],K:[86,98],F:[80,124],K2:[114,98],F2:[120,124],E:[84,88],W:[72,102],E2:[96,92],W2:[72,102]},B:{H:[108,58],N:[104,72],E:[104,92],W:[128,102],E2:[116,88],W2:[128,102]}},
   curlfront:{front:1,A:{...STAND,...FRONTLEGS,E:[85,54],W:[83,77],E2:[115,54],W2:[117,77]},B:{W:[86,37],W2:[114,37]}},
   curlconc:{bench:[58,96,64],A:{P:[96,92],N:[118,62],H:[128,50],K:[124,94],F:[124,127],K2:[118,96],F2:[114,127],E:[118,86],W:[124,112],E2:[126,74],W2:[128,92]},B:{W:[112,66]}},
   curlcable:{band:[156,126],A:{...STAND,E:[102,54],W:[104,76]},B:{W:[110,40]}},
@@ -323,7 +353,7 @@ function figure(ex,t){
   const key=ex.a, def=POSES[key]||POSES.curl, p=poseAt(key,t);
   const hl=ex.hl||ZONE_HL[ex.z]||'torso', prop=propOf(ex), front=!!def.front;
   const F='var(--fig)',F2=front?'var(--fig)':'var(--fig2)',HC='var(--heat)';
-  let s=`<line x1="10" y1="129" x2="190" y2="129" stroke="var(--line)" stroke-width="2"/>`;
+  let s=def.nofloor?'':`<line x1="10" y1="129" x2="190" y2="129" stroke="var(--line)" stroke-width="2"/>`;
   if(def.bench){const[x,y,w]=def.bench;s+=`<rect x="${x}" y="${y}" width="${w}" height="7" rx="3" fill="var(--fig2)"/><line x1="${x+10}" y1="${y+7}" x2="${x+10}" y2="129" stroke="var(--fig2)" stroke-width="4"/><line x1="${x+w-10}" y1="${y+7}" x2="${x+w-10}" y2="129" stroke="var(--fig2)" stroke-width="4"/>`;}
   if(def.extra) s+=def.extra;
   if(def.dyn) s+=def.dyn(p,t);
@@ -351,6 +381,7 @@ function figure(ex,t){
   if(prop==='bar'){ s+=`<circle cx="${p.W[0].toFixed(1)}" cy="${p.W[1].toFixed(1)}" r="9" fill="none" stroke="var(--ink)" stroke-width="4"/>`; }
   return s;
 }
+function viewName(ex){const d=POSES[ex.a]||{};return d.view||(d.front?'Vista de frente':'Vista de lado')}
 function figSVG(ex,t,cls){return `<svg class="${cls||''}" viewBox="0 -16 200 150" role="img" aria-label="${esc(ex.n)}">${figure(ex,t)}</svg>`}
 
 /* ======================= EXERCISES ======================= */
@@ -358,12 +389,12 @@ function figSVG(ex,t,cls){return `<svg class="${cls||''}" viewBox="0 -16 200 150
 const EX=[
  {id:'supino-halteres',n:'Supino com halteres no banco',z:'Peito',s:'Tríceps, ombro frontal',p:'ambos',eq:'Halteres + banco',lv:'Iniciante',a:'bench',st:['Deita-te no banco com um halter em cada mão, à altura do peito.','Pés bem assentes no chão e omoplatas juntas.','Empurra os halteres para cima até os braços ficarem quase esticados.','Desce devagar até os cotovelos ficarem um pouco abaixo do banco.'],er:'Bater os halteres em cima, tirar a anca do banco, descer depressa.'},
  {id:'supino-inclinado',n:'Supino inclinado com halteres',z:'Peito',s:'Ombro frontal, tríceps',p:'ambos',eq:'Halteres + banco inclinado',lv:'Iniciante',a:'inclinebench',st:['Põe o banco inclinado a 30–45°.','Halteres à altura do peito, cotovelos a cerca de 45° do corpo.','Empurra para cima e ligeiramente para dentro.','Desce devagar até sentires o peito a esticar.'],er:'Banco demasiado inclinado (passa a ser ombro), arquear muito as costas.'},
- {id:'aberturas',n:'Aberturas com halteres',z:'Peito',s:'Ombro frontal',p:'ambos',eq:'Halteres + banco',lv:'Intermédio',a:'fly',st:['Deitado no banco, halteres em cima do peito, palmas viradas uma para a outra.','Cotovelos ligeiramente dobrados, sempre no mesmo ângulo.','Abre os braços para os lados até sentires o peito a esticar.','Volta a fechar como se abraçasses uma árvore.'],er:'Usar peso a mais, esticar os braços por completo, descer demasiado.'},
+ {id:'aberturas',n:'Aberturas com halteres',z:'Peito',s:'Ombro frontal',p:'ambos',eq:'Halteres + banco',lv:'Intermédio',a:'flytop',st:['Deitado no banco, halteres em cima do peito, palmas viradas uma para a outra.','Cotovelos ligeiramente dobrados, sempre no mesmo ângulo.','Abre os braços para os lados até sentires o peito a esticar.','Volta a fechar como se abraçasses uma árvore.'],er:'Usar peso a mais, esticar os braços por completo, descer demasiado.'},
  {id:'flexoes',n:'Flexões',z:'Peito',s:'Tríceps, core',p:'ambos',eq:'Peso do corpo',lv:'Iniciante',a:'pushup',st:['Mãos no chão um pouco mais abertas que os ombros.','Corpo em linha reta da cabeça aos pés, barriga contraída.','Desce até o peito quase tocar no chão.','Empurra o chão para voltar acima.'],er:'Anca a cair ou levantada, cotovelos muito abertos, meia repetição.'},
  {id:'flexoes-inclinadas',n:'Flexões inclinadas no banco',z:'Peito',s:'Tríceps, core',p:'casa',eq:'Banco',lv:'Iniciante',a:'inclinepush',st:['Mãos na beira do banco, corpo em linha reta.','Desce o peito até ao banco.','Empurra para voltar acima.','Quando ficar fácil, passa para flexões no chão.'],er:'Anca dobrada, pescoço esticado para a frente.'},
  {id:'press-elastico',n:'Press de peito com elástico',z:'Peito',s:'Tríceps',p:'casa',eq:'Elástico',lv:'Iniciante',a:'pushfwd',st:['Prende o elástico atrás de ti à altura do peito.','Pega numa ponta com cada mão, um pé à frente.','Empurra as mãos para a frente até esticar os braços.','Volta devagar a controlar o elástico.'],er:'Deixar o elástico puxar de repente, curvar as costas.'},
  {id:'supino-barra',n:'Supino com barra',z:'Peito',s:'Tríceps, ombro frontal',p:'gin',eq:'Barra + banco',lv:'Intermédio',a:'bench',st:['Deitado, olhos por baixo da barra, mãos um pouco mais abertas que os ombros.','Tira a barra do suporte com os braços esticados.','Desce até tocar ao de leve no peito.','Empurra para cima até esticar os braços.'],er:'Fazer ressaltar a barra no peito, treinar pesado sem alguém a ajudar.'},
- {id:'peck-deck',n:'Máquina de aberturas (peck deck)',z:'Peito',s:'Ombro frontal',p:'gin',eq:'Máquina',lv:'Iniciante',a:'pushfwd',st:['Ajusta o banco para as pegas ficarem à altura do peito.','Costas encostadas, cotovelos ligeiramente dobrados.','Junta as pegas à frente do peito.','Abre devagar até sentir o peito a esticar.'],er:'Afastar as costas do encosto, deixar o peso bater.'},
+ {id:'peck-deck',n:'Máquina de aberturas (peck deck)',z:'Peito',s:'Ombro frontal',p:'gin',eq:'Máquina',lv:'Iniciante',a:'peckfront',st:['Ajusta o banco para as pegas ficarem à altura do peito.','Costas encostadas, cotovelos ligeiramente dobrados.','Junta as pegas à frente do peito.','Abre devagar até sentir o peito a esticar.'],er:'Afastar as costas do encosto, deixar o peso bater.'},
 
  {id:'remada-halter',n:'Remada com halter no banco',z:'Costas',s:'Bíceps, ombro posterior',p:'ambos',eq:'Halter + banco',lv:'Iniciante',a:'row',st:['Joelho e mão do mesmo lado apoiados no banco, costas direitas.','Halter na outra mão, braço esticado para o chão.','Puxa o halter até à anca, cotovelo junto ao corpo.','Aperta as costas 1 segundo em cima e desce devagar.'],er:'Rodar o tronco para subir o peso, arredondar as costas, puxar só com o braço.'},
  {id:'remada-elastico',n:'Remada sentada com elástico',z:'Costas',s:'Bíceps',p:'casa',eq:'Elástico',lv:'Iniciante',a:'seatedrow',st:['Senta-te no chão com as pernas esticadas e o elástico à volta dos pés.','Costas direitas, braços esticados à frente.','Puxa as mãos até à barriga, cotovelos para trás.','Aperta as omoplatas e volta devagar.'],er:'Inclinar o tronco para trás para ajudar, encolher os ombros.'},
@@ -375,12 +406,12 @@ const EX=[
  {id:'remada-cabo',n:'Remada sentada no cabo',z:'Costas',s:'Bíceps',p:'gin',eq:'Cabo',lv:'Iniciante',a:'seatedrow',st:['Pés no apoio, joelhos ligeiramente dobrados.','Costas direitas, braços esticados.','Puxa a pega até à barriga.','Volta devagar sem arredondar as costas.'],er:'Balançar o tronco, encolher os ombros.'},
  {id:'peso-morto',n:'Peso morto com barra',z:'Costas',s:'Pernas, glúteos',p:'gin',eq:'Barra',lv:'Intermédio',a:'hinge',hl:'torso',st:['Pés à largura da anca, barra junto às canelas.','Costas direitas, peito para fora.','Levanta empurrando o chão com os pés, barra sempre junto ao corpo.','Desce levando a anca para trás.'],er:'Arredondar as costas, afastar a barra do corpo.'},
 
- {id:'press-ombros',n:'Press de ombros com halteres',z:'Ombros',s:'Tríceps',p:'ambos',eq:'Halteres + banco',lv:'Iniciante',a:'press',st:['Sentado no banco com encosto, halteres à altura dos ombros.','Palmas viradas para a frente.','Empurra para cima até quase esticar os braços.','Desce devagar até à altura das orelhas.'],er:'Arquear a lombar, bater os halteres em cima.'},
+ {id:'press-ombros',n:'Press de ombros com halteres',z:'Ombros',s:'Tríceps',p:'ambos',eq:'Halteres + banco',lv:'Iniciante',a:'pressfront',st:['Sentado no banco com encosto, halteres à altura dos ombros.','Palmas viradas para a frente.','Empurra para cima até quase esticar os braços.','Desce devagar até à altura das orelhas.'],er:'Arquear a lombar, bater os halteres em cima.'},
  {id:'elev-laterais',n:'Elevações laterais',z:'Ombros',s:'Trapézio',p:'ambos',eq:'Halteres',lv:'Iniciante',a:'lateral',st:['De pé, halteres ao lado do corpo.','Cotovelos ligeiramente dobrados.','Levanta os braços para os lados até à altura dos ombros.','Desce devagar.'],er:'Usar peso a mais e balançar, subir acima dos ombros, encolher os ombros.'},
  {id:'elev-frontais',n:'Elevações frontais',z:'Ombros',s:'Peito (parte de cima)',p:'ambos',eq:'Halteres',lv:'Iniciante',a:'frontraise',st:['De pé, halteres à frente das coxas.','Levanta um braço (ou os dois) à frente até à altura dos ombros.','Segura 1 segundo.','Desce devagar.'],er:'Balançar o corpo, subir demasiado alto.'},
  {id:'face-pull',n:'Face pull com elástico',z:'Ombros',s:'Costas (trapézio)',p:'casa',eq:'Elástico',lv:'Iniciante',a:'facepull',hl:'arm',st:['Prende o elástico à frente, à altura da cara.','Pega com as duas mãos, braços esticados.','Puxa em direção à cara, abrindo os cotovelos para os lados.','Volta devagar.'],er:'Puxar para o peito em vez da cara, encolher os ombros.'},
  {id:'pike',n:'Pike push-ups',z:'Ombros',s:'Tríceps',p:'ambos',eq:'Peso do corpo',lv:'Intermédio',a:'pike',st:['Faz um V invertido: mãos e pés no chão, anca bem alta.','Dobra os cotovelos e leva a cabeça em direção ao chão.','Empurra para voltar acima.','Mais perto os pés das mãos = mais difícil.'],er:'Baixar a anca e transformar em flexão normal.'},
- {id:'press-maquina',n:'Press de ombros na máquina',z:'Ombros',s:'Tríceps',p:'gin',eq:'Máquina',lv:'Iniciante',a:'press',st:['Ajusta o banco para as pegas ficarem à altura dos ombros.','Costas encostadas.','Empurra para cima.','Desce devagar.'],er:'Afastar as costas do encosto.'},
+ {id:'press-maquina',n:'Press de ombros na máquina',z:'Ombros',s:'Tríceps',p:'gin',eq:'Máquina',lv:'Iniciante',a:'pressfront',st:['Ajusta o banco para as pegas ficarem à altura dos ombros.','Costas encostadas.','Empurra para cima.','Desce devagar.'],er:'Afastar as costas do encosto.'},
 
  {id:'curl-halteres',n:'Curl com halteres',z:'Bíceps',s:'Antebraço',p:'ambos',eq:'Halteres',lv:'Iniciante',a:'curlfront',st:['De pé, halteres ao lado do corpo, palmas para a frente.','Cotovelos colados ao corpo.','Sobe os halteres até aos ombros.','Desce devagar até esticar os braços.'],er:'Balançar o corpo, mexer os cotovelos para a frente.'},
  {id:'curl-martelo',n:'Curl martelo',z:'Bíceps',s:'Antebraço',p:'ambos',eq:'Halteres',lv:'Iniciante',a:'curl',prop:'dbv',st:['Halteres ao lado do corpo, palmas viradas uma para a outra.','Cotovelos parados.','Sobe os halteres mantendo as palmas viradas para dentro.','Desce devagar.'],er:'Rodar o pulso, usar balanço.'},
@@ -409,7 +440,7 @@ const EX=[
  {id:'ponte',n:'Ponte de glúteos',z:'Glúteos',s:'Posterior da coxa',p:'casa',eq:'Peso do corpo',lv:'Iniciante',a:'bridge',st:['Deitado de costas, joelhos dobrados, pés no chão.','Sobe a anca até ficar em linha com os joelhos.','Aperta os glúteos 2 segundos.','Desce devagar.'],er:'Empurrar com a lombar, pés demasiado longe.'},
  {id:'abducao-elastico',n:'Abdução com elástico',z:'Glúteos',s:'',p:'casa',eq:'Elástico',lv:'Iniciante',a:'abduct',st:['Elástico à volta dos tornozelos ou acima dos joelhos.','De pé, apoiado numa cadeira.','Leva uma perna para o lado.','Volta devagar e troca de perna no fim.'],er:'Inclinar o tronco para o lado.'},
  {id:'coice-gluteo',n:'Coice de glúteo',z:'Glúteos',s:'',p:'casa',eq:'Elástico',lv:'Iniciante',a:'gkick',st:['De quatro no chão, mãos debaixo dos ombros.','Leva uma perna para trás e para cima.','Aperta o glúteo em cima.','Volta devagar e troca de perna no fim.'],er:'Arquear a lombar, rodar a anca.'},
- {id:'abducao-maquina',n:'Abdução na máquina',z:'Glúteos',s:'',p:'gin',eq:'Máquina',lv:'Iniciante',a:'abduct',st:['Senta-te com os apoios do lado de fora dos joelhos.','Abre as pernas.','Segura 1 segundo.','Fecha devagar.'],er:'Deixar o peso bater.'},
+ {id:'abducao-maquina',n:'Abdução na máquina',z:'Glúteos',s:'',p:'gin',eq:'Máquina',lv:'Iniciante',a:'abductseat',st:['Senta-te com os apoios do lado de fora dos joelhos.','Abre as pernas.','Segura 1 segundo.','Fecha devagar.'],er:'Deixar o peso bater.'},
 
  {id:'gemeos',n:'Elevação de gémeos com halteres',z:'Gémeos',s:'',p:'ambos',eq:'Halteres',lv:'Iniciante',a:'calf',st:['De pé, halteres ao lado do corpo.','Sobe para a ponta dos pés o mais alto possível.','Segura 1 segundo.','Desce devagar.'],er:'Ir depressa, dobrar os joelhos.'},
  {id:'gemeos-sentado',n:'Gémeos sentado na máquina',z:'Gémeos',s:'',p:'gin',eq:'Máquina',lv:'Iniciante',a:'seatedcalf',st:['Senta-te com o apoio em cima dos joelhos.','Pontas dos pés na plataforma.','Sobe os calcanhares ao máximo.','Desce devagar.'],er:'Fazer só meio movimento.'},
@@ -418,7 +449,7 @@ const EX=[
  {id:'crunch',n:'Crunch',z:'Core',s:'',p:'ambos',eq:'Peso do corpo',lv:'Iniciante',a:'crunch',st:['Deitado de costas, joelhos dobrados.','Mãos junto à cabeça sem puxar o pescoço.','Sobe os ombros do chão contraindo a barriga.','Desce devagar.'],er:'Puxar a cabeça com as mãos, subir com balanço.'},
  {id:'crunch-banco',n:'Crunch no banco',z:'Core',s:'',p:'casa',eq:'Banco',lv:'Iniciante',a:'benchcrunch',st:['Deitado no banco, pés apoiados.','Mãos junto à cabeça.','Sobe os ombros contraindo a barriga.','Desce devagar sem relaxar por completo.'],er:'Puxar o pescoço.'},
  {id:'elev-pernas',n:'Elevação de pernas',z:'Core',s:'',p:'ambos',eq:'Peso do corpo',lv:'Iniciante',a:'legraise',st:['Deitado de costas, mãos ao lado do corpo ou debaixo da anca.','Pernas esticadas (dobradas é mais fácil).','Sobe as pernas até ficarem na vertical.','Desce devagar sem tocar no chão.'],er:'Lombar a levantar do chão, descer depressa.'},
- {id:'russian-twist',n:'Russian twist',z:'Core',s:'Oblíquos',p:'ambos',eq:'Halter',lv:'Iniciante',a:'twist',st:['Sentado, joelhos dobrados, tronco um pouco inclinado para trás.','Segura um halter com as duas mãos.','Roda o tronco e leva o halter a um lado.','Roda para o outro lado. Cada lado conta 1.'],er:'Mexer só os braços, arredondar as costas.'},
+ {id:'russian-twist',n:'Russian twist',z:'Core',s:'Oblíquos',p:'ambos',eq:'Halter',lv:'Iniciante',a:'twistfront',st:['Sentado, joelhos dobrados, tronco um pouco inclinado para trás.','Segura um halter com as duas mãos.','Roda o tronco e leva o halter a um lado.','Roda para o outro lado. Cada lado conta 1.'],er:'Mexer só os braços, arredondar as costas.'},
  {id:'mountain-climbers',n:'Mountain climbers',z:'Core',s:'Cardio, ombros',p:'ambos',eq:'Peso do corpo',lv:'Iniciante',a:'climber',tm:1,st:['Posição de flexão com braços esticados.','Leva um joelho ao peito.','Troca de perna rapidamente.','Mantém a anca baixa.'],er:'Levantar muito a anca.'},
  {id:'prancha-lateral',n:'Prancha lateral',z:'Core',s:'Oblíquos',p:'ambos',eq:'Peso do corpo',lv:'Iniciante',a:'sideplank',tm:1,st:['De lado, apoiado num antebraço.','Sobe a anca até o corpo ficar em linha reta.','Segura o tempo indicado.','Troca de lado.'],er:'Deixar a anca descer.'},
 
@@ -486,6 +517,131 @@ const RECIPES=[
 ];
 const RM=Object.fromEntries(RECIPES.map(r=>[r.id,r]));
 const SLOTS=['Pequeno-almoço','Almoço','Lanche','Pré-treino','Pós-treino','Jantar'];
+/* ======================= ALIMENTOS (valores por 100 g, aprox.) ======================= */
+// [nome, kcal, proteína, hidratos, gordura, categoria, porções [[nome, gramas]]]
+const FOOD_RAW=[
+ ['Peito de frango (grelhado/assado)',165,31,0,3.6,'Carne e peixe',[['1 peito',150]]],
+ ['Frango assado com pele',215,25,0,13,'Carne e peixe',[['1/4 de frango',250],['1 coxa',120]]],
+ ['Peito de peru',135,29,0,1.5,'Carne e peixe',[['1 bife',150]]],
+ ['Fiambre de peru',105,18,2,2.5,'Carne e peixe',[['1 fatia',20]]],
+ ['Bife de vaca',180,26,0,8,'Carne e peixe',[['1 bife',150]]],
+ ['Carne picada de vaca',250,26,0,15,'Carne e peixe',[['1 dose',150]]],
+ ['Lombo de porco',170,28,0,6,'Carne e peixe',[['1 bife',120]]],
+ ['Hambúrguer de vaca (só a carne)',250,17,3,19,'Carne e peixe',[['1 hambúrguer',110]]],
+ ['Salsichas',230,12,3,19,'Carne e peixe',[['1 salsicha',40]]],
+ ['Chouriço',450,24,2,38,'Carne e peixe',[['1 rodela',8]]],
+ ['Atum ao natural (escorrido)',110,25,0,1,'Carne e peixe',[['1 lata',80]]],
+ ['Atum em azeite (escorrido)',190,26,0,9,'Carne e peixe',[['1 lata',80]]],
+ ['Salmão',208,20,0,13,'Carne e peixe',[['1 posta',150]]],
+ ['Salmão fumado',117,18,0,4.3,'Carne e peixe',[['1 fatia',20]]],
+ ['Bacalhau cozido',105,23,0,1,'Carne e peixe',[['1 posta',150]]],
+ ['Pescada / peixe branco',85,18,0,1,'Carne e peixe',[['1 posta',150]]],
+ ['Sardinhas em lata',210,24,0,12,'Carne e peixe',[['1 lata',90]]],
+ ['Sardinhas assadas',200,25,0,11,'Carne e peixe',[['1 sardinha',50]]],
+ ['Camarão',99,24,0,0.3,'Carne e peixe',[['1 dose',120]]],
+ ['Ovo',143,12.6,0.7,9.5,'Ovos e lacticínios',[['1 ovo',55]]],
+ ['Claras de ovo',52,11,0.7,0.2,'Ovos e lacticínios',[['1 clara',33]]],
+ ['Leite meio-gordo',46,3.3,4.8,1.6,'Ovos e lacticínios',[['1 copo',250],['1 chávena',200]]],
+ ['Leite magro',35,3.4,5,0.1,'Ovos e lacticínios',[['1 copo',250]]],
+ ['Leite gordo',64,3.2,4.7,3.6,'Ovos e lacticínios',[['1 copo',250]]],
+ ['Iogurte grego natural magro',59,10,4,0.4,'Ovos e lacticínios',[['1 iogurte',150]]],
+ ['Iogurte grego natural (normal)',120,6,4,9,'Ovos e lacticínios',[['1 iogurte',150]]],
+ ['Iogurte proteico / Skyr',62,10.5,4,0.2,'Ovos e lacticínios',[['1 iogurte',160]]],
+ ['Iogurte natural',62,4,5,3,'Ovos e lacticínios',[['1 iogurte',125]]],
+ ['Iogurte de aromas / líquido',85,3.2,13,2,'Ovos e lacticínios',[['1 iogurte',125]]],
+ ['Queijo fresco',160,11,3,11,'Ovos e lacticínios',[['1 queijinho',90]]],
+ ['Queijo fresco light',100,12,3,4.5,'Ovos e lacticínios',[['1 queijinho',90]]],
+ ['Queijo flamengo',350,25,0,27,'Ovos e lacticínios',[['1 fatia',20]]],
+ ['Queijo cottage',98,11,3.4,4.3,'Ovos e lacticínios',[['1 colher de sopa',30]]],
+ ['Mozzarella',250,18,3,19,'Ovos e lacticínios',[['1 bola',125]]],
+ ['Manteiga',740,0.6,0.6,82,'Gorduras e frutos secos',[['1 colher de chá',5]]],
+ ['Arroz cozido',130,2.7,28,0.3,'Hidratos',[['1 chávena',160],['1 saqueta micro-ondas (125 g)',125]]],
+ ['Massa cozida',157,5.8,31,0.9,'Hidratos',[['1 prato',180]]],
+ ['Batata cozida',86,2,20,0.1,'Hidratos',[['1 batata média',150]]],
+ ['Batata-doce cozida / micro-ondas',90,2,21,0.1,'Hidratos',[['1 batata-doce média',150]]],
+ ['Batatas fritas',312,3.4,41,15,'Hidratos',[['1 dose',120]]],
+ ['Puré de batata',90,2,14,3,'Hidratos',[['1 dose',200]]],
+ ['Pão (carcaça)',270,9,52,2.5,'Hidratos',[['1 carcaça',50]]],
+ ['Pão integral',247,13,41,3.4,'Hidratos',[['1 fatia',35]]],
+ ['Pão de forma',265,8,49,3.5,'Hidratos',[['1 fatia',25]]],
+ ['Wrap / tortilha',300,8,50,7,'Hidratos',[['1 wrap',60]]],
+ ['Flocos de aveia',380,13,60,7,'Hidratos',[['1 colher de sopa',10],['1 dose',40]]],
+ ['Cereais de pequeno-almoço',380,7,84,1.5,'Hidratos',[['1 taça',40]]],
+ ['Granola',450,10,62,17,'Hidratos',[['1 colher de sopa',12]]],
+ ['Grão cozido',125,7,19,2.5,'Hidratos',[['1/2 frasco',120]]],
+ ['Feijão cozido',110,7,17,0.5,'Hidratos',[['1/2 frasco',120]]],
+ ['Lentilhas cozidas',116,9,20,0.4,'Hidratos',[['1 dose',150]]],
+ ['Quinoa cozida',120,4.4,21,1.9,'Hidratos',[['1 saqueta',125]]],
+ ['Bolachas Maria',440,7,74,12,'Hidratos',[['1 bolacha',6.5]]],
+ ['Tostas',390,11,72,5,'Hidratos',[['1 tosta',8]]],
+ ['Banana',89,1.1,23,0.3,'Fruta',[['1 banana',120]]],
+ ['Maçã',52,0.3,14,0.2,'Fruta',[['1 maçã',180]]],
+ ['Pera',57,0.4,15,0.1,'Fruta',[['1 pera',170]]],
+ ['Laranja',47,0.9,12,0.1,'Fruta',[['1 laranja',180]]],
+ ['Tangerina',53,0.8,13,0.3,'Fruta',[['1 tangerina',80]]],
+ ['Kiwi',61,1.1,15,0.5,'Fruta',[['1 kiwi',75]]],
+ ['Morangos',32,0.7,7.7,0.3,'Fruta',[['1 taça',150]]],
+ ['Uvas',69,0.7,18,0.2,'Fruta',[['1 cacho pequeno',120]]],
+ ['Frutos vermelhos',50,0.8,12,0.3,'Fruta',[['1 mão cheia',80]]],
+ ['Manga',60,0.8,15,0.4,'Fruta',[['1/2 manga',150]]],
+ ['Ananás',50,0.5,13,0.1,'Fruta',[['1 rodela',80]]],
+ ['Salada (alface / mistura)',17,1.3,3,0.2,'Legumes',[['1 prato',80]]],
+ ['Tomate',18,0.9,3.9,0.2,'Legumes',[['1 tomate',120]]],
+ ['Pepino',15,0.7,3.6,0.1,'Legumes',[['1/2 pepino',150]]],
+ ['Brócolos',35,2.4,7,0.4,'Legumes',[['1 dose',150]]],
+ ['Legumes congelados (mistura)',60,3,9,0.5,'Legumes',[['1 dose',200]]],
+ ['Cenoura',41,0.9,10,0.2,'Legumes',[['1 cenoura',80]]],
+ ['Espinafres',23,2.9,3.6,0.4,'Legumes',[['1 mão cheia',30]]],
+ ['Sopa de legumes',40,1.5,6,1.2,'Legumes',[['1 prato',300]]],
+ ['Azeite',884,0,0,100,'Gorduras e frutos secos',[['1 colher de sopa',13],['1 fio',5]]],
+ ['Abacate',160,2,9,15,'Gorduras e frutos secos',[['1/2 abacate',70]]],
+ ['Amêndoas',580,21,22,50,'Gorduras e frutos secos',[['1 mão cheia',25]]],
+ ['Nozes',654,15,14,65,'Gorduras e frutos secos',[['1 mão cheia',25]]],
+ ['Farinha de amêndoa',600,21,20,50,'Gorduras e frutos secos',[['1 colher de sopa',10]]],
+ ['Amendoins',570,26,16,49,'Gorduras e frutos secos',[['1 mão cheia',25]]],
+ ['Manteiga de amendoim',590,25,20,50,'Gorduras e frutos secos',[['1 colher de sopa',15]]],
+ ['Maionese',680,1,1,75,'Molhos e doces',[['1 colher de sopa',15]]],
+ ['Ketchup',112,1.3,26,0.1,'Molhos e doces',[['1 colher de sopa',15]]],
+ ['Mel',304,0.3,82,0,'Molhos e doces',[['1 colher de chá',7]]],
+ ['Açúcar',400,0,100,0,'Molhos e doces',[['1 pacote',6]]],
+ ['Chocolate negro',550,7,46,36,'Molhos e doces',[['1 quadrado',10]]],
+ ['Chocolate de leite',535,7.5,58,30,'Molhos e doces',[['1 quadrado',10]]],
+ ['Gelado',210,3.5,24,11,'Molhos e doces',[['1 bola',60]]],
+ ['Bolo (fatia)',380,5,50,18,'Molhos e doces',[['1 fatia',80]]],
+ ['Pastel de nata',330,5,38,17,'Molhos e doces',[['1 pastel',60]]],
+ ['Croissant',406,8,46,21,'Molhos e doces',[['1 croissant',60]]],
+ ['Whey protein',400,80,8,6,'Suplementos',[['1 scoop',30]]],
+ ['Refrigerante (tipo cola)',42,0,10.6,0,'Bebidas',[['1 lata',330]]],
+ ['Refrigerante zero',1,0,0,0,'Bebidas',[['1 lata',330]]],
+ ['Sumo de laranja',45,0.7,10,0.2,'Bebidas',[['1 copo',200]]],
+ ['Cerveja',43,0.5,3.6,0,'Bebidas',[['1 imperial',200],['1 garrafa',330]]],
+ ['Vinho',85,0.1,2.6,0,'Bebidas',[['1 copo',150]]],
+ ['Galão / meia de leite',40,2.5,4,1.4,'Bebidas',[['1 galão',250],['1 meia de leite',200]]],
+ ['Francesinha',230,13,15,13,'Pratos feitos',[['1 francesinha',550]]],
+ ['Bitoque (bife, ovo, batata, arroz)',190,10,15,10,'Pratos feitos',[['1 prato',500]]],
+ ['Pizza',266,11,33,10,'Pratos feitos',[['1 fatia',110]]],
+ ['Hambúrguer no pão (fast food)',250,13,28,10,'Pratos feitos',[['1 hambúrguer',220]]],
+ ['Sushi',150,6,28,1.5,'Pratos feitos',[['1 peça',30]]],
+ ['Bacalhau à Brás',180,10,10,11,'Pratos feitos',[['1 prato',350]]],
+ ['Arroz de pato',190,11,20,7,'Pratos feitos',[['1 prato',350]]],
+ ['Lasanha',135,8,12,6,'Pratos feitos',[['1 prato',350]]],
+ ['Esparguete à bolonhesa',140,7,18,4.5,'Pratos feitos',[['1 prato',350]]],
+ ['Prego no pão',240,14,25,9,'Pratos feitos',[['1 prego',200]]],
+ ['Tosta mista',260,12,28,11,'Pratos feitos',[['1 tosta',150]]],
+ ['Sandes de fiambre e queijo',250,13,30,9,'Pratos feitos',[['1 sandes',130]]],
+ ['Frango de churrasco com batata frita',230,15,14,13,'Pratos feitos',[['1 prato',450]]]
+];
+function slug(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}
+const FOODS=FOOD_RAW.map(([n,k,p,c,f,cat,por])=>({id:'f-'+slug(n),n,k,p,c,f,cat,por:(por||[]).map(([l,g])=>({l,g}))}));
+function allFoods(){return FOODS.concat((S.myFoods||[]))}
+function foodById(id){return allFoods().find(f=>f.id===id)}
+function itemGrams(it,f){ if(it.u==='g') return num(it.q)||0; const p=f&&f.por[+it.u]; return (num(it.q)||0)*(p?p.g:100); }
+function plateTotals(items){
+  const t={k:0,p:0,c:0,f:0,parts:[]};
+  items.forEach(it=>{ const f=foodById(it.fid); if(!f) return; const g=itemGrams(it,f); t.k+=f.k*g/100; t.p+=f.p*g/100; t.c+=(f.c||0)*g/100; t.f+=(f.f||0)*g/100; t.parts.push({n:f.n,g:Math.round(g)}); });
+  return t;
+}
+
 
 /* ======================= HELPERS ======================= */
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -513,14 +669,14 @@ function lsGet(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 function freshState(){
   const plans=TPL.map(t=>({...clone(t),id:uid('p')}));
-  return {v:1,updatedAt:0,tplSeen:TPL.map(t=>t.tpl),plans,activePlan:plans[0].id,current:null,food:{},shop:{sel:{},got:{}},settings:{rest:90},deleted:[]};
+  return {v:1,updatedAt:0,tplSeen:TPL.map(t=>t.tpl),plans,activePlan:plans[0].id,current:null,food:{},shop:{sel:{},got:{}},settings:{rest:90},deleted:[],myFoods:[],myPlates:[],recentFoods:[]};
 }
 function normalize(s){
   const f=freshState();
   if(!s||typeof s!=='object') return f;
   const o={...f,...s};
   if(!Array.isArray(o.plans)) o.plans=f.plans;
-  o.food=o.food||{}; o.shop=o.shop||{sel:{},got:{}}; o.shop.sel=o.shop.sel||{}; o.shop.got=o.shop.got||{};
+  o.food=o.food||{}; o.myFoods=o.myFoods||[]; o.myPlates=o.myPlates||[]; o.recentFoods=o.recentFoods||[]; o.shop=o.shop||{sel:{},got:{}}; o.shop.sel=o.shop.sel||{}; o.shop.got=o.shop.got||{};
   o.settings={rest:90,...(o.settings||{})}; o.deleted=o.deleted||[];
   if(!Array.isArray(s.tplSeen)) o.tplSeen=Array.isArray(s.plans)?['p4','p3','ini','cardio']:TPL.map(t=>t.tpl);
   TPL.forEach(t=>{ if(!o.tplSeen.includes(t.tpl)){ if(!o.plans.find(p=>p.tpl===t.tpl)) o.plans.push({...clone(t),id:uid('p')}); o.tplSeen.push(t.tpl); } });
@@ -598,7 +754,7 @@ function animate(elId,getEx,period){
   const T=period||3200, t0=performance.now();
   const loop=now=>{
     const node=document.getElementById(elId); if(!node){ RAF[elId]=null; return; }
-    const el2=now-t0, cycle=Math.floor(el2/T), x=(el2%T)/T; let t;
+    const el2=Math.max(0,now-t0), cycle=Math.floor(el2/T), x=(el2%T)/T; let t;
     if(x<.38) t=ease(x/.38); else if(x<.5) t=1; else if(x<.94) t=1-ease((x-.5)/.44); else t=0;
     node.innerHTML=figure(getEx(cycle),t);
     RAF[elId]=requestAnimationFrame(loop);
@@ -672,28 +828,26 @@ function viewHome(){
   // Rápidos
   const qk=S.plans.filter(p=>p.quick&&p.days.length);
   if(qk.length&&!S.current) h+=`<div class="w full t-ex"><div class="row between"><span class="wl">Treinos rápidos</span><span class="ws2" style="margin:0">15 min</span></div><div class="qgrid">${qk.map(p=>`<button class="qbtn" data-act="startDay" data-p="${p.id}" data-d="0">${esc(p.days[0].name.replace(/\s*15 min/,''))}<small>${p.days[0].items.length} exercícios</small></button>`).join('')}</div></div>`;
-  // Comida + Água
+  // Comida (um só widget)
   const fd=S.food[today]||{items:[],water:0};
   const kcal=fd.items.reduce((a,x)=>a+(x.kcal||0),0), prot=fd.items.reduce((a,x)=>a+(x.prot||0),0);
-  h+=`<button class="w t-food" data-act="goFood" data-k="hoje"><span class="wl">Comida hoje</span><div><div class="big">${Math.round(prot)}<small> g</small></div><div class="ws2">proteína, ${Math.round(kcal)} kcal</div></div></button>`;
-  h+=`<div class="w t-water"><span class="wl">Água</span><div class="row between" style="align-items:flex-end"><div><div class="big">${fd.water||0}</div><div class="ws2">copos</div></div><button class="plus" data-act="waterHome" aria-label="Mais um copo de água">+</button></div></div>`;
-  // Exercícios + Planos
-  h+=`<button class="w t-ex" data-act="go" data-k="exercicios"><span class="wl">Exercícios</span><svg id="homeAnim" class="wfig" viewBox="0 -16 200 150" aria-hidden="true"></svg><div class="ws2">${EX.length} com animação</div></button>`;
-  h+=`<button class="w" data-act="go" data-k="planos"><span class="wl">Planos</span><div><div class="wt2">${esc(plan?plan.name:'Sem plano')}</div><div class="ws2">${S.plans.length} ${S.plans.length===1?'plano':'planos'} guardados</div></div></button>`;
-  // Batido sugerido
-  const hr=new Date().getHours(); const slot=hr<11?'Pequeno-almoço':hr<15?'Almoço':hr<19?'Pós-treino':'Jantar';
-  const opts=RECIPES.filter(r=>r.when.includes(slot)); const doy=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,0))/864e5); const r=opts[doy%opts.length];
-  if(r) h+=`<button class="w full rec" data-act="recipe" data-id="${r.id}"><span class="rbar" style="background:${r.col}"></span><span class="wl">Sugestão para ${slot.toLowerCase()}</span><div><div class="wt2">${esc(r.n)}</div><div class="ws2">${r.kcal} kcal, ${r.prot} g proteína, ${r.k==='batido'?'2 min no liquidificador':'sem cozinhar'}</div></div></button>`;
-  // Progresso + Compras
-  const weeks=[]; for(let i=5;i>=0;i--){ const a=new Date(ws.getFullYear(),ws.getMonth(),ws.getDate()-7*i), b=new Date(a.getFullYear(),a.getMonth(),a.getDate()+7); weeks.push(SESS.filter(s=>{const d=new Date(s.date);return d>=a&&d<b}).length); }
-  const mx=Math.max(3,...weeks);
-  h+=`<button class="w t-prog" data-act="go" data-k="progresso"><span class="wl">Progresso</span><div class="bars">${weeks.map((n,i)=>`<span style="height:${Math.max(6,n/mx*100)}%;${i===5?'background:var(--good)':''}"></span>`).join('')}</div><div class="ws2">${SESS.length} treinos no total</div></button>`;
+  const hr=new Date().getHours(); const sug=hr<11?'Pequeno-almoço':hr<15?'Almoço':hr<19?'Pós-treino':'Jantar';
+  const opts=RECIPES.filter(r=>r.when.includes(sug)); const doy=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,0))/864e5); const r=opts[doy%opts.length];
   const sel=Object.entries(S.shop.sel).filter(([id,n])=>RM[id]&&n>0);
   const agg=new Set(); sel.forEach(([id])=>RM[id].ing.forEach(([q,u,n])=>agg.add(n+'|'+u)));
   const left=[...agg].filter(k=>!S.shop.got[k]).length;
-  h+=`<button class="w" data-act="goFood" data-k="compras"><span class="wl">Compras</span><div><div class="big">${left}</div><div class="ws2">${sel.length?'por comprar':'lista vazia'}</div></div></button>`;
-  h+=`<button class="w" data-act="goFood" data-k="batido"><span class="wl">Batidos</span><div><div class="big">${RECIPES.filter(x=>x.k==='batido').length}</div><div class="ws2">receitas</div></div></button>`;
-  h+=`<button class="w" data-act="goFood" data-k="refeicao"><span class="wl">Refeições fáceis</span><div><div class="big">${RECIPES.filter(x=>x.k==='refeicao').length}</div><div class="ws2">sem fogão</div></div></button>`;
+  h+=`<div class="w full t-food food-w"><button class="fw-top" data-act="goFood" data-k="hoje"><span class="wl">Comida hoje</span><span class="fw-go">Diário ›</span></button>
+   <button class="fw-nums" data-act="goFood" data-k="hoje"><span><span class="big">${Math.round(kcal)}</span><span class="ws2">kcal</span></span><span><span class="big">${Math.round(prot)}<small> g</small></span><span class="ws2">proteína</span></span></button>
+   <button class="btn primary block" data-act="quickLog">+ Registar o que comi</button>
+   <div class="fw-row"><button class="fw-chip" data-act="goFood" data-k="batido">Batidos</button><button class="fw-chip" data-act="goFood" data-k="refeicao">Refeições</button><button class="fw-chip" data-act="goFood" data-k="compras">Compras${left?` <b>${left}</b>`:''}</button></div>
+   ${r?`<button class="fw-sug" data-act="recipe" data-id="${r.id}"><span class="dot" style="background:${r.col}"></span><span class="grow">Sugestão para ${sug.toLowerCase()}: <b>${esc(r.n)}</b></span>›</button>`:''}</div>`;
+  // Exercícios + Planos
+  h+=`<button class="w t-ex" data-act="go" data-k="exercicios"><span class="wl">Exercícios</span><svg id="homeAnim" class="wfig" viewBox="0 -16 200 150" aria-hidden="true"></svg><div class="ws2">${EX.length} com animação</div></button>`;
+  h+=`<button class="w" data-act="go" data-k="planos"><span class="wl">Planos</span><div><div class="wt2">${esc(plan?plan.name:'Sem plano')}</div><div class="ws2">${S.plans.length} ${S.plans.length===1?'plano':'planos'} guardados</div></div></button>`;
+  // Progresso
+  const weeks=[]; for(let i=5;i>=0;i--){ const a=new Date(ws.getFullYear(),ws.getMonth(),ws.getDate()-7*i), b=new Date(a.getFullYear(),a.getMonth(),a.getDate()+7); weeks.push(SESS.filter(s=>{const d=new Date(s.date);return d>=a&&d<b}).length); }
+  const mx=Math.max(3,...weeks);
+  h+=`<button class="w full t-prog" data-act="go" data-k="progresso"><div class="row between"><span class="wl">Progresso</span><span class="ws2" style="margin:0">${SESS.length} treinos no total</span></div><div class="bars">${weeks.map((n,i)=>`<span style="height:${Math.max(6,n/mx*100)}%;${i===5?'background:var(--good)':''}"></span>`).join('')}</div><div class="ws2" style="margin:0">Treinos por semana (últimas 6)</div></button>`;
   h+='</div>';
   return h;
 }
@@ -733,7 +887,7 @@ function viewWorkout(){
   const idx=Math.min(c.idx||0,c.items.length-1); c.idx=idx;
   const item=c.items[idx], ex=EXM[item.ex], last=lastFor(item.ex);
   let h=`<div class="pills">${c.items.map((x,i)=>{ const ok=x.sets.length&&x.sets.every(s=>s.done); return `<button class="pill ${i===idx?'cur':ok?'ok':''}" data-act="wGo" data-i="${i}" aria-label="Exercício ${i+1}">${ok&&i!==idx?'✓':i+1}</button>`; }).join('')}<button class="pill" data-act="wMenu" aria-label="Mais opções">⋯</button></div>`;
-  h+=`<div class="card" style="padding:0;overflow:hidden"><button class="wstage" data-act="exInfo" data-ex="${ex.id}" aria-label="Ver como se faz"><svg id="wAnim" viewBox="0 -16 200 150" aria-hidden="true">${figure(ex,0)}</svg><span class="howto">Como fazer</span></button><div style="padding:14px 16px 16px"><div class="small muted">Exercício ${idx+1} de ${c.items.length}</div><div class="h2" style="font-size:26px">${esc(ex.n)}</div><div class="small" style="margin-top:2px"><b>Objetivo:</b> ${esc(item.target||'')}</div>${last?`<div class="last">Última vez: ${esc(setsTxt(last.sets))}</div>`:''}`;
+  h+=`<div class="card" style="padding:0;overflow:hidden"><button class="wstage" data-act="exInfo" data-ex="${ex.id}" aria-label="Ver como se faz"><svg id="wAnim" viewBox="0 -16 200 150" aria-hidden="true">${figure(ex,0)}</svg><span class="viewtag">${viewName(ex)}</span><span class="howto">Como fazer</span></button><div style="padding:14px 16px 16px"><div class="small muted">Exercício ${idx+1} de ${c.items.length}</div><div class="h2" style="font-size:26px">${esc(ex.n)}</div><div class="small" style="margin-top:2px"><b>Objetivo:</b> ${esc(item.target||'')}</div>${last?`<div class="last">Última vez: ${esc(setsTxt(last.sets))}</div>`:''}`;
   const firstOpen=item.sets.findIndex(s=>!s.done);
   const open=UI.wOpen&&UI.wOpen.i===idx?UI.wOpen.j:firstOpen;
   item.sets.forEach((st,j)=>{
@@ -848,7 +1002,7 @@ function exInfo(id){
   const hist=exHistory(id);
   const pts=hist.filter(h=>h.best!=null).slice(0,20).reverse().map(h=>({y:h.best,l:fmtDate(h.date).split(', ')[1]}));
   let h=`<div class="sh-top"><h2>${esc(ex.n)}</h2><button class="iconbtn" data-act="closeSheet" aria-label="Fechar">×</button></div>
-  <div class="stage"><svg id="anim" viewBox="0 -16 200 150" role="img" aria-label="Animação do exercício ${esc(ex.n)}">${figure(ex,0)}</svg></div>
+  <div class="stage"><svg id="anim" viewBox="0 -16 200 150" role="img" aria-label="Animação do exercício ${esc(ex.n)}">${figure(ex,0)}</svg><span class="viewtag">${viewName(ex)}</span></div>
   <div class="row wrap" style="gap:6px;margin-bottom:12px">${placeTag(ex.p)}<span class="tag">${esc(ex.lv)}</span><span class="tag">${esc(ex.eq)}</span></div>
   <div class="kv"><div><div class="k">Músculo principal</div><div class="v">${esc(ex.z)}</div></div><div><div class="k">Também trabalha</div><div class="v">${esc(ex.s||'—')}</div></div></div>
   <div class="card"><div class="h3">Como fazer</div><ol class="steps">${ex.st.map(s=>`<li>${esc(s)}</li>`).join('')}</ol></div>
@@ -884,15 +1038,15 @@ function viewComida(){
 }
 function viewDiario(){
   const k=UI.foodDate, d=S.food[k]||{items:[],water:0};
-  const kcal=d.items.reduce((a,x)=>a+(x.kcal||0),0), prot=d.items.reduce((a,x)=>a+(x.prot||0),0);
+  const kcal=d.items.reduce((a,x)=>a+(x.kcal||0),0), prot=d.items.reduce((a,x)=>a+(x.prot||0),0), carb=d.items.reduce((a,x)=>a+(x.carb||0),0), fat=d.items.reduce((a,x)=>a+(x.fat||0),0);
   const isToday=k===dkey();
   let h=`<div class="row between" style="margin-bottom:10px"><button class="iconbtn" data-act="foodPrev" aria-label="Dia anterior">‹</button><div class="h3">${isToday?'Hoje':fmtKey(k)}</div><button class="iconbtn" data-act="foodNext" aria-label="Dia seguinte" ${isToday?'disabled style="opacity:.35"':''}>›</button></div>
-  <div class="totals"><div><div class="num">${Math.round(kcal)}</div><div class="k">kcal aprox.</div></div><div><div class="num">${Math.round(prot)} g</div><div class="k">proteína</div></div><div><div class="row between"><div class="num">${d.water||0}</div><div class="row" style="gap:4px"><button class="iconbtn" style="width:30px;height:30px" data-act="water" data-v="-1" aria-label="Menos um copo">−</button><button class="iconbtn" style="width:30px;height:30px" data-act="water" data-v="1" aria-label="Mais um copo">+</button></div></div><div class="k">copos de água</div></div></div>
+  <div class="totals"><div><div class="num">${Math.round(kcal)}</div><div class="k">kcal aprox.</div></div><div><div class="num">${Math.round(prot)} g</div><div class="k">proteína</div></div><div><div class="row between"><div class="num">${d.water||0}</div><div class="row" style="gap:4px"><button class="iconbtn" style="width:30px;height:30px" data-act="water" data-v="-1" aria-label="Menos um copo">−</button><button class="iconbtn" style="width:30px;height:30px" data-act="water" data-v="1" aria-label="Mais um copo">+</button></div></div><div class="k">copos de água</div></div></div>${carb||fat?`<div class="small muted" style="margin:-4px 0 12px">Hidratos ${Math.round(carb)} g, gordura ${Math.round(fat)} g (dos alimentos registados com detalhe)</div>`:''}
   <details class="tip"><summary>Comer antes e depois do treino</summary><div class="small" style="margin-top:8px;line-height:1.55"><p style="margin:0 0 6px"><b>1–2 h antes:</b> uma refeição normal mas leve (ex.: wrap de ovos, frango com arroz).</p><p style="margin:0 0 6px"><b>30–60 min antes:</b> algo rápido, como banana e iogurte proteico ou o batido de café.</p><p style="margin:0 0 6px"><b>Depois do treino:</b> um batido pós-treino ou uma refeição com proteína nas 2 horas seguintes.</p><p style="margin:0">Vai bebendo água ao longo do dia. Os valores são aproximados e não substituem um nutricionista.</p></div></details>`;
   SLOTS.forEach(sl=>{
     const items=d.items.map((x,i)=>({...x,i})).filter(x=>x.slot===sl);
     h+=`<div class="slot"><div class="row between"><span class="h3">${sl}</span><button class="link" data-act="foodAdd" data-slot="${sl}">+ Adicionar</button></div>`;
-    items.forEach(x=>{ h+=`<div class="it"><span class="grow">${esc(x.name)}<span class="small muted" style="display:block">${x.kcal?Math.round(x.kcal)+' kcal':''}${x.kcal&&x.prot?', ':''}${x.prot?Math.round(x.prot)+' g proteína':''}</span></span><button class="iconbtn" style="width:30px;height:30px" data-act="foodDel" data-i="${x.i}" aria-label="Remover">×</button></div>`; });
+    items.forEach(x=>{ h+=`<div class="it"><span class="grow">${esc(x.name)}${x.parts&&x.parts.length>1?`<span class="small muted" style="display:block">${esc(x.parts.map(p=>p.n.split(' (')[0]+' '+p.g+' g').join(', '))}</span>`:''}<span class="small muted" style="display:block">${x.kcal?Math.round(x.kcal)+' kcal':''}${x.kcal&&x.prot?', ':''}${x.prot?Math.round(x.prot)+' g proteína':''}</span></span><button class="iconbtn" style="width:30px;height:30px" data-act="foodDel" data-i="${x.i}" aria-label="Remover">×</button></div>`; });
     h+=`</div>`;
   });
   return h;
@@ -936,6 +1090,63 @@ function viewCompras(){
   return h;
 }
 
+/* ---------- REGISTAR COMIDA ---------- */
+function openAdd(slot){
+  UI.add={slot,tab:'prato',q:'',plate:{items:[],name:''}};
+  openSheet(`<div class="sh-top"><h2>O que comeste?</h2><button class="iconbtn" data-act="closeSheet" aria-label="Fechar">×</button></div>
+  <div class="chips" style="margin-bottom:8px">${SLOTS.map(s=>`<button class="chip" data-act="addSlot" data-k="${s}" aria-pressed="${s===slot}">${s}</button>`).join('')}</div>
+  <div class="seg">${[['prato','Montar prato'],['meus','Os meus pratos'],['receitas','Receitas'],['outro','Outro']].map(([k,l])=>`<button data-act="addTab" data-k="${k}" aria-pressed="${k==='prato'}">${l}</button>`).join('')}</div>
+  <div id="addBody"></div>`);
+  renderAddBody();
+}
+function renderAddBody(){
+  const b=document.getElementById('addBody'); if(!b||!UI.add) return; const t=UI.add.tab;
+  if(t==='prato'){
+    b.innerHTML=`<input id="fq" class="input" type="search" placeholder="Procurar alimento (ex.: frango, arroz, ovo)" data-in="fq" value="${esc(UI.add.q)}" autocomplete="off"><div id="fRes" style="margin-top:8px"></div><div id="plateBox"></div>`;
+    renderFoodResults(); renderPlate();
+  } else if(t==='meus'){
+    if(!S.myPlates.length){ b.innerHTML=`<div class="empty">Ainda não guardaste pratos.<br>Em "Montar prato", marca "Guardar este prato" para o voltares a registar com um toque.</div>`; return; }
+    b.innerHTML=S.myPlates.map(pl=>{ const tt=plateTotals(pl.items); return `<div class="recipe" style="cursor:default"><span class="grow"><span class="h3" style="display:block">${esc(pl.name)}</span><span class="small muted">${Math.round(tt.k)} kcal, ${Math.round(tt.p)} g proteína</span></span><button class="btn sm primary" data-act="plateLogSaved" data-id="${pl.id}">Registar</button><button class="iconbtn" data-act="plateEdit" data-id="${pl.id}" aria-label="Editar">✎</button><button class="iconbtn" data-act="plateDelSaved" data-id="${pl.id}" aria-label="Apagar">×</button></div>`; }).join('');
+  } else if(t==='receitas'){
+    const sl=UI.add.slot;
+    const rec=k=>RECIPES.filter(r=>r.k===k).sort((a,b2)=>(b2.when.includes(sl)?1:0)-(a.when.includes(sl)?1:0)).map(r=>`<button class="recipe" data-act="foodPick" data-id="${r.id}"><span class="dot" style="background:${r.col}"></span><span class="grow"><span class="h3" style="display:block">${esc(r.n)}</span><span class="small muted">${r.kcal} kcal, ${r.prot} g proteína</span></span></button>`).join('');
+    b.innerHTML=`<div class="sec-title" style="margin-top:4px">Batidos</div>${rec('batido')}<div class="sec-title">Refeições fáceis</div>${rec('refeicao')}`;
+  } else {
+    b.innerHTML=`<div class="card"><div class="h3">Registo rápido</div><div class="small muted">Quando já sabes as calorias (ex.: do rótulo).</div><label class="lbl" for="fn">O que comeste</label><input id="fn" class="input" placeholder="Ex.: barra de cereais"><div class="row" style="gap:8px"><div class="grow"><label class="lbl" for="fk">kcal</label><input id="fk" class="input" inputmode="numeric"></div><div class="grow"><label class="lbl" for="fp">Proteína (g)</label><input id="fp" class="input" inputmode="numeric"></div></div><button class="btn primary block" style="margin-top:12px" data-act="foodFree">Registar</button></div>
+    <div class="card"><div class="h3">Criar alimento novo</div><div class="small muted">Fica guardado para usares nos pratos. Os valores estão no rótulo, por 100 g.</div><label class="lbl" for="nfN">Nome</label><input id="nfN" class="input"><div class="row" style="gap:8px"><div class="grow"><label class="lbl" for="nfK">kcal / 100 g</label><input id="nfK" class="input" inputmode="decimal"></div><div class="grow"><label class="lbl" for="nfP">Proteína / 100 g</label><input id="nfP" class="input" inputmode="decimal"></div></div><div class="row" style="gap:8px"><div class="grow"><label class="lbl" for="nfC">Hidratos / 100 g</label><input id="nfC" class="input" inputmode="decimal"></div><div class="grow"><label class="lbl" for="nfF">Gordura / 100 g</label><input id="nfF" class="input" inputmode="decimal"></div></div><div class="row" style="gap:8px"><div class="grow"><label class="lbl" for="nfPL">Porção (opcional)</label><input id="nfPL" class="input" placeholder="Ex.: 1 barra"></div><div class="grow"><label class="lbl" for="nfPG">Peso da porção (g)</label><input id="nfPG" class="input" inputmode="decimal"></div></div><button class="btn block" style="margin-top:12px" data-act="newFood">Criar e adicionar ao prato</button></div>`;
+  }
+}
+function renderFoodResults(){
+  const box=document.getElementById('fRes'); if(!box) return;
+  const q=slug(UI.add.q||'');
+  let list;
+  if(!q){
+    const rec=S.recentFoods.map(foodById).filter(Boolean);
+    const base=rec.length?rec:['f-peito-de-frango-grelhado-assado','f-arroz-cozido','f-ovo','f-atum-ao-natural-escorrido','f-salada-alface-mistura','f-pao-integral','f-banana','f-azeite'].map(foodById).filter(Boolean);
+    box.innerHTML=`<div class="small muted" style="margin:2px 0 6px">${rec.length?'Usados recentemente':'Mais comuns'}</div><div class="chips" style="flex-wrap:wrap">${base.map(f=>`<button class="chip" style="background:var(--surface)" data-act="plateAdd" data-f="${f.id}">+ ${esc(f.n.split(' (')[0])}</button>`).join('')}</div>`;
+    return;
+  }
+  const words=q.split('-').filter(Boolean);
+  list=allFoods().filter(f=>{ const s=slug(f.n+' '+f.cat); return words.every(w=>s.includes(w)); }).slice(0,25);
+  box.innerHTML=list.length?`<div class="flist">${list.map(f=>`<button class="fitem" data-act="plateAdd" data-f="${f.id}"><span class="grow"><span style="display:block;font-weight:600">${esc(f.n)}</span><span class="small muted">${f.k} kcal, ${fmtNum(f.p)} g prot. por 100 g${f.por.length?`, ${esc(f.por[0].l)} = ${f.por[0].g} g`:''}</span></span><span class="addp">+</span></button>`).join('')}</div>`:`<div class="empty" style="padding:14px">Não encontrei "${esc(UI.add.q)}". Podes criá-lo no separador <b>Outro</b>.</div>`;
+}
+function renderPlate(){
+  const box=document.getElementById('plateBox'); if(!box) return;
+  const pl=UI.add.plate;
+  if(!pl.items.length){ box.innerHTML=`<div class="plate empty-plate"><div class="h3">O teu prato</div><div class="small muted" style="margin-top:4px">Procura e toca nos alimentos que comeste. Depois ajusta as quantidades e a app calcula as calorias e a proteína.</div></div>`; return; }
+  const t=plateTotals(pl.items);
+  box.innerHTML=`<div class="plate"><div class="h3" style="margin-bottom:6px">O teu prato</div>${pl.items.map((it,i)=>{ const f=foodById(it.fid); if(!f) return ''; const g=itemGrams(it,f); return `<div class="prow"><div class="grow" style="min-width:0"><div style="font-weight:600;line-height:1.2">${esc(f.n.split(' (')[0])}</div><div class="small muted" id="pk-${i}">${Math.round(f.k*g/100)} kcal, ${fmtNum(Math.round(f.p*g/10)/10)} g prot.</div><div class="row" style="gap:6px;margin-top:6px"><input class="mini-in" style="width:64px" inputmode="decimal" data-in="pq" data-k="${i}" value="${esc(String(it.q).replace('.',','))}" aria-label="Quantidade"><select class="mini-sel" data-in="pu" data-k="${i}" aria-label="Unidade">${f.por.map((p,j)=>`<option value="${j}" ${String(it.u)===String(j)?'selected':''}>${esc(p.l.replace(/^1 /,''))} (${p.g} g)</option>`).join('')}<option value="g" ${it.u==='g'?'selected':''}>gramas</option></select></div></div><button class="iconbtn" data-act="plateDel" data-k="${i}" aria-label="Remover">×</button></div>`; }).join('')}
+  <div class="ptot" id="ptot">${ptotHTML(t)}</div>
+  <label class="lbl" for="plName">Nome (opcional)</label><input id="plName" class="input" placeholder="Ex.: Almoço frango com arroz" value="${esc(pl.name||'')}">
+  <label class="row" style="gap:8px;margin-top:10px"><input type="checkbox" id="plSave" ${pl.editId?'checked':''} style="width:20px;height:20px"><span class="small">Guardar este prato para repetir</span></label>
+  <button class="btn good block" style="margin-top:12px" data-act="plateLog">Registar em ${esc(UI.add.slot)}</button></div>`;
+}
+function ptotHTML(t){return `<div><b>${Math.round(t.k)}</b><span>kcal</span></div><div><b>${Math.round(t.p)} g</b><span>proteína</span></div><div><b>${Math.round(t.c)} g</b><span>hidratos</span></div><div><b>${Math.round(t.f)} g</b><span>gordura</span></div>`}
+function updatePlateNums(){
+  const pl=UI.add.plate; pl.items.forEach((it,i)=>{ const f=foodById(it.fid); const el=document.getElementById('pk-'+i); if(f&&el){ const g=itemGrams(it,f); el.textContent=`${Math.round(f.k*g/100)} kcal, ${fmtNum(Math.round(f.p*g/10)/10)} g prot.`; } });
+  const tt=document.getElementById('ptot'); if(tt) tt.innerHTML=ptotHTML(plateTotals(pl.items));
+}
+
 /* ---------- PROGRESSO ---------- */
 function viewProgresso(){
   const now=new Date(), mStart=new Date(now.getFullYear(),now.getMonth(),1);
@@ -969,7 +1180,7 @@ function openSheet(html){
   document.body.style.overflow='hidden'; sheetOpen=true;
 }
 function closeSheet(){
-  stopAnim('anim'); UI.pick=null; sheetOpen=false;
+  stopAnim('anim'); UI.pick=null; UI.add=null; sheetOpen=false;
   document.getElementById('sheet').classList.remove('on'); document.getElementById('scrim').classList.remove('on');
   document.body.style.overflow='';
 }
@@ -1050,15 +1261,32 @@ const ACT={
   foodPrev:()=>{ const [y,m,d]=UI.foodDate.split('-').map(Number); UI.foodDate=dkey(new Date(y,m-1,d-1)); render(); },
   foodNext:()=>{ const [y,m,d]=UI.foodDate.split('-').map(Number); const n=dkey(new Date(y,m-1,d+1)); if(n<=dkey()){ UI.foodDate=n; render(); } },
   water:el=>{ const d=dayFood(UI.foodDate); d.water=Math.max(0,(d.water||0)+(+el.dataset.v)); saveState(); render(); },
-  foodAdd:el=>{
-    const sl=el.dataset.slot;
-    const rec=k=>RECIPES.filter(r=>r.k===k).sort((a,b)=>(b.when.includes(sl)?1:0)-(a.when.includes(sl)?1:0)).map(r=>`<button class="recipe" data-act="foodPick" data-id="${r.id}" data-slot="${esc(sl)}"><span class="dot" style="background:${r.col}"></span><span class="grow"><span class="h3" style="display:block">${esc(r.n)}</span><span class="small muted">${r.kcal} kcal, ${r.prot} g proteína</span></span></button>`).join('');
-    openSheet(`<div class="sh-top"><h2>${esc(sl)}</h2><button class="iconbtn" data-act="closeSheet" aria-label="Fechar">×</button></div>
-    <div class="card"><div class="h3">Outra coisa</div><label class="lbl" for="fn">O que comeste</label><input id="fn" class="input" placeholder="Ex.: sandes de queijo"><div class="row" style="gap:8px"><div class="grow"><label class="lbl" for="fk">kcal (opcional)</label><input id="fk" class="input" inputmode="numeric"></div><div class="grow"><label class="lbl" for="fp">Proteína g (opcional)</label><input id="fp" class="input" inputmode="numeric"></div></div><button class="btn primary block" style="margin-top:12px" data-act="foodFree" data-slot="${esc(sl)}">Adicionar</button></div>
-    <div class="sec-title" style="margin-top:6px">Batidos</div>${rec('batido')}<div class="sec-title">Refeições fáceis</div>${rec('refeicao')}`);
+  foodAdd:el=>openAdd(el.dataset.slot),
+  quickLog:()=>{ const hr=new Date().getHours(), m=new Date().getMinutes(); const sl=hr<10||(hr===10&&m<30)?'Pequeno-almoço':hr<15?'Almoço':hr<19?'Lanche':'Jantar'; UI.foodTab='hoje'; UI.foodDate=dkey(); navigate('comida'); openAdd(sl); },
+  addSlot:el=>{ UI.add.slot=el.dataset.k; document.querySelectorAll('[data-act="addSlot"]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===UI.add.slot)); },
+  addTab:el=>{ UI.add.tab=el.dataset.k; document.querySelectorAll('[data-act="addTab"]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===UI.add.tab)); renderAddBody(); },
+  plateAdd:el=>{ const f=foodById(el.dataset.f); if(!f) return; UI.add.plate.items.push({fid:f.id,q:f.por.length?1:100,u:f.por.length?'0':'g'}); S.recentFoods=[f.id,...S.recentFoods.filter(x=>x!==f.id)].slice(0,12); UI.add.q=''; const s=document.getElementById('fq'); if(s) s.value=''; renderFoodResults(); renderPlate(); toast(`${f.n.split(' (')[0]} adicionado ao prato`); },
+  plateDel:el=>{ UI.add.plate.items.splice(+el.dataset.k,1); renderPlate(); },
+  plateLog:()=>{
+    const pl=UI.add.plate; if(!pl.items.length){ toast('Adiciona pelo menos um alimento'); return; }
+    const t=plateTotals(pl.items); const nm=(document.getElementById('plName')||{}).value||''; const save=(document.getElementById('plSave')||{}).checked;
+    const name=nm.trim()||t.parts.map(p=>p.n.split(' (')[0]).join(' + ');
+    dayFood(UI.foodDate).items.push({slot:UI.add.slot,rid:null,name,kcal:Math.round(t.k),prot:Math.round(t.p),carb:Math.round(t.c),fat:Math.round(t.f),parts:t.parts});
+    if(save){ const ex=pl.editId&&S.myPlates.find(x=>x.id===pl.editId); if(ex){ ex.name=name; ex.items=clone(pl.items);} else S.myPlates.unshift({id:uid('pl'),name,items:clone(pl.items)}); }
+    saveState(); closeSheet(); render(); toast(`Registado: ${Math.round(t.k)} kcal, ${Math.round(t.p)} g proteína`);
   },
-  foodPick:el=>{ const r=RM[el.dataset.id]; dayFood(UI.foodDate).items.push({slot:el.dataset.slot,rid:r.id,name:r.n,kcal:r.kcal,prot:r.prot}); saveState(); closeSheet(); render(); },
-  foodFree:el=>{ const n=document.getElementById('fn').value.trim(); if(!n){ document.getElementById('fn').focus(); return; } dayFood(UI.foodDate).items.push({slot:el.dataset.slot,rid:null,name:n,kcal:num(document.getElementById('fk').value)||0,prot:num(document.getElementById('fp').value)||0}); saveState(); closeSheet(); render(); },
+  plateLogSaved:el=>{ const pl=S.myPlates.find(x=>x.id===el.dataset.id); if(!pl) return; const t=plateTotals(pl.items); dayFood(UI.foodDate).items.push({slot:UI.add.slot,rid:null,name:pl.name,kcal:Math.round(t.k),prot:Math.round(t.p),carb:Math.round(t.c),fat:Math.round(t.f),parts:t.parts}); saveState(); closeSheet(); render(); toast(`Registado em ${UI.add.slot}`); },
+  plateEdit:el=>{ const pl=S.myPlates.find(x=>x.id===el.dataset.id); if(!pl) return; UI.add.plate={items:clone(pl.items),name:pl.name,editId:pl.id}; UI.add.tab='prato'; document.querySelectorAll('[data-act="addTab"]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k==='prato')); renderAddBody(); },
+  plateDelSaved:el=>{ if(!confirm('Apagar este prato guardado?')) return; S.myPlates=S.myPlates.filter(x=>x.id!==el.dataset.id); saveState(); renderAddBody(); },
+  newFood:()=>{
+    const g=id=>(document.getElementById(id)||{}).value||'';
+    const n=g('nfN').trim(), k=num(g('nfK')); if(!n||k==null){ toast('Põe pelo menos o nome e as kcal'); return; }
+    const pg=num(g('nfPG')); const f={id:uid('m'),n,k,p:num(g('nfP'))||0,c:num(g('nfC'))||0,f:num(g('nfF'))||0,cat:'Os meus alimentos',por:pg?[{l:g('nfPL').trim()||'1 porção',g:pg}]:[]};
+    S.myFoods.push(f); saveState(); UI.add.tab='prato'; UI.add.plate.items.push({fid:f.id,q:f.por.length?1:100,u:f.por.length?'0':'g'});
+    document.querySelectorAll('[data-act="addTab"]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k==='prato')); renderAddBody(); toast('Alimento criado e adicionado ao prato');
+  },
+  foodPick:el=>{ const r=RM[el.dataset.id]; dayFood(UI.foodDate).items.push({slot:UI.add?UI.add.slot:el.dataset.slot,rid:r.id,name:r.n,kcal:r.kcal,prot:r.prot}); saveState(); closeSheet(); render(); },
+  foodFree:el=>{ const n=document.getElementById('fn').value.trim(); if(!n){ document.getElementById('fn').focus(); return; } dayFood(UI.foodDate).items.push({slot:UI.add?UI.add.slot:el.dataset.slot,rid:null,name:n,kcal:num(document.getElementById('fk').value)||0,prot:num(document.getElementById('fp').value)||0}); saveState(); closeSheet(); render(); },
   foodDel:el=>{ dayFood(UI.foodDate).items.splice(+el.dataset.i,1); saveState(); render(); },
   recipe:el=>recipeSheet(el.dataset.id),
   logRecipe:el=>{ const r=RM[el.dataset.id]; dayFood(dkey()).items.push({slot:el.dataset.slot,rid:r.id,name:r.n,kcal:r.kcal,prot:r.prot}); saveState(); closeSheet(); toast(`Registado em ${el.dataset.slot}`); render(); },
@@ -1085,6 +1313,8 @@ document.addEventListener('input',e=>{
   const el=e.target, k=el.dataset&&el.dataset.in; if(!k) return;
   if(k==='w'||k==='r'){ const st=S.current&&S.current.items[+el.dataset.i]&&S.current.items[+el.dataset.i].sets[+el.dataset.j]; if(st){ st[k]=el.value; clearTimeout(inT); inT=setTimeout(saveState,500);} return; }
   if(k==='exQ'){ UI.exQ=el.value; refreshExList(); return; }
+  if(k==='fq'){ if(UI.add){ UI.add.q=el.value; renderFoodResults(); } return; }
+  if(k==='pq'){ if(UI.add){ UI.add.plate.items[+el.dataset.k].q=el.value.replace(',','.'); updatePlateNums(); } return; }
   if(k==='pkQ'){ if(UI.pick){ UI.pick.q=el.value; refreshPicker(); } return; }
   const p=curPlan();
   if(p){
@@ -1099,6 +1329,7 @@ document.addEventListener('input',e=>{
 document.addEventListener('change',e=>{
   const el=e.target, k=el.dataset&&el.dataset.in;
   if(k==='progEx'){ UI.progEx=el.value; render(); }
+  if(k==='pu'&&UI.add){ const it=UI.add.plate.items[+el.dataset.k], f=foodById(it.fid); const g=itemGrams(it,f); it.u=el.value; it.q=el.value==='g'?Math.round(g):Math.max(1,Math.round(g/f.por[+el.value].g*2)/2); renderPlate(); }
   if(k==='shopGot'){ const key=el.dataset.key; if(el.checked) S.shop.got[key]=1; else delete S.shop.got[key]; saveState(); el.closest('.shop-it').classList.toggle('got',el.checked); }
 });
 document.getElementById('importFile').addEventListener('change',async e=>{
