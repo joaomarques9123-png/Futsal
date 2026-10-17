@@ -120,6 +120,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Barlow', sans-se
 .ls-count-btn.assists .cb-value { color: var(--amber); }
 .ls-count-btn.recoveries .cb-value { color: #4a7fb5; }
 .ls-count-btn.og .cb-value { color: var(--red); }
+.ls-count-btn.extra .cb-value { color: #4a7fb5; }
 .ls-count-btn.disabled { opacity: 0.5; pointer-events: none; }
 .ls-count-btn.just-tapped { background: #dcefe3; }
 
@@ -411,7 +412,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Barlow', sans-se
 .gd-comment { margin:8px 14px 0; padding:8px 12px; background:rgba(0,102,51,0.07); border-left:3px solid var(--scp-green); font-size:13px; }
 .gd-teams { display:grid; grid-template-columns:1fr; gap:10px; padding:8px 14px; }
 @media (min-width:701px) { .gd-teams { grid-template-columns:1fr 1fr; } }
-.gd-pr { display:grid; grid-template-columns:minmax(0,1fr) 24px 24px 24px 40px 44px; gap:2px; align-items:center; font-size:12.5px; padding:6px 0; border-bottom:1px solid var(--border); }
+.gd-pr { display:grid; grid-template-columns:minmax(0,1fr) 26px 26px 40px 44px; gap:2px; align-items:center; font-size:12.5px; padding:6px 0; border-bottom:1px solid var(--border); }
 .gd-pr > span { text-align:center; } .gd-pr .n { text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .gd-pr.win .n { color:var(--scp-green); font-weight:700; }
 .gd-pr-h { font-size:10px; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.04em; border-bottom:2px solid var(--border2); }
@@ -659,6 +660,19 @@ body { background: var(--bg); color: var(--text); font-family: 'Barlow', sans-se
   .desktop-only-grid { display: grid !important; }
   .ps-game-mobile { display: none !important; }
 }
+
+/* SETTINGS — compact list */
+.st-list { padding: 0; overflow: hidden; max-width: 560px; }
+.st-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 13px; }
+.st-row:last-of-type { border-bottom: none; }
+.st-link { cursor: pointer; }
+.st-link:active { background: var(--surface2); }
+.st-v { color: var(--dim); font-size: 12px; }
+.st-in { width: 84px; padding: 5px 8px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface2); font-family:'Barlow',sans-serif; font-size: 13px; color: var(--text); text-align:center; }
+select.st-in { width: auto; }
+.cfg-row { display:flex; align-items:center; gap:8px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.cfg-row .nm { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cfg-in { width: 62px; padding: 5px 6px; border: 1px solid var(--border2); border-radius: 6px; background: var(--surface2); font-size: 13px; text-align:center; color: var(--text); }
 </style>
 </head>
 <body>
@@ -1203,64 +1217,21 @@ body { background: var(--bg); color: var(--text); font-family: 'Barlow', sans-se
      TAB — SETTINGS
 ════════════════════════════════ -->
 <div id="tab-settings" class="page">
-  <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;margin-bottom:20px">Settings</div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;align-items:start;max-width:1100px">
-
-    <div class="card" style="padding:18px">
-      <div class="section-label">App data</div>
-      <div id="settings-summary" style="font-size:13px;color:var(--muted);margin-bottom:14px">—</div>
-      <div style="font-size:12px;color:var(--dim)">Data is stored locally in this browser (localStorage). Export a backup regularly.</div>
-    </div>
-
-    <div class="card" style="padding:18px">
-      <div class="section-label">Season</div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-        <span style="font-size:13px">Year</span>
-        <select id="settings-year" style="padding:5px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);font-family:'Barlow',sans-serif;font-size:13px;color:var(--text)" onchange="setSelectedYear(this.value)"></select>
-      </div>
-      <div style="font-size:12px;color:var(--dim)">Every page in the app — Records, Rankings, Current Form, Player Stats, and more — shows only this year's games. Switching years never deletes anything; it's just what you're currently looking at. ELO keeps running continuously across years and isn't affected by this, except for 2025, which is a frozen, view-only year that never feeds into ELO.</div>
-    </div>
-
-    <div class="card" style="padding:18px">
-      <div class="section-label">ELO settings</div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-        <span style="font-size:13px">K-factor</span>
-        <input type="number" id="settings-kfactor" min="1" max="100" style="width:70px;padding:5px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);font-family:'Barlow',sans-serif;font-size:13px;color:var(--text);text-align:center" onchange="setKFactor(this.value)">
-      </div>
-      <div style="font-size:12px;color:var(--dim)">Controls how much ELO shifts per game. Higher = bigger swings. Default is 20.</div>
-    </div>
-
-    <div class="card" style="padding:18px">
-      <div class="section-label">Eligibility</div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-        <span style="font-size:13px">Min. % of total games</span>
-        <input type="number" id="settings-eligibility" min="1" max="100" style="width:70px;padding:5px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);font-family:'Barlow',sans-serif;font-size:13px;color:var(--text);text-align:center" onchange="setEligibilityPct(this.value)">
-      </div>
-      <div style="font-size:12px;color:var(--dim)">A player needs to have played at least this % of all recorded games to count as "eligible" (i.e. could realistically win the tournament). Used by the "eligible only" toggle on ranking pages and by the Home widgets. Default is 30%.</div>
-    </div>
-
-    <div class="card" style="padding:18px">
-      <div class="section-label">Backup</div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <button class="btn btn-primary" onclick="exportJsonBackup()">⬇ Export JSON backup</button>
-        <button class="btn" onclick="document.getElementById('json-import-input').click()">⬆ Import JSON backup</button>
-        <input type="file" id="json-import-input" accept=".json" style="display:none" onchange="importJsonBackup(this.files[0])">
-      </div>
-      <div style="font-size:12px;color:var(--dim);margin-top:8px">Importing a backup <strong>replaces</strong> all current data.</div>
-    </div>
-
-    <div class="card" style="padding:18px">
-      <div class="section-label">Import from Excel</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:10px">Re-import your .xlsx file. This replaces all current data with what's in the file.</div>
-      <button class="btn" onclick="document.getElementById('file-input').click()">📂 Choose Excel file</button>
-    </div>
-
-    <div class="card" style="padding:18px;border-color:rgba(192,57,43,0.3)">
-      <div class="section-label" style="color:var(--red)">Danger zone</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:10px">Erase all players, games, and stats stored in this browser.</div>
-      <button class="btn btn-danger" onclick="resetAppData()">🗑 Reset app data</button>
-    </div>
-
+  <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px">Settings</div>
+  <div id="settings-summary" style="font-size:11px;color:var(--dim);margin-bottom:12px">—</div>
+  <div class="card st-list">
+    <div class="st-row"><span>📅 Season</span><select id="settings-year" class="st-in" onchange="setSelectedYear(this.value)"></select></div>
+    <div class="st-row"><span>⚖️ ELO K-factor</span><input type="number" id="settings-kfactor" min="1" max="100" class="st-in" onchange="setKFactor(this.value)"></div>
+    <div class="st-row"><span>✅ Eligibility % of games</span><input type="number" id="settings-eligibility" min="1" max="100" class="st-in" onchange="setEligibilityPct(this.value)"></div>
+    <div class="st-row st-link" onclick="openStatsConfigModal()"><span>📋 Stats to collect</span><span class="st-v" id="settings-stats-sum">›</span></div>
+    <div class="st-row st-link" onclick="openMotmFormulaModal()"><span>🏅 MOTM formula</span><span class="st-v">›</span></div>
+  </div>
+  <div class="card st-list" style="margin-top:12px">
+    <div class="st-row st-link" onclick="exportJsonBackup()"><span>⬇ Export backup</span><span class="st-v">›</span></div>
+    <div class="st-row st-link" onclick="document.getElementById('json-import-input').click()"><span>⬆ Import backup</span><span class="st-v">›</span></div>
+    <div class="st-row st-link" onclick="document.getElementById('file-input').click()"><span>📂 Import Excel</span><span class="st-v">›</span></div>
+    <div class="st-row st-link" onclick="resetAppData()" style="color:var(--red)"><span>🗑 Reset app data</span><span class="st-v">›</span></div>
+    <input type="file" id="json-import-input" accept=".json" style="display:none" onchange="importJsonBackup(this.files[0])">
   </div>
 </div>
 
@@ -1629,6 +1600,48 @@ const STORAGE_KEY = 'futebol2026_v2_full';
 let K_FACTOR = 20;
 let ELIGIBILITY_PCT = 30; // % of total games a player needs to count as "eligible" (can win the tournament)
 
+// ══════════════════════════════════════════
+// CONFIGURABLE STATS + MOTM FORMULA (edited in Settings)
+// Each stat value lives directly on the GOAL_STATS row under its key (goals, assists, ownGoals,
+// recoveries, or c_xxx for stats created by the user).
+// ══════════════════════════════════════════
+const CORE_STAT_KEYS = ['goals','assists','ownGoals']; // always on, fixed buttons in Log Stats
+function defaultStatDefs() {
+  return [
+    { key:'goals',      icon:'⚽', name:'Goals',           builtin:true, fixed:true,  enabled:true },
+    { key:'assists',    icon:'🎯', name:'Assists',         builtin:true, fixed:true,  enabled:true },
+    { key:'ownGoals',   icon:'⭕', name:'Own Goals',       builtin:true, fixed:true,  enabled:true },
+    { key:'recoveries', icon:'🛡️', name:'Ball Recoveries', builtin:true, fixed:false, enabled:true },
+  ];
+}
+function defaultMotmFormula() {
+  return { weights:{ goals:10, assists:6, recoveries:2, ownGoals:0 }, include:{ goals:true, assists:true, recoveries:true, ownGoals:false }, contrib:0.10 };
+}
+let STAT_DEFS = defaultStatDefs();
+let MOTM_FORMULA = defaultMotmFormula();
+function enabledStats() { return STAT_DEFS.filter(s => s.enabled); }
+function extraStats() { return STAT_DEFS.filter(s => s.enabled && !CORE_STAT_KEYS.includes(s.key)); }
+function customStats() { return STAT_DEFS.filter(s => s.enabled && !s.builtin); }
+function statDef(key) { return STAT_DEFS.find(s => s.key === key); }
+function normalizeStatConfig() {
+  if (!Array.isArray(STAT_DEFS) || !STAT_DEFS.length) STAT_DEFS = defaultStatDefs();
+  defaultStatDefs().forEach(d => { if (!STAT_DEFS.find(s => s.key === d.key)) STAT_DEFS.push(d); });
+  STAT_DEFS.forEach(s => { if (s.fixed) s.enabled = true; });
+  if (!MOTM_FORMULA || typeof MOTM_FORMULA !== 'object') MOTM_FORMULA = defaultMotmFormula();
+  MOTM_FORMULA.weights = MOTM_FORMULA.weights || {};
+  MOTM_FORMULA.include = MOTM_FORMULA.include || {};
+  if (typeof MOTM_FORMULA.contrib !== 'number') MOTM_FORMULA.contrib = 0.10;
+  STAT_DEFS.forEach(s => {
+    if (typeof MOTM_FORMULA.weights[s.key] !== 'number') MOTM_FORMULA.weights[s.key] = 0;
+    if (typeof MOTM_FORMULA.include[s.key] !== 'boolean') MOTM_FORMULA.include[s.key] = false;
+  });
+}
+function motmFormulaText() {
+  const parts = enabledStats().filter(s => MOTM_FORMULA.include[s.key]).map(s => s.name + '×' + MOTM_FORMULA.weights[s.key]);
+  if (MOTM_FORMULA.contrib) parts.push('Contribution%×' + MOTM_FORMULA.contrib);
+  return parts.join(' + ') || '—';
+}
+
 function minEligibleGames() {
   return Math.ceil(TOTAL_GAMES_COUNT * ELIGIBILITY_PCT / 100);
 }
@@ -1638,7 +1651,7 @@ function saveState() {
     const state = {
       version: 3,
       ALL_PLAYERS, GAMES_ALL_YEARS, GOAL_STATS, PAY_DATA, GAMES_2025,
-      TOLERANCE, K_FACTOR, ELIGIBILITY_PCT, SELECTED_YEAR,
+      TOLERANCE, K_FACTOR, ELIGIBILITY_PCT, SELECTED_YEAR, STAT_DEFS, MOTM_FORMULA,
       savedAt: Date.now()
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -1658,6 +1671,9 @@ function loadState() {
     TOLERANCE = (typeof state.TOLERANCE === 'number') ? state.TOLERANCE : null;
     K_FACTOR = state.K_FACTOR || 20;
     ELIGIBILITY_PCT = state.ELIGIBILITY_PCT || 30;
+    STAT_DEFS = Array.isArray(state.STAT_DEFS) ? state.STAT_DEFS : defaultStatDefs();
+    MOTM_FORMULA = state.MOTM_FORMULA || defaultMotmFormula();
+    normalizeStatConfig();
     ALL_PLAYERS.forEach(p => { if (typeof p.initialElo !== 'number') p.initialElo = p.elo; });
 
     GAMES_ALL_YEARS.length = 0;
@@ -1790,6 +1806,7 @@ function refreshAll() {
   renderEloHistory();
   renderMotmHistory();
   renderHomeWidgets();
+  renderSettingsTab();
   saveState();
 }
 
@@ -3546,7 +3563,36 @@ function renderRecords() {
 
   // goalCards was already computed above (inside the hasGoals block) purely to run its card()
   // calls and populate categoryGroups — its own string value isn't used here.
-  const CATEGORY_ORDER = ['streaks','goals','assists','involvement','recovery','motm','gamerecords'];
+  // User-created stats (Settings → Stats to collect): one category each, with Total + Avg/game.
+  // Avg only counts games where that stat was already being collected (as done for recoveries).
+  const customCatKeys = [];
+  customStats().forEach(s => {
+    const k = s.key;
+    const statGames = new Set(fGOAL_STATS.filter(r => r[k] !== undefined).map(r => r.gameId));
+    if (!statGames.size) return;
+    const agg = {};
+    fGOAL_STATS.forEach(r => {
+      if (r.player === 'Outro' || !statGames.has(r.gameId)) return;
+      if (!agg[r.player]) agg[r.player] = { total:0, games:0 };
+      agg[r.player].total += (r[k]||0);
+      agg[r.player].games++;
+    });
+    const arr = Object.entries(agg).map(([name,v]) => ({ name, total:v.total, games:v.games, avg: v.games ? v.total/v.games : 0 }));
+    const byTotal = [...arr].sort((a,b)=>b.total-a.total);
+    const byAvg = [...arr].sort((a,b)=>b.avg-a.avg);
+    const mT = byTotal[0]?.total||1, mA = byAvg[0]?.avg||1;
+    const cat = 'custom_' + k;
+    CATEGORY_META[cat] = { icon: s.icon, title: s.name };
+    categoryGroups[cat] = [
+      { tabLabel:'Total', previewHtml: byTotal[0] ? previewLine(byTotal[0].name, byTotal[0].total) : '',
+        body: byTotal.map(p=>barRow(p.name, p.total, mT, 'var(--scp-green)', `${p.total} · ${p.games}g`)).join('') },
+      { tabLabel:'Avg/game', previewHtml: '',
+        body: byAvg.map(p=>barRow(p.name, p.avg, mA, 'var(--amber)', `${p.avg.toFixed(2)}/g · ${p.games}g`)).join('') }
+    ];
+    customCatKeys.push(cat);
+  });
+  const recOn = !!(statDef('recoveries') && statDef('recoveries').enabled);
+  const CATEGORY_ORDER = ['streaks','goals','assists','involvement', ...(recOn?['recovery']:[]), ...customCatKeys, 'motm','gamerecords'];
   const categoryTilesHtml = CATEGORY_ORDER.filter(k => categoryGroups[k] && categoryGroups[k].length).map(catKey => {
     const meta = CATEGORY_META[catKey];
     return categoryTile(meta.icon, meta.title, categoryGroups[catKey]);
@@ -4518,10 +4564,12 @@ function renderGamesDetail() {
 // ══════════════════════════════════════════
 function gdMotmBreakdown(g, name, team, teamGoals) {
   const r = GOAL_STATS.find(x=>x.gameId===g.id && x.player===name) || {};
-  const G = r.goals||0, A = r.assists||0, R = r.recoveries||0;
+  const G = r.goals||0, A = r.assists||0;
   const pct = teamGoals>0 ? (G+A)/teamGoals*100 : 0;
-  const parts = [[G+' goals × 10', G*10], [A+' assists × 6', A*6], [R+' recoveries × 2', R*2], [Math.round(pct)+'% of team goals × 0.10', pct*0.10]];
-  const total = motmRound(G*10 + A*6 + R*2 + pct*0.10);
+  const parts = enabledStats().filter(s => MOTM_FORMULA.include[s.key])
+    .map(s => [(r[s.key]||0)+' '+s.name.toLowerCase()+' × '+MOTM_FORMULA.weights[s.key], (r[s.key]||0)*(MOTM_FORMULA.weights[s.key]||0)]);
+  if (MOTM_FORMULA.contrib) parts.push([Math.round(pct)+'% of team goals × '+MOTM_FORMULA.contrib, pct*MOTM_FORMULA.contrib]);
+  const total = motmRound(parts.reduce((s,p)=>s+p[1],0));
   return '<div class="gd-mb">'
     + parts.map(p=>'<div><span>'+p[0]+'</span><b>'+(Math.round(p[1]*10)/10)+'</b></div>').join('')
     + '<div class="tot"><span>MOTM score</span><b>'+total+'</b></div>'
@@ -4542,6 +4590,53 @@ function gdNeighbour(gameId, dir) {
   return n ? n.id : null;
 }
 
+// "📊 All stats" for one game — tabs (all visible, wrapping) for MOTM + every enabled stat,
+// each ranked from most to least, with shared medals on ties.
+function openAllStatsModal(gameId) {
+  const g = GAMES.find(x => x.id === gameId);
+  const results = computeGameMOTM(gameId);
+  if (!g || !results.length) return;
+  const { scoreA, scoreB } = getGameScore(g);
+  const teamGoals = { A: scoreA, B: scoreB };
+  const tabs = [{ key:'__motm', icon:'🏅', name:'MOTM' }, ...enabledStats()];
+  const rowHtml = (rank, r, val, extra) => `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="width:26px;text-align:center;font-size:${rank<=3?'17':'12'}px;font-weight:700;color:var(--dim);flex-shrink:0">${rankMedal(rank)}</span>
+      <span style="flex:1;min-width:0;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.player}</span>
+      ${extra||''}
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:var(--scp-green);min-width:40px;text-align:right">${val}</span>
+    </div>`;
+  const bodies = tabs.map((t, ti) => {
+    let html;
+    if (t.key === '__motm') {
+      const ranks = competitionRanks(results, (a,b) => a.score === b.score && a.won === b.won);
+      html = results.map((r,i) => {
+        const bid = 'as-mb-'+i;
+        return `<div onclick="gdToggleMotm('${bid}')" style="cursor:pointer">${rowHtml(ranks[i], r, r.score.toFixed(1), `<span style="font-size:11px;color:var(--muted)">${r.won?'W':'L'}</span>`)}</div>`
+          + `<div id="${bid}" style="display:none">${gdMotmBreakdown(g, r.player, r.team, teamGoals[r.team])}</div>`;
+      }).join('') + '<div style="font-size:11px;color:var(--dim);padding-top:8px">Tap a player to see how the score was calculated</div>';
+    } else {
+      const sorted = [...results].sort((a,b) => (b[t.key]||0) - (a[t.key]||0));
+      const ranks = competitionRanks(sorted, (a,b) => (a[t.key]||0) === (b[t.key]||0));
+      html = sorted.map((r,i) => rowHtml(ranks[i], r, r[t.key]||0)).join('');
+    }
+    return `<div class="as-body" id="as-body-${ti}" style="${ti===0?'':'display:none'}">${html}</div>`;
+  }).join('');
+  const tabBtns = tabs.map((t,ti) => `<button class="duo-min-btn as-tab ${ti===0?'active':''}" id="as-tab-${ti}" onclick="switchAllStatsTab(${ti},${tabs.length})">${t.icon} ${t.name}</button>`).join('');
+  openAppModal(`<div style="background:var(--scp-green);padding:14px 18px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:#fff">📊 Game #${g.id} — all stats</div>
+      <button onclick="closeAppModal()" style="background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:28px;height:28px;font-size:18px;cursor:pointer;color:#fff;line-height:1">×</button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;padding:12px 18px 0">${tabBtns}</div>
+    <div style="padding:8px 18px 18px">${bodies}</div>`);
+}
+function switchAllStatsTab(idx, n) {
+  for (let i = 0; i < n; i++) {
+    const b = document.getElementById('as-body-'+i), t = document.getElementById('as-tab-'+i);
+    if (b) b.style.display = i===idx ? '' : 'none';
+    if (t) t.classList.toggle('active', i===idx);
+  }
+}
+
 function openGameDetail(gameId) {
   GD_CURRENT_GAME = gameId;
   const g = GAMES.find(x=>x.id===gameId);
@@ -4559,7 +4654,7 @@ function openGameDetail(gameId) {
   function teamBlock(t) {
     const won = g.winner===t;
     const head = '<div class="gd-pr gd-pr-h"><span class="n">'+(won?'🏆 ':'')+'Team '+t+(avgElo(t)!=null?' · '+avgElo(t)+' ELO':'')+'</span>'
-      + '<span>G</span><span>A</span><span>R</span><span>MOTM</span><span>ELO</span></div>';
+      + '<span>G</span><span>A</span><span>MOTM</span><span>ELO</span></div>';
     const rows = g['team'+t].map((name,i) => {
       const r = GOAL_STATS.find(x=>x.gameId===g.id && x.player===name);
       const isOutro = !name || name.startsWith('Outro');
@@ -4575,7 +4670,6 @@ function openGameDetail(gameId) {
       const row = '<div class="gd-pr'+(won?' win':'')+'">'+nameCell
         + '<span>'+(s.filmed? (r?r.goals:0) : '–')+'</span>'
         + '<span>'+(s.filmed? (r?r.assists:0) : '–')+'</span>'
-        + '<span>'+(s.filmed? (r?(r.recoveries||0):0) : '–')+'</span>'
         + motmCell
         + '<span class="'+(adj>0?'up':adj<0?'down':'dim')+'">'+(adj==null||isOutro?'–':(adj>0?'+':'')+adj.toFixed(1))+'</span></div>';
       return row + (m ? '<div id="'+bid+'" style="display:none">'+gdMotmBreakdown(g,name,t,teamGoals[t])+'</div>' : '');
@@ -4600,7 +4694,7 @@ function openGameDetail(gameId) {
     + '<div class="gd-teams">'+teamBlock('A')+teamBlock('B')+'</div>'
     + (s.filmed ? '<div class="gd-hint">Tap a MOTM score to see how it was calculated · tap a name to open their stats</div>' : '<div class="gd-hint">Tap a name to open their stats</div>')
     + '<div class="gd-act">'
-    +  '<button type="button" class="gd-btn" onclick="gdShareImage(\''+g.id+'\')">📤 Share image</button>'
+    +  (s.filmed ? '<button type="button" class="gd-btn" onclick="openAllStatsModal(\''+g.id+'\')">📊 All stats</button>' : '')
     +  '<button type="button" class="gd-btn" aria-label="More options" onclick="gdToggleMenu()">⋯</button>'
     +  '<button type="button" class="gd-btn" onclick="closeGameDetail()">Close</button>'
     + '</div>'
@@ -4704,15 +4798,15 @@ function openEditGameStats(gameId) {
   const existing = {};
   GOAL_STATS.filter(r => r.gameId === gameId).forEach(r => { existing[r.player] = r; });
   const players = [...g.teamA, ...g.teamB];
+  const cols = enabledStats();
+  const tmpl = `grid-template-columns:minmax(80px,1fr) repeat(${cols.length},40px)`;
+  const inpS = 'width:100%;padding:4px;border:1px solid var(--border2);border-radius:4px;text-align:center;font-size:12px';
 
   function row(name, team) {
-    const e = existing[name] || {goals:0, assists:0, ownGoals:0, recoveries:0};
-    return `<div style="display:grid;grid-template-columns:1fr 42px 42px 42px 42px;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
-      <span style="font-size:12px;font-weight:${team==='A'?600:400}">${name}</span>
-      <input type="number" min="0" value="${e.goals||0}" data-egs="${name}" data-field="goals" style="width:100%;padding:4px;border:1px solid var(--border2);border-radius:4px;text-align:center;font-size:12px">
-      <input type="number" min="0" value="${e.assists||0}" data-egs="${name}" data-field="assists" style="width:100%;padding:4px;border:1px solid var(--border2);border-radius:4px;text-align:center;font-size:12px">
-      <input type="number" min="0" value="${e.recoveries||0}" data-egs="${name}" data-field="recoveries" style="width:100%;padding:4px;border:1px solid var(--border2);border-radius:4px;text-align:center;font-size:12px">
-      <input type="number" min="0" value="${e.ownGoals||0}" data-egs="${name}" data-field="ownGoals" style="width:100%;padding:4px;border:1px solid var(--border2);border-radius:4px;text-align:center;font-size:12px">
+    const e = existing[name] || {};
+    return `<div style="display:grid;${tmpl};gap:5px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:12px;font-weight:${team==='A'?600:400};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span>
+      ${cols.map(s => `<input type="number" min="0" value="${e[s.key]||0}" data-egs="${name}" data-field="${s.key}" style="${inpS}">`).join('')}
     </div>`;
   }
 
@@ -4721,9 +4815,9 @@ function openEditGameStats(gameId) {
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;color:#fff">Game #${g.id} stats</div>
       <button onclick="closeAppModal()" style="background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:28px;height:28px;font-size:18px;cursor:pointer;color:#fff;line-height:1">×</button>
     </div>
-    <div style="padding:16px 20px">
-      <div style="display:grid;grid-template-columns:1fr 42px 42px 42px 42px;gap:6px;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--dim);padding-bottom:6px;border-bottom:2px solid var(--border2)">
-        <span>Player</span><span style="text-align:center">G</span><span style="text-align:center">A</span><span style="text-align:center">BR</span><span style="text-align:center">OG</span>
+    <div style="padding:16px 20px;overflow-x:auto">
+      <div style="display:grid;${tmpl};gap:5px;font-size:13px;font-weight:700;color:var(--dim);padding-bottom:6px;border-bottom:2px solid var(--border2)">
+        <span style="font-size:10px;text-transform:uppercase">Player</span>${cols.map(s=>`<span style="text-align:center" title="${s.name}">${s.icon}</span>`).join('')}
       </div>
       ${players.map(n => row(n, g.teamA.includes(n) ? 'A' : 'B')).join('')}
       <button class="btn btn-primary" style="width:100%;margin-top:16px;padding:11px" onclick="confirmSaveGameStats('${g.id}')">Save stats</button>
@@ -4733,14 +4827,16 @@ function openEditGameStats(gameId) {
 
 function confirmSaveGameStats(gameId) {
   const inputs = document.querySelectorAll('[data-egs]');
+  const old = {};
+  GOAL_STATS.filter(r => r.gameId === gameId).forEach(r => { old[r.player] = r; });
   const byPlayer = {};
   inputs.forEach(inp => {
     const name = inp.getAttribute('data-egs');
     const field = inp.getAttribute('data-field');
-    if (!byPlayer[name]) byPlayer[name] = {gameId, player:name, goals:0, assists:0, ownGoals:0, recoveries:0};
+    // start from the previous row so values of stats that are currently switched off are kept
+    if (!byPlayer[name]) byPlayer[name] = Object.assign({goals:0, assists:0, ownGoals:0}, old[name]||{}, {gameId, player:name});
     byPlayer[name][field] = Math.max(0, parseInt(inp.value, 10) || 0);
   });
-  // Remove old rows for this game, push fresh ones
   for (let i = GOAL_STATS.length - 1; i >= 0; i--) { if (GOAL_STATS[i].gameId === gameId) GOAL_STATS.splice(i, 1); }
   Object.values(byPlayer).forEach(r => GOAL_STATS.push(r));
   closeAppModal();
@@ -4756,6 +4852,7 @@ function confirmSaveGameStats(gameId) {
 let lsCurrentGame = null;
 let lsIsLocked = false;
 let lsLiveStats = {};
+let lsOrigRows = {};
 let lsUndoStack = [];
 
 function lsCssId(name) { return name.replace(/[^a-zA-Z0-9]/g, ''); }
@@ -4788,10 +4885,14 @@ function lsPickGame(gameId) {
   lsUndoStack = [];
 
   lsLiveStats = {};
+  lsOrigRows = {};
   [...g.teamA, ...g.teamB].forEach(name => {
     if (!name) return;
     const row = GOAL_STATS.find(r => r.gameId === gameId && r.player === name);
-    lsLiveStats[name] = { goals: row ? (row.goals||0) : 0, assists: row ? (row.assists||0) : 0, recoveries: row ? (row.recoveries||0) : 0, og: row ? (row.ownGoals||0) : 0 };
+    lsOrigRows[name] = row ? Object.assign({}, row) : null;
+    const live = { goals: row ? (row.goals||0) : 0, assists: row ? (row.assists||0) : 0, og: row ? (row.ownGoals||0) : 0 };
+    extraStats().forEach(s => { live[s.key] = row ? (row[s.key]||0) : 0; });
+    lsLiveStats[name] = live;
   });
 
   renderLogStatsEntry();
@@ -4839,16 +4940,26 @@ function lsRowStateClass() {
   return lsHasStats(lsCurrentGame.id) ? 'locked' : 'locked-nf';
 }
 
+function lsExtraTotal(name) {
+  const s = lsLiveStats[name];
+  return extraStats().reduce((t, d) => t + (s[d.key]||0), 0);
+}
+
 function lsCounterRow(name) {
   const s = lsLiveStats[name];
   const dis = lsIsLocked;
+  const id = lsCssId(name);
+  const extraBtn = extraStats().length
+    ? `<div class="ls-count-btn extra" id="ls-ctrl-${id}-extra" onclick="openLsExtraPicker('${name.replace(/'/g,"\\'")}')">
+        <span class="cb-icon">➕</span><span class="cb-value" id="ls-val-${id}-extra">${lsExtraTotal(name)}</span>
+      </div>` : '';
   return `<div class="ls-player-row ${lsRowStateClass()}">
     <div class="ls-p-name">${name}</div>
     <div class="ls-counters-row">
       ${lsCountBtnHtml(name,'goals','⚽',s.goals,dis)}
       ${lsCountBtnHtml(name,'assists','🎯',s.assists,dis)}
-      ${lsCountBtnHtml(name,'recoveries','🛡️',s.recoveries,dis)}
       ${lsCountBtnHtml(name,'og','⭕',s.og,dis)}
+      ${extraBtn}
     </div>
   </div>`;
 }
@@ -4859,13 +4970,45 @@ function lsCountBtnHtml(name, field, icon, value, dis) {
   </div>`;
 }
 
+// Window with the other stats (recoveries + user-created ones) — tap a stat to add 1
+function openLsExtraPicker(name) {
+  const s = lsLiveStats[name];
+  if (!s) return;
+  const id = lsCssId(name);
+  const nEsc = name.replace(/'/g,"\\'");
+  const rows = extraStats().map(d => `
+    <div class="ls-count-btn ${lsIsLocked?'disabled':''}" style="justify-content:space-between;padding:12px 14px;margin-bottom:8px" onclick="lsTapCount('${nEsc}','${d.key}')">
+      <span style="font-size:14px;font-weight:600">${d.icon} ${d.name}</span>
+      <span class="cb-value" id="ls-pk-${id}-${d.key}" style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900">${s[d.key]||0}</span>
+    </div>`).join('');
+  openAppModal(`<div style="background:var(--scp-green);padding:14px 18px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:#fff">➕ ${name}</div>
+      <button onclick="closeAppModal()" style="background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:28px;height:28px;font-size:18px;cursor:pointer;color:#fff;line-height:1">×</button>
+    </div>
+    <div style="padding:14px 18px">${rows}
+      <button class="btn btn-primary" style="width:100%;padding:11px;margin-top:4px" onclick="closeAppModal()">Done</button>
+    </div>`);
+}
+
+function lsRefreshCell(name, field) {
+  const id = lsCssId(name);
+  const v = lsLiveStats[name][field];
+  const el = document.getElementById(`ls-val-${id}-${field}`);
+  if (el) el.textContent = v;
+  const pk = document.getElementById(`ls-pk-${id}-${field}`);
+  if (pk) pk.textContent = v;
+  const ex = document.getElementById(`ls-val-${id}-extra`);
+  if (ex) ex.textContent = lsExtraTotal(name);
+  const ctrl = document.getElementById(`ls-ctrl-${id}-${field}`) || (CORE_STAT_KEYS.includes(field)||field==='og' ? null : document.getElementById(`ls-ctrl-${id}-extra`));
+  return ctrl;
+}
+
 function lsTapCount(name, field) {
   if (lsIsLocked) return;
-  lsLiveStats[name][field] += 1;
-  document.getElementById(`ls-val-${lsCssId(name)}-${field}`).textContent = lsLiveStats[name][field];
+  lsLiveStats[name][field] = (lsLiveStats[name][field]||0) + 1;
   lsUndoStack.push({name, field});
-  const el = document.getElementById(`ls-ctrl-${lsCssId(name)}-${field}`);
-  el.classList.add('just-tapped'); setTimeout(()=>el.classList.remove('just-tapped'), 150);
+  const el = lsRefreshCell(name, field);
+  if (el) { el.classList.add('just-tapped'); setTimeout(()=>el.classList.remove('just-tapped'), 150); }
   lsUpdateUndoBtn();
   lsUpdateLiveScore();
 }
@@ -4873,9 +5016,8 @@ function lsTapCount(name, field) {
 function lsUndoLast() {
   if (!lsUndoStack.length) return;
   const {name, field} = lsUndoStack.pop();
-  lsLiveStats[name][field] = Math.max(0, lsLiveStats[name][field]-1);
-  const el = document.getElementById(`ls-val-${lsCssId(name)}-${field}`);
-  if (el) el.textContent = lsLiveStats[name][field];
+  lsLiveStats[name][field] = Math.max(0, (lsLiveStats[name][field]||0)-1);
+  lsRefreshCell(name, field);
   lsUpdateUndoBtn();
   lsUpdateLiveScore();
 }
@@ -4948,7 +5090,10 @@ function lsSaveStats() {
   const gameId = lsCurrentGame.id;
   for (let i = GOAL_STATS.length - 1; i >= 0; i--) { if (GOAL_STATS[i].gameId === gameId) GOAL_STATS.splice(i, 1); }
   Object.entries(lsLiveStats).forEach(([name, v]) => {
-    GOAL_STATS.push({ gameId, player: name, goals: v.goals, assists: v.assists, recoveries: v.recoveries, ownGoals: v.og });
+    // keep values of stats that are currently switched off, overwrite the ones counted here
+    const row = Object.assign({}, lsOrigRows[name]||{}, { gameId, player: name, goals: v.goals, assists: v.assists, ownGoals: v.og });
+    extraStats().forEach(s => { row[s.key] = v[s.key]||0; });
+    GOAL_STATS.push(row);
   });
   lsCurrentGame.notFilmedLocked = false;
   refreshAll();
@@ -5239,7 +5384,7 @@ function getGameScore(g) {
 
 // ══════════════════════════════════════════
 // MAN OF THE MATCH (MOTM)
-// Score = (Goals×10) + (Assists×6) + (Recoveries×2) + (Contribution%×0.10)
+// Score = sum of (stat × points) for the stats included in Settings → MOTM formula, + Contribution% × weight
 // Tie-break (only when scores are exactly equal): player from the winning team wins;
 // if the tied players are on the same team, the award is shared.
 // ══════════════════════════════════════════
@@ -5259,12 +5404,15 @@ function computeGameMOTM(gameId) {
     const row = gsRows.find(r => r.player === p);
     const goals = row ? (row.goals||0) : 0;
     const assists = row ? (row.assists||0) : 0;
-    const og = row ? (row.ownGoals||0) : 0;
-    const recoveries = row ? (row.recoveries||0) : 0;
     const contribPct = teamGoals[team] > 0 ? (goals+assists)/teamGoals[team]*100 : 0;
     const won = (g.winner === team);
-    const score = motmRound(goals*10 + assists*6 + recoveries*2 + contribPct*0.10);
-    results.push({ player: p, team, goals, assists, ownGoals: og, recoveries, won, score });
+    // Formula is configurable in Settings → MOTM formula
+    const res = { player: p, team, won, contribPct };
+    STAT_DEFS.forEach(s => { res[s.key] = row ? (row[s.key]||0) : 0; });
+    let raw = contribPct * (MOTM_FORMULA.contrib||0);
+    enabledStats().forEach(s => { if (MOTM_FORMULA.include[s.key]) raw += res[s.key] * (MOTM_FORMULA.weights[s.key]||0); });
+    res.score = motmRound(raw);
+    results.push(res);
   });
   // Highest score first; on an exactly equal score, the winning team's player goes first
   results.sort((a,b) => (b.score - a.score) || ((b.won?1:0) - (a.won?1:0)));
@@ -5357,10 +5505,7 @@ function openStatRankingModal(gameId, field, icon, title) {
 function openOtherStatsModal(gameId) {
   const g = GAMES.find(x => x.id === gameId);
   if (!g) return;
-  const items = [
-    { field: 'recoveries', icon: '🛡️', title: 'Ball Recoveries' },
-    { field: 'ownGoals', icon: '⭕', title: 'Own Goals' },
-  ];
+  const items = enabledStats().filter(s => s.key!=='goals' && s.key!=='assists').map(s => ({ field: s.key, icon: s.icon, title: s.name.replace(/'/g,'’') }));
   const rows = items.map(it => `<div onclick="closeAppModal();openStatRankingModal('${gameId}','${it.field}','${it.icon}','${it.title}')" style="display:flex;align-items:center;gap:10px;padding:12px 4px;border-bottom:1px solid var(--border);cursor:pointer">
     <span style="font-size:18px">${it.icon}</span>
     <span style="flex:1;font-size:14px;font-weight:600">${it.title}</span>
@@ -5597,7 +5742,7 @@ function renderHomeWidgets() {
 function renderSettingsTab() {
   const el = document.getElementById('settings-summary');
   if (el) {
-    el.innerHTML = `${ALL_PLAYERS.length} players &middot; ${GAMES_ALL_YEARS.length} games recorded across all years (${GAMES.length} in ${SELECTED_YEAR}) &middot; ${GOAL_STATS.length ? [...new Set(GOAL_STATS.map(r=>r.gameId))].length : 0} games with goal stats`;
+    el.innerHTML = `${ALL_PLAYERS.length} players · ${GAMES_ALL_YEARS.length} games · ${GOAL_STATS.length ? [...new Set(GOAL_STATS.map(r=>r.gameId))].length : 0} filmed`;
   }
   const kf = document.getElementById('settings-kfactor');
   if (kf) kf.value = K_FACTOR;
@@ -5608,9 +5753,114 @@ function renderSettingsTab() {
   if (yearSel) {
     let years = [...new Set(GAMES_ALL_YEARS.map(g => g.year))].sort((a,b) => b-a);
     if (!years.includes(SELECTED_YEAR)) years = [SELECTED_YEAR, ...years];
-    yearSel.innerHTML = years.map(y => `<option value="${y}">${y}${y===2025?' (frozen — view only, no ELO impact)':''}</option>`).join('');
+    yearSel.innerHTML = years.map(y => `<option value="${y}">${y}${y===2025?' (frozen)':''}</option>`).join('');
     yearSel.value = SELECTED_YEAR;
   }
+  const ss = document.getElementById('settings-stats-sum');
+  if (ss) ss.textContent = enabledStats().length + ' ›';
+}
+
+// ── Settings → Stats to collect ──
+function openStatsConfigModal() {
+  const rows = STAT_DEFS.map(s => {
+    const right = s.fixed
+      ? '<span class="st-v">always on</span>'
+      : `<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><input type="checkbox" ${s.enabled?'checked':''} onchange="toggleStatEnabled('${s.key}', this.checked)"> on</label>`
+        + (s.builtin ? '' : `<button class="icon-btn" title="Delete" onclick="deleteCustomStat('${s.key}')">🗑</button>`);
+    return `<div class="cfg-row"><span style="font-size:16px">${s.icon}</span><span class="nm">${s.name}</span>${right}</div>`;
+  }).join('');
+  openAppModal(`<div style="background:var(--scp-green);padding:14px 18px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:#fff">📋 Stats to collect</div>
+      <button onclick="closeAppModal()" style="background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:28px;height:28px;font-size:18px;cursor:pointer;color:#fff;line-height:1">×</button>
+    </div>
+    <div style="padding:6px 18px 4px">${rows}</div>
+    <div style="padding:10px 18px 18px">
+      <div class="section-label" style="margin-bottom:6px">New stat</div>
+      <div style="display:flex;gap:6px">
+        <input id="ns-icon" class="cfg-in" maxlength="4" placeholder="🔥" style="width:48px">
+        <input id="ns-name" class="cfg-in" placeholder="Name (e.g. Shots on target)" style="flex:1;width:auto;text-align:left">
+        <button class="btn btn-primary" style="padding:6px 12px" onclick="addCustomStat()">Add</button>
+      </div>
+    </div>`);
+}
+function toggleStatEnabled(key, on) {
+  const s = statDef(key); if (!s || s.fixed) return;
+  s.enabled = !!on;
+  refreshAll();
+  openStatsConfigModal();
+}
+function addCustomStat() {
+  const name = (document.getElementById('ns-name').value||'').trim();
+  const icon = (document.getElementById('ns-icon').value||'').trim() || '📊';
+  if (!name) { alert('Enter a name for the stat.'); return; }
+  if (STAT_DEFS.some(s => s.name.toLowerCase() === name.toLowerCase())) { alert('A stat with that name already exists.'); return; }
+  const key = 'c_' + Date.now().toString(36);
+  STAT_DEFS.push({ key, icon, name, builtin:false, fixed:false, enabled:true, since: Date.now() });
+  MOTM_FORMULA.weights[key] = 0;
+  MOTM_FORMULA.include[key] = false;
+  refreshAll();
+  openStatsConfigModal();
+}
+function deleteCustomStat(key) {
+  const s = statDef(key); if (!s || s.builtin) return;
+  if (!confirm(`Delete "${s.name}"? Values already logged stay stored, but the stat stops showing in the app.`)) return;
+  STAT_DEFS = STAT_DEFS.filter(x => x.key !== key);
+  delete MOTM_FORMULA.weights[key];
+  delete MOTM_FORMULA.include[key];
+  refreshAll();
+  openStatsConfigModal();
+}
+
+// ── Settings → MOTM formula ──
+function openMotmFormulaModal() {
+  const rows = enabledStats().map(s => `
+    <div class="cfg-row">
+      <input type="checkbox" id="mf-inc-${s.key}" ${MOTM_FORMULA.include[s.key]?'checked':''} oninput="motmFormulaPreview()">
+      <span style="font-size:16px">${s.icon}</span><span class="nm">${s.name}</span>
+      <span class="st-v">×</span><input type="number" step="0.5" id="mf-w-${s.key}" class="cfg-in" value="${MOTM_FORMULA.weights[s.key]||0}" oninput="motmFormulaPreview()">
+    </div>`).join('');
+  openAppModal(`<div style="background:var(--scp-gold);padding:14px 18px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:#3a2f0c">🏅 MOTM formula</div>
+      <button onclick="closeAppModal()" style="background:rgba(0,0,0,0.15);border:none;border-radius:50%;width:28px;height:28px;font-size:18px;cursor:pointer;color:#3a2f0c;line-height:1">×</button>
+    </div>
+    <div style="padding:6px 18px 0">${rows}
+      <div class="cfg-row"><span style="width:13px"></span><span style="font-size:16px">📈</span><span class="nm">Contribution % (G+A ÷ team goals)</span>
+        <span class="st-v">×</span><input type="number" step="0.05" id="mf-contrib" class="cfg-in" value="${MOTM_FORMULA.contrib}" oninput="motmFormulaPreview()"></div>
+    </div>
+    <div style="padding:10px 18px 0;font-size:12px;color:var(--muted)">Score = <b id="mf-preview">${motmFormulaText()}</b></div>
+    <div style="padding:12px 18px 18px;display:flex;gap:8px">
+      <button class="btn" style="flex:1" onclick="resetMotmFormula()">Reset default</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveMotmFormula()">Save</button>
+    </div>`);
+}
+function readMotmFormulaInputs() {
+  const f = { weights: Object.assign({}, MOTM_FORMULA.weights), include: Object.assign({}, MOTM_FORMULA.include), contrib: MOTM_FORMULA.contrib };
+  enabledStats().forEach(s => {
+    const inc = document.getElementById('mf-inc-'+s.key), w = document.getElementById('mf-w-'+s.key);
+    if (inc) f.include[s.key] = inc.checked;
+    if (w) { const n = parseFloat(w.value); f.weights[s.key] = isNaN(n) ? 0 : n; }
+  });
+  const c = parseFloat((document.getElementById('mf-contrib')||{}).value);
+  f.contrib = isNaN(c) ? 0 : c;
+  return f;
+}
+function motmFormulaPreview() {
+  const saved = MOTM_FORMULA; MOTM_FORMULA = readMotmFormulaInputs();
+  const txt = motmFormulaText(); MOTM_FORMULA = saved;
+  const el = document.getElementById('mf-preview'); if (el) el.textContent = txt;
+}
+function saveMotmFormula() {
+  MOTM_FORMULA = readMotmFormulaInputs();
+  normalizeStatConfig();
+  closeAppModal();
+  refreshAll();
+}
+function resetMotmFormula() {
+  if (!confirm('Reset the MOTM formula to the default?')) return;
+  MOTM_FORMULA = defaultMotmFormula();
+  normalizeStatConfig();
+  refreshAll();
+  openMotmFormulaModal();
 }
 
 function setSelectedYear(val) {
@@ -5640,7 +5890,7 @@ function setEligibilityPct(val) {
 function exportJsonBackup() {
   const state = {
     version: 3, ALL_PLAYERS, GAMES_ALL_YEARS, GOAL_STATS, PAY_DATA, GAMES_2025,
-    TOLERANCE, K_FACTOR, ELIGIBILITY_PCT, SELECTED_YEAR, exportedAt: new Date().toISOString()
+    TOLERANCE, K_FACTOR, ELIGIBILITY_PCT, SELECTED_YEAR, STAT_DEFS, MOTM_FORMULA, exportedAt: new Date().toISOString()
   };
   const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -5667,6 +5917,9 @@ function importJsonBackup(file) {
       TOLERANCE = (typeof state.TOLERANCE === 'number') ? state.TOLERANCE : null;
       K_FACTOR = state.K_FACTOR || 20;
       ELIGIBILITY_PCT = state.ELIGIBILITY_PCT || 30;
+      STAT_DEFS = Array.isArray(state.STAT_DEFS) ? state.STAT_DEFS : defaultStatDefs();
+      MOTM_FORMULA = state.MOTM_FORMULA || defaultMotmFormula();
+      normalizeStatConfig();
       ALL_PLAYERS.forEach(p => { if (typeof p.initialElo !== 'number') p.initialElo = p.elo; });
       if (!ALL_PLAYERS.find(p => p.name === 'Outro')) ALL_PLAYERS.push({name:'Outro', elo:400, initialElo:400});
 
@@ -5708,6 +5961,8 @@ function resetAppData() {
   TOLERANCE = null;
   K_FACTOR = 20;
   ELIGIBILITY_PCT = 30;
+  STAT_DEFS = defaultStatDefs();
+  MOTM_FORMULA = defaultMotmFormula();
   SELECTED_YEAR = new Date().getFullYear();
   slots = Array.from({length:10}, () => ({name:null, team:null}));
   streakSelected = new Set(); duoTabSelected = new Set();
