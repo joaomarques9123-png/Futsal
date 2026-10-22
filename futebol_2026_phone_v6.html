@@ -921,7 +921,11 @@ select.st-in { width: auto; }
 ════════════════════════════════ -->
 <div id="tab-stats" class="page">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800">Player Ranking</div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800">Player Ranking</div>
+      <select id="ranking-year-filter" onchange="setRankingYear(this.value)" style="padding:5px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);font-family:'Barlow',sans-serif;font-size:13px;font-weight:700;color:var(--text)"></select>
+      <button class="duo-min-btn" onclick="openChampionsHistory()" style="font-size:12px;padding:4px 10px">🏆 Champions</button>
+    </div>
     <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)">
         <span>Up to month:</span>
@@ -1726,7 +1730,7 @@ function buildPlayerStats() {
 function populateMonthDropdowns() {
   const allMonths = [...new Set(GAMES.map(g=>g.month))].sort((a,b)=>a-b);
   const mNames = {1:'January',2:'February',3:'March',4:'April',5:'May',6:'June',7:'July',8:'August',9:'September',10:'October',11:'November',12:'December'};
-  ['ranking-month-filter','goalstats-month-filter','gd-month-filter','records-month-filter'].forEach(id => {
+  ['goalstats-month-filter','gd-month-filter','records-month-filter'].forEach(id => {
     const sel = document.getElementById(id);
     if (!sel) return;
     const prev = sel.value;
@@ -2818,16 +2822,77 @@ function setAdj(name, val) {
   renderStats();
 }
 
+// ── Player Ranking: own year selector + champions history ──
+let rankingYear = null; // null = follow the global Season setting
+function rankingYearShown() { return (rankingYear == null) ? SELECTED_YEAR : rankingYear; }
+function setRankingYear(val) {
+  const y = parseInt(val, 10);
+  rankingYear = (isNaN(y) || y === SELECTED_YEAR) ? null : y;
+  rankingMonthFilter = 'all';
+  renderStats();
+}
+function openChampionsHistory() {
+  const years = [...new Set(GAMES_ALL_YEARS.map(g => g.year))].sort((a,b) => b-a);
+  const nowY = new Date().getFullYear();
+  const blocks = years.map(y => {
+    const s = seasonRankingFor(y);
+    const podium = s.eligible.filter(p => p.rank <= 3);
+    const champs = podium.filter(p => p.rank === 1);
+    const others = podium.filter(p => p.rank > 1);
+    const inProg = y >= nowY ? ' <span style="font-size:10px;font-weight:600;color:var(--amber);text-transform:uppercase;letter-spacing:.05em">in progress</span>' : '';
+    return `<div style="padding:12px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900">${y}${inProg}</span>
+        <span style="font-size:11px;color:var(--dim)">${s.total} games · ${s.eligible.length} eligible (min ${s.minG})</span>
+      </div>
+      ${champs.length ? champs.map(p => `<div style="display:flex;align-items:center;gap:8px;padding:4px 0">
+          <span style="font-size:20px">🏆</span>
+          <span style="flex:1;font-size:15px;font-weight:800;color:var(--scp-green);cursor:pointer" onclick="closeAppModal();openPlayerStatsFor('${p.name.replace(/'/g,"\\'")}')">${p.name}</span>
+          <span style="font-size:12px;color:var(--muted)">${p.w}W ${p.l}L</span>
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800">${p.adj}%</span>
+        </div>`).join('') : '<div style="font-size:12px;color:var(--dim);font-style:italic">No eligible players</div>'}
+      ${others.map(p => `<div style="display:flex;align-items:center;gap:8px;padding:2px 0 2px 4px;font-size:12px;color:var(--muted)">
+          <span style="width:20px">${rankMedal(p.rank)}</span><span style="flex:1">${p.name}</span><span>${p.adj}%</span>
+        </div>`).join('')}
+    </div>`;
+  }).join('');
+  openAppModal(`<div style="background:var(--scp-gold);padding:14px 18px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:#3a2f0c">🏆 Champions history</div>
+      <button onclick="closeAppModal()" style="background:rgba(0,0,0,0.15);border:none;border-radius:50%;width:28px;height:28px;font-size:18px;cursor:pointer;color:#3a2f0c;line-height:1">×</button>
+    </div>
+    <div style="padding:2px 18px 12px">${blocks || '<div style="padding:16px 0;color:var(--dim)">No seasons yet.</div>'}</div>
+    <div style="padding:0 18px 16px;font-size:10px;color:var(--dim)">Best Adj% among players with ≥${ELIGIBILITY_PCT}% of that season's games</div>`);
+}
+
 function renderStats() {
   const tbody = document.getElementById('stats-tbody');
   const elBtn = document.getElementById('ranking-eligible-btn');
   if (elBtn) elBtn.textContent = ELIGIBILITY_PCT + '%+';
   const minPct = gamesFilter / 100;
 
+  // Year shown here is independent of the global Season setting (defaults to it)
+  const ry = rankingYearShown();
+  const ysel = document.getElementById('ranking-year-filter');
+  if (ysel) {
+    const years = [...new Set(GAMES_ALL_YEARS.map(g => g.year))].sort((a,b) => b-a);
+    if (!years.includes(ry)) years.unshift(ry);
+    ysel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+    ysel.value = ry;
+  }
+  const yearGames = GAMES_ALL_YEARS.filter(g => g.year === ry);
+  const msel = document.getElementById('ranking-month-filter');
+  if (msel) {
+    const mNames = {1:'January',2:'February',3:'March',4:'April',5:'May',6:'June',7:'July',8:'August',9:'September',10:'October',11:'November',12:'December'};
+    const months = [...new Set(yearGames.map(g=>g.month))].sort((a,b)=>a-b);
+    if (rankingMonthFilter !== 'all' && !months.includes(rankingMonthFilter)) rankingMonthFilter = 'all';
+    msel.innerHTML = '<option value="all">All</option>' + months.map(m => `<option value="${m}">${mNames[m]}</option>`).join('');
+    msel.value = String(rankingMonthFilter);
+  }
+
   // Filter games up to selected month
   const filteredGames = rankingMonthFilter === 'all'
-    ? GAMES
-    : GAMES.filter(g => g.month <= rankingMonthFilter);
+    ? yearGames
+    : yearGames.filter(g => g.month <= rankingMonthFilter);
 
   const totalFiltered = filteredGames.length;
   if (!totalFiltered) { tbody.innerHTML = '<tr><td colspan="10" style="color:var(--dim);font-style:italic;padding:12px">No games for selected period.</td></tr>'; return; }
@@ -2873,9 +2938,9 @@ function renderStats() {
     const adjColor = adjPct >= 60 ? 'var(--scp-green)' : adjPct >= 45 ? 'var(--amber)' : 'var(--red)';
     const sc = p.streak.startsWith('W') ? 'tag-green' : p.streak.startsWith('L') ? 'tag-red' : 'tag-amber';
     const rankLabel = i===0 ? '🏆' : i===1 ? '🥈' : i===2 ? '🥉' : (i+1);
-    return `<tr>
+    return `<tr style="cursor:pointer" onclick="openPlayerStatsFor('${p.name.replace(/'/g,"\\'")}')">
       <td style="text-align:center;font-weight:700;color:var(--dim);width:34px">${rankLabel}</td>
-      <td class="player-name-cell">${p.name}</td>
+      <td class="player-name-cell" style="color:var(--scp-green)">${p.name}</td>
       <td style="text-align:center;font-size:12px">${p.games}</td>
       <td style="font-weight:700;color:${adjColor};text-align:center">${adjPct}%</td>
       <td>${p.streak ? `<span class="tag ${sc}">${p.streak}</span>` : '—'}</td>
@@ -5867,6 +5932,7 @@ function setSelectedYear(val) {
   const y = parseInt(val, 10);
   if (isNaN(y)) return;
   SELECTED_YEAR = y;
+  rankingYear = null;
   applyYearFilter();
   refreshAll();
 }
@@ -6395,6 +6461,53 @@ function renderPlayerStats() {
   if (playerStatsSelected) showPlayerStats(playerStatsSelected, null);
 }
 
+// ── Player Stats → previous seasons: final ranking position among eligible players ──
+// Same rules as Player Ranking: Adj% = (W+10)/(G+20), eligible = played ≥ ELIGIBILITY_PCT% of that year's games.
+function seasonRankingFor(year) {
+  const games = GAMES_ALL_YEARS.filter(g => g.year === year);
+  const total = games.length;
+  const minG = Math.ceil(total * ELIGIBILITY_PCT / 100);
+  const pm = {};
+  games.forEach(g => {
+    [['A',g.teamA],['B',g.teamB]].forEach(([t, team]) => team.forEach(p => {
+      if (!p || p.startsWith('Outro')) return;
+      if (!pm[p]) pm[p] = { name:p, games:0, w:0 };
+      pm[p].games++; if (g.winner === t) pm[p].w++;
+    }));
+  });
+  const all = Object.values(pm).map(p => ({ ...p, l: p.games - p.w, adj: Math.round((p.w+10)/(p.games+20)*100) }));
+  const eligible = all.filter(p => p.games >= minG).sort((a,b) => b.adj - a.adj);
+  const ranks = competitionRanks(eligible, (a,b) => a.adj === b.adj);
+  eligible.forEach((p,i) => p.rank = ranks[i]);
+  return { total, minG, all, eligible };
+}
+function buildPastSeasonsHtml(name) {
+  const years = [...new Set(GAMES_ALL_YEARS.map(g => g.year))].filter(y => y < SELECTED_YEAR).sort((a,b) => b-a);
+  if (!years.length) return '';
+  const rows = years.map(y => {
+    const s = seasonRankingFor(y);
+    const me = s.all.find(p => p.name === name);
+    let pos, detail;
+    if (!me) { pos = '—'; detail = 'Did not play'; }
+    else {
+      const el = s.eligible.find(p => p.name === name);
+      detail = `${me.games} games · ${me.w}W ${me.l}L · ${me.adj}%`;
+      pos = el ? `${el.rank<=3?rankMedal(el.rank)+' ':''}#${el.rank} <span style="color:var(--dim);font-weight:400">/ ${s.eligible.length}</span>`
+               : `<span style="color:var(--dim);font-weight:400">Not eligible (min ${s.minG})</span>`;
+    }
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;width:44px">${y}</span>
+      <span style="flex:1;font-size:11px;color:var(--muted)">${detail}</span>
+      <span style="font-size:14px;font-weight:700;text-align:right">${pos}</span>
+    </div>`;
+  }).join('');
+  return `<button type="button" class="ps-games-toggle" aria-expanded="false" onclick="const b=this.nextElementSibling;const o=b.style.display==='none';b.style.display=o?'':'none';this.setAttribute('aria-expanded',o);this.querySelector('.arr').textContent=o?'▲':'▼'"><span>📜 Previous seasons</span><span class="arr">▼</span></button>
+    <div style="display:none;padding:4px 2px 0">
+      <div style="font-size:10px;color:var(--dim);margin:6px 0 2px">Final position by Adj% among players with ≥${ELIGIBILITY_PCT}% of that season's games</div>
+      ${rows}
+    </div>`;
+}
+
 function showPlayerStats(name, btn) {
   playerStatsSelected = name;
   // Sync dropdowns
@@ -6719,6 +6832,7 @@ function showPlayerStats(name, btn) {
       })()
     + '</tbody></table></div></div>'
     + '</div>';
+  content.insertAdjacentHTML('beforeend', buildPastSeasonsHtml(name));
 }
 
 
