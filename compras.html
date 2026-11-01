@@ -2,7 +2,7 @@
 <html lang="pt-PT">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <title>Compras</title>
@@ -10,6 +10,7 @@
 :root{--bg:#F2F2F7;--card:#FFFFFF;--card2:#F2F2F7;--ink:#000000;--mu:#8A8A8E;--ln:#E3E3E8;--chv:#C4C4C7;--ac:#2FA552;--ac-ink:#FFFFFF;--acs:#E2F4E7;--red:#FF3B30;--hl:#FFF4D6;--hlink:#6B4C00;--segon:#FFFFFF;color-scheme:light}
 @media (prefers-color-scheme:dark){:root{--bg:#000000;--card:#1C1C1E;--card2:#2C2C2E;--ink:#FFFFFF;--mu:#8D8D93;--ln:#38383A;--chv:#5A5A5E;--ac:#30D158;--ac-ink:#00210B;--acs:#0F3019;--red:#FF453A;--hl:#3A2F12;--hlink:#FFD479;--segon:#636366;color-scheme:dark}}
 *{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Inter,system-ui,sans-serif;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
 body{padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
 body.lock{overflow:hidden}
@@ -70,7 +71,7 @@ h1,h2,p{margin:0}
 .sm{border:0;border-radius:9px;padding:7px 12px;background:var(--card2);color:var(--ac);font-size:14px;font-weight:600;flex:none}
 .inp{width:100%;font:inherit;font-size:16px;padding:12px 14px;border:0;border-radius:12px;background:var(--card);color:var(--ink)}
 .g .inp{background:transparent;border-radius:0;padding:14px}
-.qty{width:58px;text-align:center;font:inherit;font-size:15px;padding:7px 4px;border:0;border-radius:8px;background:var(--card2);color:var(--ink)}
+.qty{width:62px;text-align:center;font:inherit;font-size:16px;padding:7px 4px;border:0;border-radius:8px;background:var(--card2);color:var(--ink)}
 .unit{width:30px;color:var(--mu);font-size:13px}
 .x{background:none;border:0;color:var(--mu);font-size:22px;line-height:1;padding:0 4px;flex:none}
 .stp{display:flex;align-items:center;background:var(--card2);border-radius:9px;flex:none}
@@ -148,6 +149,15 @@ h1,h2,p{margin:0}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 .banner{background:var(--hl);color:var(--hlink);padding:10px 12px;border-radius:12px;font-size:14px;margin:10px 0 0}
 @media (prefers-reduced-motion:reduce){.sheet{animation:none}.pbar i,#toast,.zone .chev{transition:none}}
+
+input,select,textarea{font-size:16px}
+textarea.inp{display:block;min-height:96px;resize:vertical;line-height:1.4}
+.shh{display:flex;align-items:center;justify-content:space-between;margin:0 0 6px}
+.shh .grab{margin:0}
+.shh .lnk{font-size:17px;padding:6px 2px}
+.obs{white-space:pre-wrap;font-size:15.5px;line-height:1.45;padding:14px;color:var(--hlink);background:var(--hl)}
+.rname{font-size:20px;font-weight:700;letter-spacing:-.01em}
+.trc{color:var(--ac);font-size:16px;font-weight:600;flex:none}
 </style>
 </head>
 <body>
@@ -155,7 +165,6 @@ h1,h2,p{margin:0}
 <div id="sheetWrap" class="sheet-wrap" hidden><div class="sheet-bg" data-act="closeSheet"></div><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <input type="file" id="fileIn" accept="application/json,.json" hidden>
-
 <script>
 'use strict';
 const KEY='compras_app_v1';
@@ -183,12 +192,21 @@ const pq=s=>{const v=parseFloat(String(s).replace(',','.'));return isFinite(v)&&
 const plural=(n,a,b)=>`${n} ${n===1?a:b}`;
 const dt=ts=>new Date(ts).toLocaleString('pt-PT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
 const stepOf=u=>u==='g'?100:(u==='kg'||u==='L')?0.5:1;
+const longDate=d=>`${DN[dow(d)]}, ${d.getDate()} de ${d.toLocaleDateString('pt-PT',{month:'long'})}`;
 let toastT;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2600)}
 
 /* ---------- dados ---------- */
 let storageOK=true;
 try{localStorage.setItem('__t','1');localStorage.removeItem('__t')}catch(e){storageOK=false}
-function blank(){return{v:2,zonas:[],produtos:[],listas:[],pratos:[],refeicoes:{},apagados:{},ultimoExport:0}}
+function blank(){return{v:3,zonas:[],produtos:[],listas:[],pratos:[],refeicoes:{},apagados:{},ultimoExport:0}}
+function consolidar(d){
+  const rs=d.listas.filter(l=>l.estado==='rascunho').sort((a,b)=>a.id<b.id?-1:1);
+  if(rs.length<2)return;
+  const k=rs[0];
+  rs.slice(1).forEach(x=>{x.itens.forEach(i=>{const e=k.itens.find(y=>y.pid===i.pid);if(e)e.qtd=r2(e.qtd+i.qtd);else k.itens.push({pid:i.pid,qtd:i.qtd,feito:false})});
+    d.listas=d.listas.filter(l=>l!==x);d.apagados[x.id]=Date.now()});
+  k.upd=Date.now();
+}
 function migrate(d){
   d=Object.assign(blank(),d||{});
   ['zonas','produtos','listas','pratos'].forEach(k=>{if(!Array.isArray(d[k]))d[k]=[]});
@@ -199,10 +217,11 @@ function migrate(d){
       .forEach(n=>d.zonas.push({id:'z'+n,nome:'Zona '+n,cor:ZC[(n-1)%ZC.length],ordem:n,upd:1}));
   }
   d.produtos.forEach(p=>{if(p.zona===undefined&&p.corredor!=null)p.zona='z'+p.corredor;delete p.corredor});
-  d.pratos.forEach(p=>{if(!(p.doses>0))p.doses=2;if(!Array.isArray(p.ingredientes))p.ingredientes=[]});
-  Object.values(d.refeicoes).forEach(r=>{if(!r.ov)r.ov={};if(!Array.isArray(r.env))r.env=[]});
+  d.pratos.forEach(p=>{if(p.obs==null)p.obs=p.prep||'';delete p.prep;if(!Array.isArray(p.ingredientes))p.ingredientes=[]});
+  Object.values(d.refeicoes).forEach(r=>{if(!r.ov||typeof r.ov!=='object')r.ov={}});
   d.listas.forEach(l=>{if(!Array.isArray(l.itens))l.itens=[]});
-  d.v=2;return d;
+  consolidar(d);
+  d.v=3;return d;
 }
 function seed(){
   const d=blank(),t=now();
@@ -226,12 +245,11 @@ const lista=id=>S.listas.find(l=>l.id===id);
 const zona=id=>S.zonas.find(z=>z.id===id);
 const zOf=p=>zona(p.zona)||NOZ;
 const zonasOrd=()=>[...S.zonas].sort((a,b)=>a.ordem-b.ordem||a.nome.localeCompare(b.nome,'pt'));
-const drafts=()=>S.listas.filter(l=>l.estado==='rascunho').sort((a,b)=>b.upd-a.upd);
 const pends=()=>S.listas.filter(l=>l.estado==='pendente').sort((a,b)=>b.upd-a.upd);
-const lname=l=>(l.nome||'').trim()||'Lista sem nome';
 const cnt=l=>l.itens.filter(i=>prod(i.pid)).length;
 const zIcon=z=>`<span class="zi" style="--c:${z.cor}">${esc((z.nome||'?').trim().charAt(0).toUpperCase())}</span>`;
-function newDraft(){const d={id:uid(),nome:'',estado:'rascunho',itens:[],criada:now(),upd:now()};S.listas.push(d);return d}
+const aFazerGet=()=>S.listas.find(l=>l.estado==='rascunho')||null;
+function aFazer(){let a=aFazerGet();if(!a){a={id:uid(),nome:'Lista a fazer',estado:'rascunho',itens:[],criada:now(),upd:now()};S.listas.push(a)}return a}
 function addItems(L,pairs){
   pairs.forEach(({pid,qtd})=>{if(!prod(pid)||!(qtd>0))return;const it=L.itens.find(i=>i.pid===pid);
     if(it){it.qtd=r2(it.qtd+qtd);it.feito=false}else L.itens.push({pid,qtd:r2(qtd),feito:false})});
@@ -246,22 +264,22 @@ function groupZ(list){const out=[];list.forEach(i=>{let g=out[out.length-1];if(!
 function weekStart(o){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-dow(d)+o*7);return d}
 function mealQ(r,p,pid){
   if(r.ov&&r.ov[pid]!=null)return r.ov[pid];
-  const g=p.ingredientes.find(i=>i.pid===pid);if(!g)return 0;
-  return r2(g.qtd*(r.doses||p.doses)/p.doses);
+  const g=p.ingredientes.find(i=>i.pid===pid);return g?g.qtd:0;
 }
 
 /* ---------- estado da interface ---------- */
-let tab='inicio',editId=null,shopId=null,wk=0,selJ=null,catTab='produtos',prodQ='',slotQ='',slotChoose=false;
-let sheetFn=null,refocus=null,PT=null,PTMP=null,ZT=null,IMP=null,ADDQ=null,MS=null,PLAN=null,PLANDAYS=[];
-const OPEN={};
-const PICK={};
-const draft=()=>{const l=editId&&lista(editId);return l&&l.estado==='rascunho'?l:null};
+let tab='inicio',shopId=null,diaK=null,wk=0,selJ=null,catTab='produtos',prodQ='',slotQ='';
+let sheetFn=null,refocus=null,PT=null,PTMP=null,ZT=null,IMP=null,PLAN=null;
+const SELA=new Set(),OPEN={},PICK={};
+const go=(t,top=true)=>{tab=t;selJ=null;render();if(top)window.scrollTo(0,0)};
 
 /* ---------- render ---------- */
 function render(){
   if(tab==='shop'&&!lista(shopId))tab='listas';
-  if(tab==='edit'&&!draft())tab='listas';
-  const V={inicio:vInicio,listas:vListas,edit:vEdit,shop:vShop,refeicoes:vRef,catalogo:vCat};
+  if(tab==='dia'&&!diaK)tab='refeicoes';
+  if((tab==='prod'&&!PTMP)||(tab==='zona'&&!ZT)||(tab==='plano'&&!PLAN))tab='catalogo';
+  if(tab==='receita'&&!PT)tab='catalogo';
+  const V={inicio:vInicio,listas:vListas,shop:vShop,refeicoes:vRef,dia:vDia,catalogo:vCat,prod:vProd,zona:vZona,receita:vReceita,plano:vPlano};
   const m=$('#main');
   m.className=tab==='inicio'?'home':'';
   m.innerHTML=(storageOK?'':`<div class="banner">Nesta pré-visualização os dados não ficam guardados. Descarrega o ficheiro e abre-o no navegador do telemóvel.</div>`)+V[tab]();
@@ -269,10 +287,9 @@ function render(){
 }
 function doRefocus(root){if(!refocus)return;const i=root.querySelector(`[data-picker="${refocus}"] input`);if(i){i.focus({preventScroll:true});refocus=null}}
 function head(t,sub,back){
-  const b=back||{act:'data-act="go" data-v="inicio"',label:'Início'};
-  return `<div class="nav"><button class="navb" ${b.act}>‹ ${b.label}</button></div><h1 class="lt">${t}</h1>${sub?`<p class="sub">${sub}</p>`:'<div style="height:14px"></div>'}`;
+  const b=back||['inicio','Início'];
+  return `<div class="nav"><button class="navb" data-act="go" data-v="${b[0]}">‹ ${b[1]}</button></div><h1 class="lt">${t}</h1>${sub?`<p class="sub">${sub}</p>`:'<div style="height:14px"></div>'}`;
 }
-const BACK_LISTAS={act:'data-act="go" data-v="listas"',label:'Listas'};
 
 function pickerHTML(n,ph){return `<div class="picker" data-picker="${n}"><input class="inp" placeholder="${ph}" autocomplete="off" enterkeyhint="done" aria-label="${ph}"><div class="sugs"></div></div>`}
 function bindPickers(root){
@@ -304,41 +321,35 @@ function bindPickers(root){
 
 /* ---------- ecrãs ---------- */
 function vInicio(){
-  const td=new Date(),ds=drafts(),ps=pends();
+  const td=new Date(),A=aFazerGet(),na=A?cnt(A):0,ps=pends();
   const ws=weekStart(0);let nm=0;for(let i=0;i<7;i++){const x=S.refeicoes[ymd(addDays(ws,i))+'|'+SLOT];if(x&&prato(x.pratoId))nm++}
   const W=(act,g,ic,n,t,s)=>`<button class="w" ${act} style="background:linear-gradient(160deg,${g})"><span class="ic">${ic}</span><span>${n!==''?`<b>${n}</b>`:''}<span class="t">${t}</span><span class="s">${s}</span></span></button>`;
-  return `<h1 class="lt">Compras</h1><p class="sub">${DN[dow(td)]}, ${td.getDate()} de ${td.toLocaleDateString('pt-PT',{month:'long'})}</p>
+  return `<h1 class="lt">Compras</h1><p class="sub">${longDate(td)}</p>
   <div class="wg">
-    ${W('data-act="go" data-v="listas"','#4C8DF6,#2F6FE0','🧾',ds.length+ps.length,'Listas',`${ds.length} a fazer, ${ps.length} para comprar`)}
+    ${W('data-act="go" data-v="listas"','#4C8DF6,#2F6FE0','🧾',ps.length,'Listas',`${plural(na,'produto','produtos')} a fazer, ${ps.length} para comprar`)}
     ${W('data-act="go" data-v="refeicoes"','#FF7A59,#F0533A','📅',`${nm}<small>/7</small>`,'Refeições','dias planeados esta semana')}
-    ${W('data-act="go" data-v="catalogo"','#3CC16E,#22A055','🥫',S.produtos.length,'Produtos',`${plural(S.pratos.length,'refeição','refeições')}, ${plural(S.zonas.length,'zona','zonas')}`)}
+    ${W('data-act="go" data-v="catalogo"','#3CC16E,#22A055','🥫',S.produtos.length,'Produtos',`${plural(S.pratos.length,'receita','receitas')}, ${plural(S.zonas.length,'zona','zonas')}`)}
     ${W('data-act="shareSheet"','#A57CF0,#8657E0','🔄','','Partilhar',S.ultimoExport?'Última vez '+dt(S.ultimoExport):'Enviar ou importar dados')}
   </div>`;
 }
 
 function vListas(){
-  const ds=drafts(),ps=pends(),conc=S.listas.filter(l=>l.estado==='concluida').sort((a,b)=>b.upd-a.upd).slice(0,8);
-  const rowD=l=>`<button class="r" data-act="editLista" data-id="${l.id}"><span class="ri" style="--c:#2F6FE0">📝</span><span class="n"><span>${esc(lname(l))}</span><small>${plural(cnt(l),'produto','produtos')}, alterada a ${dm(new Date(l.upd))}</small></span><span class="chv">›</span></button>`;
+  const A=aFazerGet(),items=A?sortItems(A.itens):[],ps=pends(),conc=S.listas.filter(l=>l.estado==='concluida').sort((a,b)=>b.upd-a.upd).slice(0,8);
+  [...SELA].forEach(pid=>{if(!items.some(i=>i.pid===pid))SELA.delete(pid)});
+  const nSel=SELA.size,all=items.length>0&&nSel===items.length;
+  const groups=groupZ(items).map(g=>`<div class="gh"><span>${esc(g.z.nome)}</span></div><div class="g">${g.items.map(i=>`<div class="r"><button class="cirb" data-act="aSel" data-pid="${i.pid}" aria-label="Selecionar ${esc(i.p.nome)}"><span class="cir${SELA.has(i.pid)?' on':''}"></span><span class="n"><span>${esc(i.p.nome)}</span></span></button><input class="qty" inputmode="decimal" data-ch="aQty" data-pid="${i.pid}" value="${fq(i.qtd)}" aria-label="Quantidade de ${esc(i.p.nome)}"><span class="unit">${esc(i.p.unidade)}</span><button class="x" data-act="aDel" data-pid="${i.pid}" aria-label="Tirar ${esc(i.p.nome)}">×</button></div>`).join('')}</div>`).join('');
   const rowP=l=>{const its=l.itens.filter(i=>prod(i.pid)),n=its.length,f=its.filter(i=>i.feito).length,sel=selJ&&selJ.has(l.id);
     return `<button class="r" data-act="openShop" data-id="${l.id}">${selJ?`<span class="cir${sel?' on':''}"></span>`:`<span class="ri" style="--c:#F0533A">🛒</span>`}<span class="n"><span>${esc(l.nome)}</span><small>${plural(n,'produto','produtos')}${f?`, ${f} no carrinho`:''}</small><span class="mini"><i style="width:${n?f/n*100:0}%"></i></span></span>${selJ?'':'<span class="chv">›</span>'}</button>`};
-  return `${head('Listas',`${ds.length} a fazer, ${ps.length} para comprar`)}
-  <button class="btn pri wide" data-act="novaLista">+ Nova lista</button>
-  <div class="gh"><span>A fazer</span></div>
-  <div class="g ic">${ds.length?ds.map(rowD).join(''):`<p class="empty">Nenhuma lista aberta. Cria uma e vai juntando produtos ou ingredientes das refeições.</p>`}</div>
-  <div class="gh"><span>Para comprar</span>${ps.length>1?`<button class="lnk" data-act="toggleJuntar">${selJ?'Cancelar':'Juntar'}</button>`:''}</div>
+  return `${head('Listas',`${plural(items.length,'produto','produtos')} a fazer, ${ps.length} para comprar`)}
+  <div class="gh" style="margin-top:4px"><span>Lista a fazer</span>${items.length?`<button class="lnk" data-act="aAll">${all?'Desmarcar tudo':'Selecionar tudo'}</button>`:''}</div>
+  <div class="g">${pickerHTML('aAdd','Adicionar produto')}</div>
+  ${items.length?groups:`<p class="empty">Vai juntando aqui produtos e ingredientes das refeições. Depois seleciona o que vais comprar e cria a lista.</p>`}
+  ${items.length&&!selJ?`<div class="dock"><button class="btn pri" data-act="criarCompra" ${nSel?'':'disabled'}>${nSel?`Criar lista a comprar (${nSel})`:'Seleciona o que vais comprar'}</button></div>`:''}
+  <div class="gh" style="margin-top:28px"><span>Para comprar</span>${ps.length>1?`<button class="lnk" data-act="toggleJuntar">${selJ?'Cancelar':'Juntar'}</button>`:''}</div>
   ${selJ?`<p class="sub" style="margin:-2px 16px 8px;font-size:13px">Toca nas listas a juntar. As quantidades do mesmo produto somam-se.</p>`:''}
-  <div class="g ic">${ps.length?ps.map(rowP).join(''):`<p class="empty">Quando fechares uma lista, ela aparece aqui pronta para as compras.</p>`}</div>
+  <div class="g ic">${ps.length?ps.map(rowP).join(''):`<p class="empty">Ainda não há listas para comprar.</p>`}</div>
   ${selJ?`<div class="dock"><button class="btn pri" data-act="juntar" ${selJ.size<2?'disabled':''}>${selJ.size<2?'Escolhe pelo menos 2 listas':`Juntar ${selJ.size} listas`}</button></div>`:''}
   ${conc.length?`<div class="gh"><span>Repetir uma lista anterior</span></div><div class="g">${conc.map(l=>`<div class="r"><span class="n"><span>${esc(l.nome)}</span><small>${plural(l.itens.length,'produto','produtos')}, feita a ${dm(new Date(l.upd))}</small></span><button class="sm" data-act="repetir" data-id="${l.id}">Repetir</button><button class="x" data-act="apagarLista" data-id="${l.id}" aria-label="Apagar lista">×</button></div>`).join('')}</div>`:''}`;
-}
-
-function vEdit(){
-  const d=draft(),items=sortItems(d.itens);
-  const groups=groupZ(items).map(g=>`<div class="gh"><span>${esc(g.z.nome)}</span></div><div class="g">${g.items.map(i=>`<div class="r"><span class="n"><span>${esc(i.p.nome)}</span></span><input class="qty" inputmode="decimal" data-ch="draftQty" data-pid="${i.pid}" value="${fq(i.qtd)}" aria-label="Quantidade de ${esc(i.p.nome)}"><span class="unit">${esc(i.p.unidade)}</span><button class="x" data-act="draftDel" data-pid="${i.pid}" aria-label="Remover ${esc(i.p.nome)}">×</button></div>`).join('')}</div>`).join('');
-  return `${head(esc(lname(d)),plural(items.length,'produto','produtos'),BACK_LISTAS)}
-  <div class="g"><input class="inp" data-ch="draftName" placeholder="Nome da lista (opcional)" value="${esc(d.nome)}" aria-label="Nome da lista">${pickerHTML('draftAdd','Adicionar produto')}</div>
-  ${items.length?groups:`<p class="empty">Escreve o nome de um produto. Se ainda não existir, escolhes logo a zona.</p>`}
-  <div class="dock"><button class="btn danger" data-act="apagarDraft">Apagar</button><button class="btn pri" data-act="fecharLista" ${items.length?'':'disabled'}>Fechar lista</button></div>`;
 }
 
 function vShop(){
@@ -346,7 +357,7 @@ function vShop(){
   const row=i=>`<div class="r${i.feito?' got':''}"><button class="cirb" data-act="shopToggle" data-pid="${i.pid}"><span class="cir${i.feito?' on':''}"></span><span class="n"><span class="nm">${esc(i.p.nome)}</span></span></button><span class="stp"><button data-act="shopQty" data-pid="${i.pid}" data-d="-1" aria-label="Menos ${esc(i.p.nome)}">−</button><button class="sqb" data-act="shopQtySet" data-pid="${i.pid}" aria-label="Alterar quantidade">${fq(i.qtd)} ${esc(i.p.unidade)}</button><button data-act="shopQty" data-pid="${i.pid}" data-d="1" aria-label="Mais ${esc(i.p.nome)}">+</button></span></div>`;
   const zones=groupZ(items).map(g=>{const t=g.items.length,f=g.items.filter(i=>i.feito).length,all=f===t,key=shopId+'|'+g.z.id,open=OPEN[key]!==undefined?OPEN[key]:!all;
     return `<div class="g zone${open?'':' closed'}${all?' done':''}"><button class="r zh" data-act="zt" data-k="${key}" data-o="${open?1:0}" aria-expanded="${open}">${zIcon(g.z)}<span class="n"><span class="nm">${esc(g.z.nome)}</span></span><span class="v">${f}/${t}${all?' ✓':''}</span><span class="chv chev">›</span></button><div class="zb">${g.items.map(row).join('')}</div></div>`}).join('');
-  return `${head(esc(L.nome),items.length?(done<items.length?`Faltam ${items.length-done} de ${items.length}`:'Tudo no carrinho'):'Lista vazia',BACK_LISTAS)}
+  return `${head(esc(L.nome),items.length?(done<items.length?`Faltam ${items.length-done} de ${items.length}`:'Tudo no carrinho'):'Lista vazia',['listas','Listas'])}
   <div class="pbar"><i style="width:${items.length?done/items.length*100:0}%"></i></div>
   ${zones}
   ${items.length&&done===items.length?`<button class="btn pri wide" data-act="concluir">Concluir compras</button>`:''}
@@ -358,17 +369,35 @@ function vShop(){
 function vRef(){
   const ws=weekStart(wk),t=ymd(new Date());let planned=0;
   const rows=[0,1,2,3,4,5,6].map(i=>{const d=addDays(ws,i),k=ymd(d),key=k+'|'+SLOT,r=S.refeicoes[key],p=r&&prato(r.pratoId);if(p)planned++;
-    const info=p?(p.prep?`<small>⏰ ${esc(p.prep)}</small>`:(r.doses&&r.doses!==p.doses?`<small>${plural(r.doses,'dose','doses')}</small>`:'')):'';
-    return `<div class="r${k===t?' now':''}${k<t?' past':''}${p&&r.feito?' got':''}"><button class="cirb" data-act="openSlot" data-k="${key}"><span class="dd"><small>${SD[i]}</small><b>${d.getDate()}</b></span><span class="n">${p?`<span class="nm">${esc(p.nome)}</span>${info}`:'<span style="color:var(--mu)">Escolher refeição</span>'}</span></button>${p?`<button class="cirbtn" data-act="feito" data-k="${key}" aria-label="Marcar como feito"><span class="cir${r.feito?' on':''}"></span></button>`:'<span class="chv">›</span>'}</div>`}).join('');
+    return `<button class="r${k===t?' now':''}${k<t?' past':''}" data-act="openDia" data-k="${key}"><span class="dd"><small>${SD[i]}</small><b>${d.getDate()}</b></span><span class="n">${p?`<span>${esc(p.nome)}</span>`:'<span style="color:var(--mu)">Escolher refeição</span>'}</span><span class="chv">›</span></button>`}).join('');
   return `${head('Refeições','Toca num dia para escolher ou ver a refeição')}
   <div class="g days"><div class="wknav"><button data-act="wk" data-d="-1" ${wk<=-1?'disabled':''} aria-label="Semana anterior">‹</button><div><b>${WKL[wk]}</b><small>${dm(ws)} a ${dm(addDays(ws,6))}, ${planned} de 7 planeados</small></div><button data-act="wk" data-d="1" ${wk>=3?'disabled':''} aria-label="Semana seguinte">›</button></div>${rows}</div>
-  <button class="btn pri wide" data-act="sendWeek">Enviar ingredientes da semana</button>`;
+  <button class="btn pri wide" data-act="sendWeek">Enviar ingredientes da semana para a lista</button>`;
+}
+
+function chooseHTML(k){
+  const q=norm(slotQ),ps=S.pratos.filter(x=>!q||norm(x.nome).includes(q)).sort((a,b)=>a.nome.localeCompare(b.nome,'pt'));
+  return `<input class="inp" id="slotSearch" placeholder="Procurar receita" value="${esc(slotQ)}" aria-label="Procurar receita">
+    <div class="g ic" style="margin-top:12px">${ps.map(x=>`<button class="r" data-act="pickPrato" data-k="${k}" data-id="${x.id}"><span class="ri" style="--c:#FF9500">🍲</span><span class="n"><span>${esc(x.nome)}</span><small>${plural(x.ingredientes.length,'ingrediente','ingredientes')}</small></span><span class="chv">›</span></button>`).join('')||`<p class="empty">${S.pratos.length?'Nenhuma receita com esse nome.':'Ainda não tens receitas guardadas.'}</p>`}</div>
+    <button class="btn wide" style="margin-top:12px" data-act="criarReceitaDia" data-k="${k}">+ Criar receita nova${slotQ.trim()?` «${esc(slotQ.trim())}»`:''}</button>`;
+}
+function vDia(){
+  const k=diaK,d=parseYmd(k.split('|')[0]),r=S.refeicoes[k],p=r&&prato(r.pratoId);
+  if(!p)return `${head(longDate(d),'Escolhe a refeição para este dia',['refeicoes','Refeições'])}${chooseHTML(k)}`;
+  const ing=sortItems(p.ingredientes);
+  return `${head(longDate(d),'',['refeicoes','Refeições'])}
+  <div class="g"><button class="r" data-act="trocar"><span class="ri" style="--c:#FF9500">🍲</span><span class="n"><span class="rname">${esc(p.nome)}</span></span><span class="trc">Trocar</span></button></div>
+  ${p.obs?`<div class="gh"><span>Observações</span></div><div class="g"><div class="obs">${esc(p.obs)}</div></div>`:''}
+  <div class="gh"><span>Ingredientes</span></div>
+  <div class="g">${ing.length?ing.map(i=>`<div class="r"><span class="n"><span>${esc(i.p.nome)}</span></span><span class="stp"><button data-act="dQ" data-pid="${i.pid}" data-d="-1" aria-label="Menos ${esc(i.p.nome)}">−</button><span class="sqb" style="display:inline-block;text-align:center;line-height:32px">${fq(mealQ(r,p,i.pid))} ${esc(i.p.unidade)}</span><button data-act="dQ" data-pid="${i.pid}" data-d="1" aria-label="Mais ${esc(i.p.nome)}">+</button></span></div>`).join('')
+    :`<p class="empty">Esta receita não tem ingredientes.</p>`}</div>
+  ${ing.length?`<button class="btn pri wide" style="margin-top:14px" data-act="dSend">Enviar para a lista</button>`:''}`;
 }
 
 function nextDate(id){const t=ymd(new Date());const ks=Object.keys(S.refeicoes).filter(k=>S.refeicoes[k].pratoId===id&&k.split('|')[0]>=t).sort();if(!ks.length)return '';const d=parseYmd(ks[0].split('|')[0]);return `, próxima ${SD[dow(d)]} ${dm(d)}`}
 function vCat(){
   const q=norm(prodQ);
-  const seg=`<div class="seg">${[['produtos','Produtos'],['pratos','Refeições'],['zonas','Zonas']].map(([c,l])=>`<button class="${catTab===c?'on':''}" data-act="catTab" data-c="${c}">${l}</button>`).join('')}</div>`;
+  const seg=`<div class="seg">${[['produtos','Produtos'],['pratos','Receitas'],['zonas','Zonas']].map(([c,l])=>`<button class="${catTab===c?'on':''}" data-act="catTab" data-c="${c}">${l}</button>`).join('')}</div>`;
   let body='';
   if(catTab==='zonas'){
     const zs=zonasOrd();
@@ -376,123 +405,76 @@ function vCat(){
     <p class="sub" style="margin:8px 16px 4px;font-size:13px">A ordem das zonas é a ordem em que aparecem na lista de compras.</p>
     <button class="btn pri wide" data-act="novaZona">+ Nova zona</button>`;
   }else{
-    const tools=`<div class="tools"><input class="inp" id="prodSearch" placeholder="${catTab==='pratos'?'Procurar refeição':'Procurar produto'}" value="${esc(prodQ)}" aria-label="Procurar"><button class="btn" style="padding:12px 16px" data-act="${catTab==='pratos'?'novoPrato':'novoProd'}">${catTab==='pratos'?'Nova':'Novo'}</button></div>`;
+    const tools=`<div class="tools"><input class="inp" id="prodSearch" placeholder="${catTab==='pratos'?'Procurar receita':'Procurar produto'}" value="${esc(prodQ)}" aria-label="Procurar"><button class="btn" style="padding:12px 16px" data-act="${catTab==='pratos'?'novaReceita':'novoProd'}">${catTab==='pratos'?'Nova':'Novo'}</button></div>`;
     if(catTab==='pratos'){
       const ps=S.pratos.filter(p=>!q||norm(p.nome).includes(q)).sort((a,b)=>a.nome.localeCompare(b.nome,'pt'));
-      body=tools+(ps.length?`<div class="g ic" style="margin-top:12px">${ps.map(p=>`<div class="r"><button class="cirb" data-act="editPrato" data-id="${p.id}"><span class="ri" style="--c:#FF9500">🍲</span><span class="n"><span>${esc(p.nome)}</span><small>${plural(p.ingredientes.length,'ingrediente','ingredientes')}, para ${p.doses}${nextDate(p.id)}</small></span></button><button class="sm" data-act="planPrato" data-id="${p.id}">Planear</button></div>`).join('')}</div>`
-        :`<p class="empty">${S.pratos.length?'Nenhuma refeição com esse nome.':'Cria uma refeição com os ingredientes e depois escolhe os dias em que a vão cozinhar.'}</p>`);
+      body=tools+(ps.length?`<div class="g ic" style="margin-top:12px">${ps.map(p=>`<div class="r"><button class="cirb" data-act="editReceita" data-id="${p.id}"><span class="ri" style="--c:#FF9500">🍲</span><span class="n"><span>${esc(p.nome)}</span><small>${plural(p.ingredientes.length,'ingrediente','ingredientes')}${nextDate(p.id)}</small></span></button><button class="sm" data-act="planPrato" data-id="${p.id}">Planear</button></div>`).join('')}</div>`
+        :`<p class="empty">${S.pratos.length?'Nenhuma receita com esse nome.':'Cria uma receita com os ingredientes e depois escolhe os dias em que a vão cozinhar.'}</p>`);
     }else{
       const list=S.produtos.filter(p=>!q||norm(p.nome).includes(q)).map(p=>({pid:p.id,p,z:zOf(p)}))
         .sort((a,b)=>a.z.ordem-b.z.ordem||a.z.nome.localeCompare(b.z.nome,'pt')||a.p.nome.localeCompare(b.p.nome,'pt'));
       body=tools+(groupZ(list).map(g=>`<div class="gh"><span>${esc(g.z.nome)}</span></div><div class="g">${g.items.map(i=>`<button class="r" data-act="editProd" data-id="${i.p.id}"><span class="n"><span>${esc(i.p.nome)}</span></span><span class="v">${esc(i.p.unidade)}</span><span class="chv">›</span></button>`).join('')}</div>`).join('')||'<p class="empty">Nenhum produto encontrado.</p>');
     }
   }
-  return `${head('Produtos e refeições',`${plural(S.produtos.length,'produto','produtos')}, ${plural(S.pratos.length,'refeição','refeições')}, ${plural(S.zonas.length,'zona','zonas')}`)}${seg}${body}`;
+  return `${head('Produtos e receitas',`${plural(S.produtos.length,'produto','produtos')}, ${plural(S.pratos.length,'receita','receitas')}, ${plural(S.zonas.length,'zona','zonas')}`)}${seg}${body}`;
 }
 
-/* ---------- folhas ---------- */
-function openSheet(fn){sheetFn=fn;$('#sheetWrap').hidden=false;document.body.classList.add('lock');$('#sheet').scrollTop=0;renderSheet()}
-function renderSheet(){const s=$('#sheet'),st=s.scrollTop;s.innerHTML='<div class="grab"></div>'+sheetFn();bindPickers(s);s.scrollTop=st;doRefocus(s)}
-function closeSheet(){sheetFn=null;MS=null;$('#sheetWrap').hidden=true;document.body.classList.remove('lock')}
-const slotTitle=k=>{const d=parseYmd(k.split('|')[0]);return `${DN[dow(d)]}, ${d.getDate()} de ${d.toLocaleDateString('pt-PT',{month:'long'})}`};
-
-function sheetProd(id){
-  const p=id?prod(id):null;
-  PTMP={id,nome:p?p.nome:'',zona:p?p.zona:(zonasOrd()[0]||{}).id||null,unidade:p?p.unidade:'un'};
-  openSheet(()=>`<h2>${PTMP.id?'Editar produto':'Novo produto'}</h2>
+function vProd(){
+  return `${head(PTMP.id?'Editar produto':'Novo produto','',['catalogo','Produtos'])}
     <div class="lbl">Nome</div><div class="g"><input class="inp" id="pNome" value="${esc(PTMP.nome)}" placeholder="Ex.: Leite"></div>
     <div class="lbl">Zona</div><div class="chips">${zonasOrd().map(z=>`<button class="chip${PTMP.zona===z.id?' on':''}" style="--c:${z.cor}" data-act="pZona" data-id="${z.id}"><i></i>${esc(z.nome)}</button>`).join('')}<button class="chip${!zona(PTMP.zona)?' on':''}" style="--c:${NOZ.cor}" data-act="pZona" data-id=""><i></i>Sem zona</button></div>
     <div class="lbl">Unidade</div><div class="chips">${UNITS.map(u=>`<button class="chip${PTMP.unidade===u?' on':''}" data-act="pUni" data-u="${u}">${u}</button>`).join('')}</div>
-    <button class="btn pri wide" style="margin-top:22px" data-act="pSave">Guardar</button>${PTMP.id?`<button class="btn danger wide" data-act="pDel">Apagar produto</button>`:''}`);
+    <button class="btn pri wide" style="margin-top:24px" data-act="pSave">Guardar</button>${PTMP.id?`<button class="btn danger wide" data-act="pDel">Apagar produto</button>`:''}`;
 }
 const readProd=()=>{const n=$('#pNome');if(n)PTMP.nome=n.value};
 
-function sheetZona(id){
-  const z=id?zona(id):null;
-  ZT={id,nome:z?z.nome:'',cor:z?z.cor:ZC[S.zonas.length%ZC.length]};
-  openSheet(()=>`<h2>${ZT.id?'Editar zona':'Nova zona'}</h2>
+function vZona(){
+  return `${head(ZT.id?'Editar zona':'Nova zona','',['catalogo','Produtos'])}
     <div class="lbl">Nome</div><div class="g"><input class="inp" id="zNome" value="${esc(ZT.nome)}" placeholder="Ex.: Congelados"></div>
     <div class="lbl">Cor</div><div class="sw">${ZC.map(c=>`<button class="${ZT.cor===c?'on':''}" style="--c:${c}" data-act="zCor" data-c="${c}" aria-label="Cor"></button>`).join('')}</div>
-    <button class="btn pri wide" style="margin-top:22px" data-act="zSave">Guardar</button>${ZT.id?`<button class="btn danger wide" data-act="zDel">Apagar zona</button>`:''}`);
+    <button class="btn pri wide" style="margin-top:24px" data-act="zSave">Guardar</button>${ZT.id?`<button class="btn danger wide" data-act="zDel">Apagar zona</button>`:''}`;
 }
 const readZona=()=>{const n=$('#zNome');if(n)ZT.nome=n.value};
 
-function sheetPrato(id,onSave,nomeInicial){
-  const p=id?prato(id):null;
-  PT={id:p?p.id:null,nome:p?p.nome:(nomeInicial||''),prep:p?(p.prep||''):'',doses:p?p.doses:2,ingredientes:p?p.ingredientes.map(i=>({...i})):[],onSave};
-  PICK.ingAdd=pid=>{readPT();const it=PT.ingredientes.find(i=>i.pid===pid);if(it)it.qtd+=1;else PT.ingredientes.push({pid,qtd:1});refocus='ingAdd';renderSheet()};
-  openSheet(()=>{const ing=sortItems(PT.ingredientes);return `<h2>${PT.id?'Editar refeição':'Nova refeição'}</h2>
+function vReceita(){
+  const ing=sortItems(PT.ingredientes);
+  return `${head(PT.id?'Editar receita':'Nova receita','',PT.back)}
     <div class="lbl">Nome</div><div class="g"><input class="inp" id="ptNome" value="${esc(PT.nome)}" placeholder="Ex.: Arroz de frango"></div>
-    <div class="g" style="margin-top:12px"><div class="r"><span class="n"><span>Receita para</span><small>As quantidades abaixo são para este nº de pessoas</small></span><span class="stp"><button data-act="ptDose" data-d="-1" aria-label="Menos">−</button><em>${PT.doses}</em><button data-act="ptDose" data-d="1" aria-label="Mais">+</button></span></div></div>
     <div class="lbl">Ingredientes</div>
     <div class="g">${ing.map(i=>`<div class="r"><span class="n"><span>${esc(i.p.nome)}</span></span><input class="qty" inputmode="decimal" data-ing="${i.pid}" value="${fq(i.qtd)}" aria-label="Quantidade de ${esc(i.p.nome)}"><span class="unit">${esc(i.p.unidade)}</span><button class="x" data-act="ingDel" data-pid="${i.pid}" aria-label="Remover">×</button></div>`).join('')}${pickerHTML('ingAdd','Adicionar ingrediente')}</div>
-    <div class="lbl">Preparar na véspera (opcional)</div><div class="g"><input class="inp" id="ptPrep" value="${esc(PT.prep)}" placeholder="Ex.: descongelar o frango"></div>
-    <button class="btn pri wide" style="margin-top:22px" data-act="ptSave">Guardar refeição</button>${PT.id?`<button class="btn danger wide" data-act="ptDel">Apagar refeição</button>`:''}`});
+    <div class="lbl">Observações</div><div class="g"><textarea class="inp" id="ptObs" placeholder="Ex.: descongelar o frango na véspera">${esc(PT.obs)}</textarea></div>
+    <button class="btn pri wide" style="margin-top:24px" data-act="ptSave">Guardar receita</button>${PT.id?`<button class="btn danger wide" data-act="ptDel">Apagar receita</button>`:''}`;
 }
-function readPT(){const s=$('#sheet'),n=s.querySelector('#ptNome'),pr=s.querySelector('#ptPrep');if(n)PT.nome=n.value;if(pr)PT.prep=pr.value;
-  s.querySelectorAll('[data-ing]').forEach(i=>{const it=PT.ingredientes.find(x=>x.pid===i.dataset.ing);if(it)it.qtd=pq(i.value)})}
+function readPT(){const n=$('#ptNome'),o=$('#ptObs');if(n)PT.nome=n.value;if(o)PT.obs=o.value;
+  document.querySelectorAll('#main [data-ing]').forEach(i=>{const it=PT.ingredientes.find(x=>x.pid===i.dataset.ing);if(it)it.qtd=pq(i.value)})}
+function openReceita(id,back,onSave,nomeInicial){
+  const p=id?prato(id):null;
+  PT={id:p?p.id:null,nome:p?p.nome:(nomeInicial||''),obs:p?(p.obs||''):'',ingredientes:p?p.ingredientes.map(i=>({...i})):[],back,onSave};
+  go('receita');
+}
 
-function sheetSlot(k){
-  slotQ='';slotChoose=false;MS={k,sel:new Set()};
-  openSheet(()=>{
-    const r=S.refeicoes[k],p=r&&prato(r.pratoId);
-    if(p&&!slotChoose){
-      const dz=r.doses||p.doses,ing=sortItems(p.ingredientes),env=new Set(r.env||[]);
-      const all=ing.length&&ing.every(i=>MS.sel.has(i.pid)),n=MS.sel.size;
-      return `<p class="shs">${slotTitle(k)}</p><h2>${esc(p.nome)}</h2><div style="height:10px"></div>
-      ${p.prep?`<div class="g"><div class="r prep"><span class="ri" style="--c:#FF9500">⏰</span><span class="n"><span>${esc(p.prep)}</span><small>Na véspera</small></span></div></div>`:''}
-      <div class="g"><div class="r"><span class="n"><span>Doses neste dia</span><small>Receita para ${p.doses}${dz!==p.doses?`, quantidades ×${fq(dz/p.doses)}`:''}</small></span><span class="stp"><button data-act="mDose" data-d="-1" aria-label="Menos doses">−</button><em>${dz}</em><button data-act="mDose" data-d="1" aria-label="Mais doses">+</button></span></div></div>
-      <div class="gh"><span>Ingredientes</span>${ing.length?`<button class="lnk" data-act="mAll">${all?'Desmarcar todos':'Marcar todos'}</button>`:''}</div>
-      <div class="g">${ing.length?ing.map(i=>`<div class="r"><button class="cirb" data-act="mSel" data-pid="${i.pid}"><span class="cir${MS.sel.has(i.pid)?' on':''}"></span><span class="n"><span>${esc(i.p.nome)}${env.has(i.pid)?'<span class="tag">na lista</span>':''}</span></span></button><span class="stp"><button data-act="mQ" data-pid="${i.pid}" data-d="-1" aria-label="Menos">−</button><span class="sqb" style="display:inline-block;text-align:center;line-height:32px">${fq(mealQ(r,p,i.pid))} ${esc(i.p.unidade)}</span><button data-act="mQ" data-pid="${i.pid}" data-d="1" aria-label="Mais">+</button></span></div>`).join('')
-        :`<p class="empty">Esta refeição não tem ingredientes. Edita a receita para os adicionar.</p>`}</div>
-      <p class="sub" style="margin:6px 16px 0;font-size:13px">Marca só o que falta em casa.</p>
-      <button class="btn pri wide" data-act="mSend" ${n?'':'disabled'}>${n?`Enviar ${n} para a lista`:'Enviar para a lista'}</button>
-      <div class="grid2"><button class="btn" data-act="feito" data-k="${k}">${r.feito?'Desmarcar feito':'Marcar como feito'}</button><button class="btn" data-act="editPratoSlot" data-id="${p.id}" data-k="${k}">Editar receita</button>
-      <button class="btn" data-act="moverSlot" data-k="${k}">Mudar de dia</button><button class="btn" data-act="trocarSlot">Trocar refeição</button></div>
-      <button class="btn danger wide" data-act="removerSlot" data-k="${k}">Tirar deste dia</button>`;
-    }
-    const q=norm(slotQ),ps=S.pratos.filter(x=>!q||norm(x.nome).includes(q)).sort((a,b)=>a.nome.localeCompare(b.nome,'pt'));
-    return `<p class="shs">${slotTitle(k)}</p><h2>O que vamos cozinhar?</h2><div style="height:12px"></div>
-      <input class="inp" id="slotSearch" placeholder="Procurar refeição guardada" value="${esc(slotQ)}" aria-label="Procurar refeição">
-      <div class="g ic" style="margin-top:12px">${ps.map(x=>`<button class="r" data-act="pickPrato" data-k="${k}" data-id="${x.id}"><span class="ri" style="--c:#FF9500">🍲</span><span class="n"><span>${esc(x.nome)}</span><small>${plural(x.ingredientes.length,'ingrediente','ingredientes')}, para ${x.doses}</small></span><span class="chv">›</span></button>`).join('')||`<p class="empty">${S.pratos.length?'Nenhuma refeição com esse nome.':'Ainda não tens refeições guardadas.'}</p>`}</div>
-      <button class="btn pri wide" style="margin-top:14px" data-act="criarPratoSlot" data-k="${k}">Criar refeição nova${slotQ.trim()?` «${esc(slotQ.trim())}»`:''}</button>`;
-  });
+function vPlano(){
+  const p=prato(PLAN.id);if(!p){PLAN=null;return vCat()}
+  let out='';
+  PLAN.days.forEach((k,i)=>{const d=parseYmd(k),r=S.refeicoes[k+'|'+SLOT],o=r&&prato(r.pratoId),on=PLAN.sel.has(k),other=o&&o.id!==p.id;
+    if(i===0||dow(d)===0){if(i)out+='</div>';out+=`<div class="gh"><span>${i===0?'A partir de hoje':'Semana de '+dm(d)}</span></div><div class="g">`}
+    out+=`<button class="r" data-act="planDay" data-k="${k}"><span class="cir${on?' on':''}"></span><span class="n"><span>${DN[dow(d)]}, ${dm(d)}${i===0?' (hoje)':''}</span><small>${other?(on?`Substitui «${esc(o.nome)}»`:`Já tem «${esc(o.nome)}»`):(on?'Planeado':'Livre')}</small></span></button>`});
+  out+='</div>';
+  return `${head(`Planear «${esc(p.nome)}»`,'Escolhe os dias em que vão cozinhar esta receita.',['catalogo','Produtos'])}${out}
+  <div class="dock"><button class="btn pri" data-act="planSave">Guardar ${plural(PLAN.sel.size,'dia','dias')}</button></div>`;
 }
-function sheetMover(k){
-  openSheet(()=>`<p class="shs">${slotTitle(k)}</p><h2>Mudar de dia</h2>
-    <div class="lbl">Novo dia</div><div class="g"><input type="date" class="inp" id="mvD" value="${k.split('|')[0]}"></div>
-    <button class="btn pri wide" style="margin-top:18px" data-act="mvGo" data-k="${k}">Mudar</button><button class="btn wide" data-act="openSlot" data-k="${k}">Cancelar</button>`);
-}
-function sheetPlan(id){
-  const p=prato(id);if(!p)return;const t=new Date();
-  PLANDAYS=[...Array(28)].map((_,i)=>ymd(addDays(t,i)));
-  PLAN=new Set(PLANDAYS.filter(k=>{const r=S.refeicoes[k+'|'+SLOT];return r&&r.pratoId===id}));
-  openSheet(()=>{let out='',wkS=-1;
-    PLANDAYS.forEach((k,i)=>{const d=parseYmd(k),r=S.refeicoes[k+'|'+SLOT],o=r&&prato(r.pratoId),on=PLAN.has(k),other=o&&o.id!==id;
-      if(i===0||dow(d)===0){if(i)out+='</div>';out+=`<div class="gh"><span>${i===0?'A partir de hoje':'Semana de '+dm(d)}</span></div><div class="g">`}
-      out+=`<button class="r" data-act="planDay" data-k="${k}"><span class="cir${on?' on':''}"></span><span class="n"><span>${DN[dow(d)]}, ${dm(d)}${i===0?' (hoje)':''}</span><small>${other?(on?`Substitui «${esc(o.nome)}»`:`Já tem «${esc(o.nome)}»`):(on?'Planeado':'Livre')}</small></span></button>`});
-    out+='</div>';
-    return `<h2>Planear «${esc(p.nome)}»</h2><p class="sub">Escolhe os dias em que vão cozinhar esta refeição.</p>${out}
-    <div class="dock"><button class="btn pri" data-act="planSave" data-id="${id}">Guardar ${plural(PLAN.size,'dia','dias')}</button></div>`});
-}
-function setRef(k,pid){S.refeicoes[k]={pratoId:pid,feito:false,upd:now(),ov:{},env:[]}}
-function delRef(k){delete S.refeicoes[k];S.apagados['ref:'+k]=now()}
+function setRef(k,pid){S.refeicoes[k]={pratoId:pid,upd:now(),ov:{}}}
 
-function toDraft(pairs,msg){
-  pairs=pairs.filter(x=>prod(x.pid)&&x.qtd>0);
-  if(!pairs.length){toast('Não há produtos para adicionar');return}
-  const ds=drafts();
-  if(!ds.length){const d=newDraft();addItems(d,pairs);save();render();toast(`${msg} a uma lista nova`);return}
-  ADDQ={pairs,msg};
-  openSheet(()=>`<h2>Adicionar a que lista?</h2><p class="sub">${plural(pairs.length,'produto','produtos')} para adicionar.</p>
-    <div class="g ic">${ds.map(l=>`<button class="r" data-act="addTo" data-id="${l.id}"><span class="ri" style="--c:#2F6FE0">📝</span><span class="n"><span>${esc(lname(l))}</span><small>${plural(cnt(l),'produto','produtos')}</small></span><span class="chv">›</span></button>`).join('')}
-    <button class="r" data-act="addTo" data-id=""><span class="ri" style="--c:var(--ac)">＋</span><span class="n"><span>Nova lista</span><small>Cria uma lista nova com estes produtos</small></span><span class="chv">›</span></button></div>`);
-}
+/* ---------- painéis ---------- */
+function openSheet(fn,btn){sheetFn=fn;sheetBtn=btn||'Cancelar';$('#sheetWrap').hidden=false;document.body.classList.add('lock');$('#sheet').scrollTop=0;renderSheet()}
+let sheetBtn='Cancelar';
+function renderSheet(){const s=$('#sheet'),st=s.scrollTop;s.innerHTML=`<div class="shh"><span class="grab"></span><button class="lnk" data-act="closeSheet">${sheetBtn}</button></div>`+sheetFn();bindPickers(s);s.scrollTop=st;doRefocus(s)}
+function closeSheet(){sheetFn=null;$('#sheetWrap').hidden=true;document.body.classList.remove('lock')}
 
 /* ---------- partilha ---------- */
 async function exportar(){
   S.ultimoExport=now();save();render();
-  const json=JSON.stringify({app:'compras',versao:2,exportado:now(),dados:S});
+  const json=JSON.stringify({app:'compras',versao:3,exportado:now(),dados:S});
   const name=`compras-${ymd(new Date())}.json`;
   try{const file=new File([json],name,{type:'application/json'});
     if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'Dados das compras'});return}
@@ -532,14 +514,16 @@ function merge(incRaw){
     const l=lista(L.id);
     if(l){
       const newer=(L.upd||0)>(l.upd||0)?L:l,older=newer===L?l:L;
-      const doneOld=new Set(older.itens.filter(i=>i.feito).map(i=>i.pid));
-      const merged={...newer,itens:newer.itens.map(i=>({...i,feito:!!(i.feito||doneOld.has(i.pid))}))};
+      let itens;
+      if(newer.estado==='rascunho'&&older.estado==='rascunho')itens=[...newer.itens.map(i=>({...i})),...older.itens.filter(i=>!newer.itens.some(x=>x.pid===i.pid)).map(i=>({...i}))];
+      else{const doneOld=new Set(older.itens.filter(i=>i.feito).map(i=>i.pid));itens=newer.itens.map(i=>({...i,feito:!!(i.feito||doneOld.has(i.pid))}))}
+      const merged={...newer,itens};
       if(JSON.stringify(merged)!==JSON.stringify(l)){Object.assign(l,merged);c.lu++}
     }else if(!dead(L.id,L.upd)){S.listas.push(L);c.ln++}
   });
   Object.entries(inc.refeicoes).forEach(([k,r])=>{
     if(dead('ref:'+k,r.upd))return;
-    const ov={};Object.entries(r.ov||{}).forEach(([pid,q])=>ov[mp(pid)]=q);r.ov=ov;r.env=(r.env||[]).map(mp);
+    const ov={};Object.entries(r.ov||{}).forEach(([pid,q])=>ov[mp(pid)]=q);r.ov=ov;
     const l=S.refeicoes[k];
     if(!l){S.refeicoes[k]=r;c.rn++}else if((r.upd||0)>(l.upd||0)){S.refeicoes[k]=r;c.ru++}
   });
@@ -548,6 +532,7 @@ function merge(incRaw){
   S.pratos=S.pratos.filter(p=>!dead(p.id,p.upd));
   S.listas=S.listas.filter(l=>!dead(l.id,l.upd));
   Object.keys(S.refeicoes).forEach(k=>{if(dead('ref:'+k,S.refeicoes[k].upd))delete S.refeicoes[k]});
+  consolidar(S);
   return c;
 }
 function sumLine(lbl,n,u,a,b){if(!n&&!u)return '';const parts=[];if(n)parts.push(`${n} ${n===1?a:b}`);if(u)parts.push(`${u} ${u===1?'atualizado':'atualizados'}`);return `<div class="r"><span class="n"><span>${lbl}</span></span><span class="v">${parts.join(', ')}</span></div>`}
@@ -555,24 +540,34 @@ function sumLine(lbl,n,u,a,b){if(!n&&!u)return '';const parts=[];if(n)parts.push
 /* ---------- ações ---------- */
 function shopItem(pid){const L=lista(shopId),it=L&&L.itens.find(i=>i.pid===pid),p=prod(pid);return it&&p?{L,it,p}:null}
 function removeShopItem(x){if(!confirm(`Tirar «${x.p.nome}» da lista?`))return false;x.L.itens=x.L.itens.filter(i=>i!==x.it);x.L.upd=now();return true}
+function sendToAFazer(pairs){
+  pairs=pairs.filter(x=>prod(x.pid)&&x.qtd>0);
+  if(!pairs.length){toast('Não há ingredientes para enviar');return}
+  addItems(aFazer(),pairs);save();render();
+  toast(`${plural(pairs.length,'ingrediente enviado','ingredientes enviados')} para a lista a fazer`);
+}
 const ACT={
-  go:d=>{tab=d.v;selJ=null;render();window.scrollTo(0,0)},
+  go:d=>go(d.v),
   closeSheet:()=>closeSheet(),
-  novaLista:()=>{const d=newDraft();editId=d.id;tab='edit';refocus='draftAdd';commit();window.scrollTo(0,0)},
-  editLista:d=>{editId=d.id;tab='edit';render();window.scrollTo(0,0)},
-  openShop:d=>{if(selJ){selJ.has(d.id)?selJ.delete(d.id):selJ.add(d.id);render();return}shopId=d.id;tab='shop';render();window.scrollTo(0,0)},
+  aSel:d=>{SELA.has(d.pid)?SELA.delete(d.pid):SELA.add(d.pid);render()},
+  aAll:()=>{const A=aFazerGet();if(!A)return;const ids=A.itens.filter(i=>prod(i.pid)).map(i=>i.pid);const all=ids.length&&ids.every(id=>SELA.has(id));SELA.clear();if(!all)ids.forEach(id=>SELA.add(id));render()},
+  aDel:d=>{const A=aFazerGet();if(!A)return;A.itens=A.itens.filter(i=>i.pid!==d.pid);SELA.delete(d.pid);A.upd=now();commit()},
+  criarCompra:()=>{const A=aFazerGet();if(!A||!SELA.size)return;
+    const itens=A.itens.filter(i=>SELA.has(i.pid)&&prod(i.pid)).map(i=>({pid:i.pid,qtd:i.qtd,feito:false}));
+    if(!itens.length)return;
+    const hoje=dm(new Date()),n=S.listas.filter(l=>l.estado==='pendente'&&l.nome.startsWith('Compras '+hoje)).length;
+    S.listas.push({id:uid(),nome:`Compras ${hoje}${n?' ('+(n+1)+')':''}`,estado:'pendente',itens,criada:now(),upd:now()});
+    A.itens=A.itens.filter(i=>!SELA.has(i.pid));A.upd=now();SELA.clear();commit();
+    toast(`Lista a comprar criada com ${plural(itens.length,'produto','produtos')}`)},
+  openShop:d=>{if(selJ){selJ.has(d.id)?selJ.delete(d.id):selJ.add(d.id);render();return}shopId=d.id;go('shop')},
   toggleJuntar:()=>{selJ=selJ?null:new Set();render()},
   juntar:()=>{const ls=[...selJ].map(lista).filter(Boolean);if(ls.length<2)return;
     const agg={};ls.forEach(l=>l.itens.forEach(i=>{if(!agg[i.pid])agg[i.pid]={pid:i.pid,qtd:0,feito:true};agg[i.pid].qtd=r2(agg[i.pid].qtd+i.qtd);agg[i.pid].feito=agg[i.pid].feito&&!!i.feito}));
     let nome=ls.map(l=>l.nome).join(' + ');if(nome.length>50)nome=`Lista combinada ${dm(new Date())}`;
     S.listas.push({id:uid(),nome,estado:'pendente',itens:Object.values(agg),criada:now(),upd:now()});
     ls.forEach(l=>{S.listas=S.listas.filter(x=>x!==l);tomb(l.id)});selJ=null;commit();toast(`${ls.length} listas juntas numa só`)},
-  repetir:d=>{const L=lista(d.id);if(L)toDraft(L.itens.map(i=>({pid:i.pid,qtd:i.qtd})),'Produtos adicionados')},
+  repetir:d=>{const L=lista(d.id);if(!L)return;addItems(aFazer(),L.itens.map(i=>({pid:i.pid,qtd:i.qtd})));commit();window.scrollTo(0,0);toast('Produtos adicionados à lista a fazer')},
   apagarLista:d=>{if(!confirm('Apagar esta lista?'))return;S.listas=S.listas.filter(l=>l.id!==d.id);tomb(d.id);commit()},
-  draftDel:d=>{const x=draft();if(!x)return;x.itens=x.itens.filter(i=>i.pid!==d.pid);x.upd=now();commit()},
-  fecharLista:()=>{const x=draft();if(!x||!cnt(x))return;const ni=$('[data-ch="draftName"]');if(ni)x.nome=ni.value;
-    x.nome=x.nome.trim()||`Compras ${dm(new Date())}`;x.estado='pendente';x.upd=now();editId=null;tab='listas';commit();window.scrollTo(0,0);toast('Lista fechada, pronta para as compras')},
-  apagarDraft:()=>{const x=draft();if(!x||!confirm('Apagar esta lista?'))return;S.listas=S.listas.filter(l=>l!==x);tomb(x.id);editId=null;tab='listas';commit()},
   shopToggle:d=>{const x=shopItem(d.pid);if(!x)return;x.it.feito=!x.it.feito;x.L.upd=now();
     const z=zOf(x.p).id,key=shopId+'|'+z;
     if(x.L.itens.filter(i=>{const p=prod(i.pid);return p&&zOf(p).id===z}).every(i=>i.feito))delete OPEN[key];
@@ -586,77 +581,61 @@ const ACT={
   zt:d=>{OPEN[d.k]=d.o!=='1';render()},
   concluir:()=>{const L=lista(shopId),f=L.itens.filter(i=>prod(i.pid)&&!i.feito).length;
     if(f&&!confirm(`Ainda ${f===1?'falta 1 produto':`faltam ${f} produtos`}. Concluir mesmo assim?`))return;
-    L.estado='concluida';L.upd=now();tab='listas';commit();window.scrollTo(0,0);toast('Compras concluídas')},
+    L.estado='concluida';L.upd=now();save();go('listas');toast('Compras concluídas')},
   wk:d=>{wk=Math.max(-1,Math.min(3,wk+(+d.d)));render()},
   sendWeek:()=>{const ws=weekStart(wk),agg={};
     for(let i=0;i<7;i++){const k=ymd(addDays(ws,i))+'|'+SLOT,r=S.refeicoes[k],p=r&&prato(r.pratoId);if(!p)continue;
-      p.ingredientes.forEach(g=>{if(!prod(g.pid))return;const q=mealQ(r,p,g.pid);if(q>0)agg[g.pid]=r2((agg[g.pid]||0)+q)});
-      r.env=[...new Set([...r.env,...p.ingredientes.map(g=>g.pid)])];r.upd=now()}
-    const n=Object.keys(agg).length;save();toDraft(Object.entries(agg).map(([pid,qtd])=>({pid,qtd})),plural(n,'ingrediente adicionado','ingredientes adicionados'))},
-  openSlot:d=>sheetSlot(d.k),
-  feito:d=>{const r=S.refeicoes[d.k];if(!r)return;r.feito=!r.feito;r.upd=now();commit()},
-  pickPrato:d=>{setRef(d.k,d.id);commit();slotChoose=false;MS={k:d.k,sel:new Set()};renderSheet();toast('Refeição adicionada ao dia')},
-  trocarSlot:()=>{slotChoose=true;slotQ='';renderSheet()},
-  criarPratoSlot:d=>{const k=d.k;sheetPrato(null,id=>{setRef(k,id);save();sheetSlot(k);render();toast('Refeição criada e adicionada')},slotQ.trim())},
-  editPratoSlot:d=>{const k=d.k;sheetPrato(d.id,()=>{save();sheetSlot(k);render()})},
-  moverSlot:d=>sheetMover(d.k),
-  mvGo:d=>{const k=d.k,r=S.refeicoes[k];if(!r)return closeSheet();const nd=$('#mvD').value;if(!nd)return toast('Escolhe um dia');
-    const nk=nd+'|'+SLOT;if(nk===k)return closeSheet();
-    const ex=S.refeicoes[nk];if(ex&&prato(ex.pratoId)&&!confirm(`Já está «${prato(ex.pratoId).nome}» nesse dia. Substituir?`))return;
-    S.refeicoes[nk]={...r,upd:now()};delRef(k);closeSheet();commit();toast(`Mudado para ${slotTitle(nk)}`)},
-  removerSlot:d=>{delRef(d.k);closeSheet();commit();toast('Refeição tirada do dia')},
-  mDose:d=>{const r=S.refeicoes[MS.k],p=r&&prato(r.pratoId);if(!p)return;r.doses=Math.max(1,(r.doses||p.doses)+(+d.d));r.ov={};r.upd=now();commit()},
-  mQ:d=>{const r=S.refeicoes[MS.k],p=r&&prato(r.pratoId),pr=prod(d.pid);if(!p||!pr)return;
+      p.ingredientes.forEach(g=>{if(!prod(g.pid))return;const q=mealQ(r,p,g.pid);if(q>0)agg[g.pid]=r2((agg[g.pid]||0)+q)})}
+    sendToAFazer(Object.entries(agg).map(([pid,qtd])=>({pid,qtd})))},
+  openDia:d=>{diaK=d.k;slotQ='';go('dia')},
+  dQ:d=>{const r=S.refeicoes[diaK],p=r&&prato(r.pratoId),pr=prod(d.pid);if(!p||!pr)return;
     r.ov[d.pid]=Math.max(0,r2(mealQ(r,p,d.pid)+(+d.d)*stepOf(pr.unidade)));r.upd=now();commit()},
-  mSel:d=>{MS.sel.has(d.pid)?MS.sel.delete(d.pid):MS.sel.add(d.pid);renderSheet()},
-  mAll:()=>{const r=S.refeicoes[MS.k],p=r&&prato(r.pratoId);if(!p)return;const ids=p.ingredientes.filter(i=>prod(i.pid)).map(i=>i.pid);
-    const all=ids.every(id=>MS.sel.has(id));MS.sel=new Set(all?[]:ids);renderSheet()},
-  mSend:()=>{const r=S.refeicoes[MS.k],p=r&&prato(r.pratoId);if(!p||!MS.sel.size)return;
-    const ids=[...MS.sel],pairs=ids.map(pid=>({pid,qtd:mealQ(r,p,pid)}));
-    r.env=[...new Set([...r.env,...ids])];r.upd=now();save();closeSheet();render();
-    toDraft(pairs,plural(pairs.length,'ingrediente adicionado','ingredientes adicionados'))},
+  dSend:()=>{const r=S.refeicoes[diaK],p=r&&prato(r.pratoId);if(!p)return;sendToAFazer(p.ingredientes.map(i=>({pid:i.pid,qtd:mealQ(r,p,i.pid)})))},
+  trocar:()=>{slotQ='';openSheet(()=>`<h2>Trocar por que receita?</h2><div style="height:12px"></div>${chooseHTML(diaK)}`)},
+  pickPrato:d=>{setRef(d.k,d.id);closeSheet();diaK=d.k;save();go('dia');toast('Receita escolhida')},
+  criarReceitaDia:d=>{const k=d.k,nome=slotQ.trim();closeSheet();openReceita(null,['dia','Voltar'],id=>{setRef(k,id);diaK=k;save();go('dia');toast('Receita criada e escolhida')},nome)},
   catTab:d=>{catTab=d.c;prodQ='';render()},
-  novoPrato:()=>sheetPrato(null,()=>{closeSheet();commit();toast('Refeição guardada')}),
-  editPrato:d=>sheetPrato(d.id,()=>{closeSheet();commit();toast('Refeição guardada')}),
-  planPrato:d=>sheetPlan(d.id),
-  planDay:d=>{PLAN.has(d.k)?PLAN.delete(d.k):PLAN.add(d.k);renderSheet()},
-  planSave:d=>{const id=d.id;PLANDAYS.forEach(day=>{const k=day+'|'+SLOT,r=S.refeicoes[k];
-      if(PLAN.has(day)){if(!r||r.pratoId!==id)setRef(k,id)}else if(r&&r.pratoId===id)delRef(k)});
-    const n=PLAN.size;closeSheet();commit();toast(n?`Planeado em ${plural(n,'dia','dias')}`:'Tirado de todos os dias')},
-  ingDel:d=>{readPT();PT.ingredientes=PT.ingredientes.filter(i=>i.pid!==d.pid);renderSheet()},
-  ptDose:d=>{readPT();PT.doses=Math.max(1,PT.doses+(+d.d));renderSheet()},
-  ptSave:()=>{readPT();const nome=PT.nome.trim();if(!nome)return toast('Dá um nome à refeição');
-    let p=PT.id&&prato(PT.id);const data={nome,prep:PT.prep.trim(),doses:PT.doses,ingredientes:PT.ingredientes,upd:now()};
+  novaReceita:()=>openReceita(null,['catalogo','Produtos'],()=>{go('catalogo');toast('Receita guardada')}),
+  editReceita:d=>openReceita(d.id,['catalogo','Produtos'],()=>{go('catalogo');toast('Receita guardada')}),
+  ingDel:d=>{readPT();PT.ingredientes=PT.ingredientes.filter(i=>i.pid!==d.pid);render()},
+  ptSave:()=>{readPT();const nome=PT.nome.trim();if(!nome)return toast('Dá um nome à receita');
+    let p=PT.id&&prato(PT.id);const data={nome,obs:PT.obs.trim(),ingredientes:PT.ingredientes,upd:now()};
     if(p)Object.assign(p,data);else{p={id:uid(),...data};S.pratos.push(p)}
-    save();const cb=PT.onSave;if(cb)cb(p.id);else{closeSheet();commit()}},
-  ptDel:()=>{if(!confirm('Apagar esta refeição? Sai também dos dias onde estava.'))return;const id=PT.id;S.pratos=S.pratos.filter(p=>p.id!==id);tomb(id);
-    Object.keys(S.refeicoes).forEach(k=>{if(S.refeicoes[k].pratoId===id)delRef(k)});closeSheet();commit()},
-  novoProd:()=>sheetProd(null),
-  editProd:d=>sheetProd(d.id),
-  pZona:d=>{readProd();PTMP.zona=d.id||null;renderSheet()},
-  pUni:d=>{readProd();PTMP.unidade=d.u;renderSheet()},
+    save();const cb=PT.onSave;PT=null;cb(p.id)},
+  ptDel:()=>{if(!confirm('Apagar esta receita? Sai também dos dias onde estava.'))return;const id=PT.id;S.pratos=S.pratos.filter(p=>p.id!==id);tomb(id);
+    Object.keys(S.refeicoes).forEach(k=>{if(S.refeicoes[k].pratoId===id){delete S.refeicoes[k];S.apagados['ref:'+k]=now()}});PT=null;save();go('catalogo')},
+  planPrato:d=>{const t=new Date(),days=[...Array(28)].map((_,i)=>ymd(addDays(t,i)));
+    PLAN={id:d.id,days,sel:new Set(days.filter(k=>{const r=S.refeicoes[k+'|'+SLOT];return r&&r.pratoId===d.id}))};go('plano')},
+  planDay:d=>{PLAN.sel.has(d.k)?PLAN.sel.delete(d.k):PLAN.sel.add(d.k);render()},
+  planSave:()=>{const id=PLAN.id;PLAN.days.forEach(day=>{const k=day+'|'+SLOT,r=S.refeicoes[k];
+      if(PLAN.sel.has(day)){if(!r||r.pratoId!==id)setRef(k,id)}else if(r&&r.pratoId===id){delete S.refeicoes[k];S.apagados['ref:'+k]=now()}});
+    const n=PLAN.sel.size;PLAN=null;save();go('catalogo');toast(n?`Planeado em ${plural(n,'dia','dias')}`:'Tirado de todos os dias')},
+  novoProd:()=>{PTMP={id:null,nome:'',zona:(zonasOrd()[0]||{}).id||null,unidade:'un'};go('prod')},
+  editProd:d=>{const p=prod(d.id);if(!p)return;PTMP={id:p.id,nome:p.nome,zona:p.zona,unidade:p.unidade};go('prod')},
+  pZona:d=>{readProd();PTMP.zona=d.id||null;render()},
+  pUni:d=>{readProd();PTMP.unidade=d.u;render()},
   pSave:()=>{readProd();const nome=PTMP.nome.trim();if(!nome)return toast('Escreve o nome do produto');
     if(S.produtos.some(p=>p.id!==PTMP.id&&norm(p.nome)===norm(nome)))return toast('Já existe um produto com esse nome');
     const p=PTMP.id&&prod(PTMP.id),data={nome,zona:PTMP.zona,unidade:PTMP.unidade,upd:now()};
     if(p)Object.assign(p,data);else S.produtos.push({id:uid(),...data});
-    closeSheet();commit();toast('Produto guardado')},
-  pDel:()=>{if(!confirm('Apagar este produto? Sai também das listas e das refeições.'))return;const id=PTMP.id;
+    PTMP=null;save();go('catalogo');toast('Produto guardado')},
+  pDel:()=>{if(!confirm('Apagar este produto? Sai também das listas e das receitas.'))return;const id=PTMP.id;
     S.produtos=S.produtos.filter(p=>p.id!==id);tomb(id);
     S.listas.forEach(l=>{const n=l.itens.length;l.itens=l.itens.filter(i=>i.pid!==id);if(l.itens.length!==n)l.upd=now()});
     S.pratos.forEach(p=>{const n=p.ingredientes.length;p.ingredientes=p.ingredientes.filter(i=>i.pid!==id);if(p.ingredientes.length!==n)p.upd=now()});
-    closeSheet();commit()},
-  novaZona:()=>sheetZona(null),
-  editZona:d=>sheetZona(d.id),
-  zCor:d=>{readZona();ZT.cor=d.c;renderSheet()},
+    PTMP=null;save();go('catalogo')},
+  novaZona:()=>{ZT={id:null,nome:'',cor:ZC[S.zonas.length%ZC.length]};go('zona')},
+  editZona:d=>{const z=zona(d.id);if(!z)return;ZT={id:z.id,nome:z.nome,cor:z.cor};go('zona')},
+  zCor:d=>{readZona();ZT.cor=d.c;render()},
   zSave:()=>{readZona();const nome=ZT.nome.trim();if(!nome)return toast('Dá um nome à zona');
     if(S.zonas.some(z=>z.id!==ZT.id&&norm(z.nome)===norm(nome)))return toast('Já existe uma zona com esse nome');
     const z=ZT.id&&zona(ZT.id);
     if(z)Object.assign(z,{nome,cor:ZT.cor,upd:now()});
     else S.zonas.push({id:uid(),nome,cor:ZT.cor,ordem:S.zonas.reduce((m,x)=>Math.max(m,x.ordem),0)+1,upd:now()});
-    closeSheet();commit();toast('Zona guardada')},
+    ZT=null;save();go('catalogo');toast('Zona guardada')},
   zDel:()=>{const id=ZT.id,n=S.produtos.filter(p=>p.zona===id).length;
     if(!confirm(n?`Apagar esta zona? ${plural(n,'produto fica','produtos ficam')} sem zona.`:'Apagar esta zona?'))return;
-    S.produtos.forEach(p=>{if(p.zona===id){p.zona=null;p.upd=now()}});S.zonas=S.zonas.filter(z=>z.id!==id);tomb(id);closeSheet();commit()},
+    S.produtos.forEach(p=>{if(p.zona===id){p.zona=null;p.upd=now()}});S.zonas=S.zonas.filter(z=>z.id!==id);tomb(id);ZT=null;save();go('catalogo')},
   zMove:d=>{const zs=zonasOrd(),i=zs.findIndex(z=>z.id===d.id),j=i+(+d.d);if(i<0||j<0||j>=zs.length)return;
     [zs[i],zs[j]]=[zs[j],zs[i]];zs.forEach((z,k)=>{if(z.ordem!==k+1){z.ordem=k+1;z.upd=now()}});commit()},
   shareSheet:()=>openSheet(()=>`<h2>Partilhar</h2><p class="sub">${S.ultimoExport?'Última partilha: '+dt(S.ultimoExport):'Ainda não partilhaste dados. O ficheiro também serve de cópia de segurança.'}</p>
@@ -664,25 +643,24 @@ const ACT={
     <button class="r" data-act="shareIn"><span class="ri" style="--c:#2F6FE0">↓</span><span class="n"><span>Importar ficheiro</span><small>Junta os dados que a outra pessoa te enviou</small></span><span class="chv">›</span></button></div>`),
   shareOut:()=>{closeSheet();exportar()},
   shareIn:()=>{closeSheet();$('#fileIn').click()},
-  addTo:d=>{const L=d.id?lista(d.id):newDraft();if(!L||!ADDQ)return closeSheet();addItems(L,ADDQ.pairs);const m=ADDQ.msg;ADDQ=null;closeSheet();commit();toast(`${m} a «${lname(L)}»`)},
   impJuntar:()=>{const c=merge(IMP);IMP=null;save();render();
-    const lines=sumLine('Zonas',c.zn,c.zu,'nova','novas')+sumLine('Produtos',c.pn,c.pu,'novo','novos')+sumLine('Refeições',c.tn,c.tu,'nova','novas')+sumLine('Listas',c.ln,c.lu,'nova','novas')+sumLine('Dias planeados',c.rn,c.ru,'novo','novos');
-    openSheet(()=>`<h2>Dados importados</h2><div style="height:10px"></div>${lines?`<div class="g">${lines}</div>`:'<p class="sub">Já tinhas tudo o que vinha no ficheiro. Nada mudou.</p>'}<button class="btn pri wide" style="margin-top:14px" data-act="closeSheet">Fechar</button>`)},
+    const lines=sumLine('Zonas',c.zn,c.zu,'nova','novas')+sumLine('Produtos',c.pn,c.pu,'novo','novos')+sumLine('Receitas',c.tn,c.tu,'nova','novas')+sumLine('Listas',c.ln,c.lu,'nova','novas')+sumLine('Dias planeados',c.rn,c.ru,'novo','novos');
+    openSheet(()=>`<h2>Dados importados</h2><div style="height:10px"></div>${lines?`<div class="g">${lines}</div>`:'<p class="sub">Já tinhas tudo o que vinha no ficheiro. Nada mudou.</p>'}`,'Fechar')},
   impSubst:()=>{if(!confirm('Substituir todos os dados deste telemóvel pelos do ficheiro?'))return;
-    S=migrate(JSON.parse(JSON.stringify(IMP)));S.ultimoExport=S.ultimoExport||0;IMP=null;tab='inicio';selJ=null;closeSheet();commit();toast('Dados substituídos')}
+    S=migrate(JSON.parse(JSON.stringify(IMP)));IMP=null;selJ=null;SELA.clear();closeSheet();save();go('inicio');toast('Dados substituídos')}
 };
 const CH={
-  draftName:(d,t)=>{const x=draft();if(x){x.nome=t.value;x.upd=now();save()}},
-  draftQty:(d,t)=>{const x=draft(),it=x&&x.itens.find(i=>i.pid===d.pid);if(it){it.qtd=pq(t.value);x.upd=now();save();t.value=fq(it.qtd)}}
+  aQty:(d,t)=>{const A=aFazerGet(),it=A&&A.itens.find(i=>i.pid===d.pid);if(it){it.qtd=pq(t.value);A.upd=now();save();t.value=fq(it.qtd)}}
 };
-PICK.draftAdd=pid=>{const x=draft();if(!x)return;addItems(x,[{pid,qtd:1}]);refocus='draftAdd';commit()};
+PICK.aAdd=pid=>{addItems(aFazer(),[{pid,qtd:1}]);refocus='aAdd';commit()};
 PICK.shopAdd=pid=>{const L=lista(shopId);if(!L)return;addItems(L,[{pid,qtd:1}]);refocus='shopAdd';commit();toast('Adicionado à lista')};
+PICK.ingAdd=pid=>{readPT();const it=PT.ingredientes.find(i=>i.pid===pid);if(it)it.qtd+=1;else PT.ingredientes.push({pid,qtd:1});refocus='ingAdd';render()};
 
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f){e.preventDefault();f(b.dataset,b)}});
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.ch&&CH[t.dataset.ch])CH[t.dataset.ch](t.dataset,t)});
 document.addEventListener('input',e=>{const t=e.target;
   if(t.id==='prodSearch'){prodQ=t.value;render();const i=$('#prodSearch');i.focus();i.setSelectionRange(i.value.length,i.value.length)}
-  if(t.id==='slotSearch'){slotQ=t.value;renderSheet();const i=$('#slotSearch');i.focus();i.setSelectionRange(i.value.length,i.value.length)}});
+  if(t.id==='slotSearch'){slotQ=t.value;const inSheet=!!t.closest('#sheet');if(inSheet)renderSheet();else render();const i=(inSheet?$('#sheet'):$('#main')).querySelector('#slotSearch');i.focus();i.setSelectionRange(i.value.length,i.value.length)}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sheetFn)closeSheet()});
 $('#fileIn').addEventListener('change',async e=>{
   const f=e.target.files[0];e.target.value='';if(!f)return;
