@@ -121,7 +121,11 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .aisle{margin-bottom:18px}
 .aisle h2{display:flex;align-items:center;gap:10px;font-size:15px;margin:0 0 8px;color:var(--muted)}
 .aisle h2 .ai{width:32px;height:32px;font-size:17px;border-radius:9px}
-.srow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 12px;margin-bottom:6px;font:inherit;font-size:17px;color:var(--ink)}
+.srow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:8px 8px 8px 12px;margin-bottom:6px;font:inherit;font-size:17px;color:var(--ink)}
+.stog{flex:1;display:flex;align-items:center;gap:12px;background:none;border:0;padding:4px 0;font:inherit;color:inherit;text-align:left;min-width:0}
+.step{display:flex;align-items:center;background:var(--surface2);border-radius:12px;padding:2px;flex:none}
+.step button{width:34px;height:34px;border:0;background:none;color:var(--ink);font:inherit;font-size:20px;border-radius:10px}
+.step .sqb{width:auto;min-width:50px;font-size:14px;font-weight:600;padding:0 4px;white-space:nowrap}
 .srow.done{opacity:.5}
 .srow.done .iname{text-decoration:line-through}
 
@@ -231,8 +235,20 @@ function commit(){save();render();if(sheetFn)renderSheet()}
 const prod=id=>S.produtos.find(p=>p.id===id);
 const prato=id=>S.pratos.find(p=>p.id===id);
 const lista=id=>S.listas.find(l=>l.id===id);
-const draft=()=>S.listas.find(l=>l.estado==='rascunho');
-function getDraft(){let d=draft();if(!d){d={id:uid(),nome:'',estado:'rascunho',itens:[],criada:now(),upd:now()};S.listas.push(d)}return d}
+const drafts=()=>S.listas.filter(l=>l.estado==='rascunho').sort((a,b)=>b.upd-a.upd);
+const draft=()=>{const l=editId&&lista(editId);return l&&l.estado==='rascunho'?l:null};
+const lname=l=>(l.nome||'').trim()||'Lista sem nome';
+function newDraft(){const d={id:uid(),nome:'',estado:'rascunho',itens:[],criada:now(),upd:now()};S.listas.push(d);return d}
+let ADDQ=null;
+function toDraft(pairs,msg){
+  if(!pairs.length){toast('Não há produtos para adicionar');return}
+  const ds=drafts();
+  if(!ds.length){const d=newDraft();addItems(d,pairs);save();render();toast(`${msg} a uma lista nova`);return}
+  ADDQ={pairs,msg};
+  openSheet(()=>`<h2>Adicionar a que lista?</h2><p class="muted small">${plural(pairs.length,'produto','produtos')} para adicionar.</p>
+    ${ds.map(l=>`<button class="opt" data-act="addTo" data-id="${l.id}"><b>${esc(lname(l))}</b><span>${plural(l.itens.filter(i=>prod(i.pid)).length,'produto','produtos')}</span></button>`).join('')}
+    <button class="opt" data-act="addTo" data-id=""><b>+ Nova lista</b><span>Cria uma lista nova com estes produtos.</span></button>`);
+}
 function addItems(L,pairs){
   pairs.forEach(({pid,qtd})=>{if(!prod(pid))return;const it=L.itens.find(i=>i.pid===pid);
     if(it){it.qtd=Math.round((it.qtd+qtd)*100)/100;it.feito=false}else L.itens.push({pid,qtd,feito:false})});
@@ -243,7 +259,7 @@ const sortItems=items=>items.map(i=>({...i,p:prod(i.pid)})).filter(i=>i.p).sort(
 const aisle=n=>`<span class="ai" style="--c:${AISLE[(n||1)-1]}">${n||'?'}</span>`;
 
 /* ---------- estado da interface ---------- */
-let catTab='produtos',tab='inicio',shopId=null,wk=0,selJ=null,prodQ='',slotQ='',slotChoose=false;
+let editId=null,catTab='produtos',tab='inicio',shopId=null,wk=0,selJ=null,prodQ='',slotQ='',slotChoose=false;
 let sheetFn=null,refocus=null,PT=null,PTMP=null,IMP=null;
 const PICK={};
 
@@ -292,13 +308,13 @@ function vInicio(){
   const rt=S.refeicoes[tm+'|'+SLOTS[0]],pt=rt&&prato(rt.pratoId);
   const pend=S.listas.filter(l=>l.estado==='pendente');
   const pi=pend.reduce((a,l)=>a+l.itens.filter(i=>prod(i.pid)&&!i.feito).length,0);
-  const d=draft(),nd=d?d.itens.filter(i=>prod(i.pid)).length:0;
+  const ds=drafts(),nd=ds.length,ndi=ds.reduce((a,l)=>a+l.itens.filter(i=>prod(i.pid)).length,0);
   const ws=weekStart(0);let nm=0;for(let i=0;i<7;i++){const x=S.refeicoes[ymd(addDays(ws,i))+'|'+SLOTS[0]];if(x&&prato(x.pratoId))nm++}
   const W=(t,c,ic,n,title,sub)=>`<button class="w" data-act="tab" data-t="${t}" style="--t:${c}"><span class="wic">${ic}</span><span class="wbot"><span class="wn">${n}</span><span class="wt">${title}</span><span class="ws">${sub}</span></span></button>`;
   return `<header class="hero"><h1>Compras</h1><p>${DN[dow(td)]}, ${td.getDate()} de ${td.toLocaleDateString('pt-PT',{month:'long'})}</p></header>
   <div class="grid">
     <button class="w today" data-act="openSlot" data-k="${k}"><span class="wic">👨‍🍳</span><span class="wbot"><span class="wl">Hoje cozinhar</span><span class="wd">${p?esc(p.nome):'Nada planeado'}</span><span class="ws">${p?(r.feito?'Feito ✓':'Toca para marcar feito'):'Toca para escolher'}${pt&&pt.prep?`<br>⏰ ${esc(pt.prep)}`:''}</span></span></button>
-    ${W('nova','#3D7FC4','📝',nd,'Nova lista',nd?'produtos por fechar':'Começar uma lista')}
+    ${W('nova','#3D7FC4','📝',nd,'Listas a fazer',nd?plural(ndi,'produto por fechar','produtos por fechar'):'Começar uma lista')}
     ${W('pend','#C98A0B','🛒',pend.length,'Pendentes',pend.length?plural(pi,'produto por comprar','produtos por comprar'):'Nada por comprar')}
     ${W('refeicoes','#D2493F','📅',`${nm}<small style="font-size:18px;opacity:.5">/7</small>`,'Refeições','dias planeados esta semana')}
     ${W('produtos','#2E9C6A','🥫',S.produtos.length,'Produtos e refeições',plural(S.pratos.length,'refeição guardada','refeições guardadas'))}
@@ -307,18 +323,26 @@ function vInicio(){
 }
 
 function vNova(){
-  const d=draft(),items=d?sortItems(d.itens):[];
-  const conc=S.listas.filter(l=>l.estado==='concluida').sort((a,b)=>b.upd-a.upd).slice(0,8);
-  let lastC=0;
+  const E=draft();
+  if(E)return vEdit(E);
+  editId=null;
+  const ds=drafts(),conc=S.listas.filter(l=>l.estado==='concluida').sort((a,b)=>b.upd-a.upd).slice(0,8);
+  return `${scrHead('Listas a fazer',ds.length?plural(ds.length,'lista aberta','listas abertas'):'Vai juntando produtos e fecha a lista para ir às compras')}
+  <button class="btn pri wide" data-act="novaLista">+ Nova lista</button>
+  ${ds.length?ds.map(l=>{const n=l.itens.filter(i=>prod(i.pid)).length;return `<button class="pcard" data-act="editLista" data-id="${l.id}"><span class="ptop"><span class="lname">${esc(lname(l))}<small>${plural(n,'produto','produtos')}, alterada a ${dm(new Date(l.upd))}</small></span><span class="go">Abrir</span></span></button>`}).join('')
+    :`<section class="card"><p class="empty">Não tens listas abertas. Cria uma e vai juntando produtos ou ingredientes das refeições.</p></section>`}
+  ${conc.length?`<section class="card" style="margin-top:14px"><h2>Repetir uma lista anterior</h2>${conc.map(l=>`<div class="crow"><span class="lname">${esc(l.nome)}<small>${plural(l.itens.length,'produto','produtos')}, feita a ${dm(new Date(l.upd))}</small></span><button class="btn sm" data-act="repetir" data-id="${l.id}">Repetir</button><button class="x" data-act="apagarLista" data-id="${l.id}" aria-label="Apagar lista">×</button></div>`).join('')}</section>`:''}`;
+}
+function vEdit(d){
+  const items=sortItems(d.itens);let lastC=0;
   const rows=items.map(i=>{const h=i.p.corredor!==lastC?`<li class="ah">${aisle(i.p.corredor)}Corredor ${i.p.corredor}</li>`:'';lastC=i.p.corredor;
     return h+`<li><span class="iname">${esc(i.p.nome)}</span><input class="qty" inputmode="decimal" data-ch="draftQty" data-pid="${i.pid}" value="${fq(i.qtd)}" aria-label="Quantidade de ${esc(i.p.nome)}"><span class="unit">${esc(i.p.unidade)}</span><button class="x" data-act="draftDel" data-pid="${i.pid}" aria-label="Remover ${esc(i.p.nome)}">×</button></li>`}).join('');
-  return `${scrHead('Nova lista',items.length?plural(items.length,'produto','produtos'):'Junta produtos e fecha a lista para ir às compras')}
+  return `${scrHead(esc(lname(d)),plural(items.length,'produto','produtos'),'data-act="backNova"')}
   <section class="card">${pickerHTML('draftAdd','Adicionar produto')}
-    ${items.length?`<input class="inp" style="margin-top:10px" data-ch="draftName" placeholder="Nome da lista (opcional)" value="${esc(d.nome)}" aria-label="Nome da lista"><ul class="items">${rows}</ul>`
-      :`<p class="empty" style="margin-top:12px">Escreve o nome de um produto. Se ainda não existir, escolhes logo o corredor.</p>`}
+    <input class="inp" style="margin-top:10px" data-ch="draftName" placeholder="Nome da lista (opcional)" value="${esc(d.nome)}" aria-label="Nome da lista">
+    ${items.length?`<ul class="items">${rows}</ul>`:`<p class="empty" style="margin-top:12px">Escreve o nome de um produto. Se ainda não existir, escolhes logo o corredor.</p>`}
   </section>
-  ${items.length?`<div class="dock"><button class="btn" data-act="limparDraft">Limpar</button><button class="btn pri" data-act="fecharLista">Fechar lista</button></div>`:''}
-  ${conc.length?`<section class="card"><h2>Repetir uma lista anterior</h2>${conc.map(l=>`<div class="crow"><span class="lname">${esc(l.nome)}<small>${plural(l.itens.length,'produto','produtos')}, feita a ${dm(new Date(l.upd))}</small></span><button class="btn sm" data-act="repetir" data-id="${l.id}">Repetir</button><button class="x" data-act="apagarLista" data-id="${l.id}" aria-label="Apagar lista">×</button></div>`).join('')}</section>`:''}`;
+  <div class="dock"><button class="btn danger" data-act="limparDraft">Apagar</button><button class="btn pri" data-act="fecharLista" ${items.length?'':'disabled'}>Fechar lista</button></div>`;
 }
 
 function pendCard(l){
@@ -334,20 +358,20 @@ function vPend(){
   ${selJ?`<div class="dock"><button class="btn pri" data-act="juntar" ${selJ.size<2?'disabled':''}>${selJ.size<2?'Escolhe pelo menos 2 listas':`Juntar ${selJ.size} listas`}</button></div>`:''}`;
 }
 
+const stepOf=u=>u==='g'?100:(u==='kg'||u==='L')?0.5:1;
 function vShop(){
   const L=lista(shopId),items=sortItems(L.itens),pend=items.filter(i=>!i.feito),done=items.filter(i=>i.feito);
-  const groups={};pend.forEach(i=>(groups[i.p.corredor]=groups[i.p.corredor]||[]).push(i));
-  const row=i=>`<button class="srow${i.feito?' done':''}" data-act="shopToggle" data-pid="${i.pid}"><span class="chk${i.feito?' on':''}"></span><span class="iname">${esc(i.p.nome)}</span><span class="sq">${fq(i.qtd)} ${esc(i.p.unidade)}</span></button>`;
+  const row=i=>`<div class="srow${i.feito?' done':''}"><button class="stog" data-act="shopToggle" data-pid="${i.pid}"><span class="chk${i.feito?' on':''}"></span><span class="iname">${esc(i.p.nome)}</span></button><span class="step"><button data-act="shopQty" data-pid="${i.pid}" data-d="-1" aria-label="Menos ${esc(i.p.nome)}">−</button><button class="sqb" data-act="shopQtySet" data-pid="${i.pid}" aria-label="Alterar quantidade">${fq(i.qtd)} ${esc(i.p.unidade)}</button><button data-act="shopQty" data-pid="${i.pid}" data-d="1" aria-label="Mais ${esc(i.p.nome)}">+</button></span></div>`;
   return `<div class="shophead"><header class="scrhead"><button class="back" data-act="closeShop" aria-label="Voltar">‹</button><div><h1>${esc(L.nome)}</h1><p>${items.length?(pend.length?`Faltam ${pend.length} de ${items.length}`:'Tudo no carrinho'):'Lista vazia'}</p></div></header>
   <div class="bar"><i style="width:${items.length?done.length/items.length*100:0}%"></i></div></div>
-  ${Object.keys(groups).sort((a,b)=>a-b).map(c=>`<section class="aisle"><h2>${aisle(+c)}Corredor ${c}</h2>${groups[c].map(row).join('')}</section>`).join('')}
+  <section class="aisle">${pend.map(row).join('')}</section>
   ${!pend.length&&items.length?`<button class="btn pri wide" style="padding:16px;font-size:17px" data-act="concluir">Concluir compras</button>`:''}
   ${done.length?`<section class="aisle"><h2>No carrinho</h2>${done.map(row).join('')}</section>`:''}
   <section class="card"><h2>Esqueceste-te de algo?</h2>${pickerHTML('shopAdd','Adicionar à lista')}</section>
   ${pend.length?`<button class="btn wide" data-act="concluir">Concluir compras mesmo assim</button>`:''}`;
 }
 
-function scrHead(t,sub){return `<header class="scrhead"><button class="back" data-act="tab" data-t="inicio" aria-label="Voltar ao início">‹</button><div><h1>${t}</h1>${sub?`<p>${sub}</p>`:''}</div></header>`}
+function scrHead(t,sub,back){return `<header class="scrhead"><button class="back" ${back||'data-act="tab" data-t="inicio"'} aria-label="Voltar">‹</button><div><h1>${t}</h1>${sub?`<p>${sub}</p>`:''}</div></header>`}
 function weekStart(o){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-dow(d)+o*7);return d}
 function vRef(){
   const ws=weekStart(wk),t=ymd(new Date()),SD=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
@@ -452,8 +476,7 @@ function sendKeys(keys){
   keys.forEach(k=>{const r=S.refeicoes[k],p=r&&prato(r.pratoId);if(p)p.ingredientes.forEach(i=>{if(prod(i.pid))agg[i.pid]=(agg[i.pid]||0)+i.qtd})});
   const n=Object.keys(agg).length;
   if(!n){toast('Não há ingredientes para enviar');return}
-  addItems(getDraft(),Object.entries(agg).map(([pid,qtd])=>({pid,qtd})));
-  save();render();toast(`${plural(n,'ingrediente enviado','ingredientes enviados')} para a nova lista`);
+  toDraft(Object.entries(agg).map(([pid,qtd])=>({pid,qtd})),plural(n,'ingrediente adicionado','ingredientes adicionados'));
 }
 
 /* ---------- partilha ---------- */
@@ -493,7 +516,6 @@ function merge(incRaw){
   (inc.listas||[]).forEach(L=>{
     L.itens=fix(L.itens);
     const l=lista(L.id);
-    if(!l&&L.estado==='rascunho'){const d=draft();if(d){if(!dead(L.id,L.upd)&&L.itens.length){addItems(d,L.itens.map(i=>({pid:i.pid,qtd:i.qtd})));c.lu++}return}}
     if(l){
       const newer=(L.upd||0)>(l.upd||0)?L:l,older=newer===L?l:L;
       const doneOld=new Set(older.itens.filter(i=>i.feito).map(i=>i.pid));
@@ -510,15 +532,13 @@ function merge(incRaw){
   S.pratos=S.pratos.filter(p=>!dead(p.id,p.upd));
   S.listas=S.listas.filter(l=>!dead(l.id,l.upd));
   Object.keys(S.refeicoes).forEach(k=>{if(dead('ref:'+k,S.refeicoes[k].upd))delete S.refeicoes[k]});
-  const ds=S.listas.filter(l=>l.estado==='rascunho');
-  ds.slice(1).forEach(x=>{x.estado='pendente';x.nome=x.nome||'Lista importada';x.upd=now()});
   return c;
 }
 function sumLine(lbl,n,u,a,b){if(!n&&!u)return '';const parts=[];if(n)parts.push(`${n} ${n===1?a:b}`);if(u)parts.push(`${u} ${u===1?'atualizado':'atualizados'}`);return `<li><b>${lbl}:</b> ${parts.join(', ')}</li>`}
 
 /* ---------- ações ---------- */
 const ACT={
-  tab:d=>{tab=d.t;shopId=null;selJ=null;render();window.scrollTo(0,0)},
+  tab:d=>{tab=d.t;shopId=null;selJ=null;editId=null;render();window.scrollTo(0,0)},
   closeSheet:()=>closeSheet(),
   openShop:d=>{if(selJ){selJ.has(d.id)?selJ.delete(d.id):selJ.add(d.id);render();return}shopId=d.id;render();window.scrollTo(0,0)},
   closeShop:()=>{shopId=null;render();window.scrollTo(0,0)},
@@ -530,8 +550,8 @@ const ACT={
     L.estado='concluida';L.upd=now();shopId=null;tab='pend';commit();window.scrollTo(0,0);toast('Compras concluídas')},
   draftDel:d=>{const x=draft();if(!x)return;x.itens=x.itens.filter(i=>i.pid!==d.pid);x.upd=now();commit()},
   fecharLista:()=>{const x=draft();if(!x||!x.itens.length)return;const ni=$('[data-ch="draftName"]');if(ni)x.nome=ni.value;
-    x.nome=x.nome.trim()||`Compras ${dm(new Date())}`;x.estado='pendente';x.upd=now();commit();toast('Lista fechada e enviada para Pendentes')},
-  limparDraft:()=>{const x=draft();if(!x||!confirm('Limpar a lista em preparação?'))return;S.listas=S.listas.filter(l=>l!==x);tomb(x.id);commit()},
+    x.nome=x.nome.trim()||`Compras ${dm(new Date())}`;x.estado='pendente';x.upd=now();editId=null;commit();window.scrollTo(0,0);toast('Lista fechada e enviada para Pendentes')},
+  limparDraft:()=>{const x=draft();if(!x||!confirm('Apagar esta lista?'))return;S.listas=S.listas.filter(l=>l!==x);tomb(x.id);editId=null;commit()},
   toggleJuntar:()=>{selJ=selJ?null:new Set();render()},
   juntar:()=>{const ls=[...selJ].map(lista).filter(Boolean);if(ls.length<2)return;
     const agg={};ls.forEach(l=>l.itens.forEach(i=>{if(!agg[i.pid])agg[i.pid]={pid:i.pid,qtd:0,feito:true};agg[i.pid].qtd=Math.round((agg[i.pid].qtd+i.qtd)*100)/100;agg[i.pid].feito=agg[i.pid].feito&&!!i.feito}));
@@ -539,7 +559,7 @@ const ACT={
     S.listas.push({id:uid(),nome,estado:'pendente',itens:Object.values(agg),criada:now(),upd:now()});
     ls.forEach(l=>{S.listas=S.listas.filter(x=>x!==l);tomb(l.id)});
     selJ=null;commit();toast(`${ls.length} listas juntas numa só`)},
-  repetir:d=>{const L=lista(d.id);if(!L)return;addItems(getDraft(),L.itens.map(i=>({pid:i.pid,qtd:i.qtd})));commit();window.scrollTo(0,0);toast('Produtos copiados para a nova lista')},
+  repetir:d=>{const L=lista(d.id);if(!L)return;toDraft(L.itens.filter(i=>prod(i.pid)).map(i=>({pid:i.pid,qtd:i.qtd})),'Produtos adicionados')},
   apagarLista:d=>{if(!confirm('Apagar esta lista?'))return;S.listas=S.listas.filter(l=>l.id!==d.id);tomb(d.id);commit()},
   wk:d=>{wk=Math.max(-1,Math.min(3,wk+(+d.d)));render()},
   sendWeek:()=>{const ws=weekStart(wk),keys=[];for(let i=0;i<7;i++)SLOTS.forEach(s=>keys.push(ymd(addDays(ws,i))+'|'+s));sendKeys(keys)},
@@ -592,6 +612,19 @@ const ACT={
     <button class="opt" data-act="shareIn"><b>Importar ficheiro</b><span>Junta os dados que a outra pessoa te enviou.</span></button>`),
   shareOut:()=>{closeSheet();exportar()},
   shareIn:()=>{closeSheet();$('#fileIn').click()},
+  novaLista:()=>{const d=newDraft();editId=d.id;refocus='draftAdd';commit();window.scrollTo(0,0)},
+  editLista:d=>{editId=d.id;render();window.scrollTo(0,0)},
+  backNova:()=>{editId=null;render();window.scrollTo(0,0)},
+  addTo:d=>{const L=d.id?lista(d.id):newDraft();if(!L||!ADDQ)return closeSheet();addItems(L,ADDQ.pairs);const m=ADDQ.msg;ADDQ=null;closeSheet();commit();toast(`${m} a «${lname(L)}»`)},
+  shopQty:d=>{const L=lista(shopId),it=L&&L.itens.find(i=>i.pid===d.pid),p=prod(d.pid);if(!it||!p)return;
+    const nq=Math.round((it.qtd+(+d.d)*stepOf(p.unidade))*100)/100;
+    if(nq<=0){if(!confirm(`Tirar «${p.nome}» da lista?`))return;L.itens=L.itens.filter(i=>i!==it)}else it.qtd=nq;
+    L.upd=now();commit()},
+  shopQtySet:d=>{const L=lista(shopId),it=L&&L.itens.find(i=>i.pid===d.pid),p=prod(d.pid);if(!it||!p)return;
+    const v=prompt(`Quantidade de ${p.nome} (${p.unidade})`,fq(it.qtd));if(v==null)return;
+    const n=parseFloat(String(v).replace(',','.'));
+    if(!(n>0)){if(confirm(`Tirar «${p.nome}» da lista?`)){L.itens=L.itens.filter(i=>i!==it);L.upd=now();commit()}return}
+    it.qtd=Math.round(n*100)/100;L.upd=now();commit()},
   exportar:()=>exportar(),
   importar:()=>$('#fileIn').click(),
   impJuntar:()=>{const c=merge(IMP);IMP=null;save();render();
@@ -604,7 +637,7 @@ const CH={
   draftName:(d,t)=>{const x=draft();if(x){x.nome=t.value;x.upd=now();save()}},
   draftQty:(d,t)=>{const x=draft(),it=x&&x.itens.find(i=>i.pid===d.pid);if(it){it.qtd=pq(t.value);x.upd=now();save();t.value=fq(it.qtd)}}
 };
-PICK.draftAdd=pid=>{addItems(getDraft(),[{pid,qtd:1}]);refocus='draftAdd';commit()};
+PICK.draftAdd=pid=>{const x=draft();if(!x)return;addItems(x,[{pid,qtd:1}]);refocus='draftAdd';commit()};
 PICK.shopAdd=pid=>{const L=lista(shopId);if(!L)return;addItems(L,[{pid,qtd:1}]);refocus='shopAdd';commit();toast('Adicionado à lista')};
 
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f){e.preventDefault();f(b.dataset,b)}});
