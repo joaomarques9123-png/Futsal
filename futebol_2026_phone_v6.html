@@ -646,6 +646,11 @@ body { background: var(--bg); color: var(--text); font-family: 'Barlow', sans-se
   /* GOAL STATS — hide team score columns */
   .goalstats-team-score { display: none !important; }
 
+  /* PLAYER RANKING — tighter table so every column fits on the phone */
+  #tab-stats .card { padding: 8px !important; }
+  #tab-stats .data-table th, #tab-stats .data-table td { padding: 8px 4px; }
+  #tab-stats .data-table th { font-size: 10px; }
+
   /* PLAYER STATS — hide full game-by-game, show mobile version */
   .ps-game-by-game { display: none !important; }
   .ps-game-mobile { display: block !important; }
@@ -673,6 +678,14 @@ select.st-in { width: auto; }
 .cfg-row { display:flex; align-items:center; gap:8px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
 .cfg-row .nm { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .cfg-in { width: 62px; padding: 5px 6px; border: 1px solid var(--border2); border-radius: 6px; background: var(--surface2); font-size: 13px; text-align:center; color: var(--text); }
+
+/* PLAYER RANKING — compact toolbar */
+.rk-bar { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+.rk-sel { padding:6px 8px; border:1px solid var(--border2); border-radius:8px; background:var(--surface2); font-family:'Barlow',sans-serif; font-size:12px; color:var(--text); min-width:0; }
+.rk-year { font-weight:800; }
+.rk-grow { flex:1; }
+.rk-btn { padding:6px 9px; border:1px solid var(--border2); border-radius:8px; background:var(--surface); font-family:'Barlow',sans-serif; font-size:12px; font-weight:700; color:var(--muted); cursor:pointer; white-space:nowrap; }
+.rk-btn.active { background:var(--scp-green); border-color:var(--scp-green); color:#fff; }
 </style>
 </head>
 <body>
@@ -920,33 +933,25 @@ select.st-in { width: auto; }
      TAB 3 — STATISTICS
 ════════════════════════════════ -->
 <div id="tab-stats" class="page">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800">Player Ranking</div>
-      <select id="ranking-year-filter" onchange="setRankingYear(this.value)" style="padding:5px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);font-family:'Barlow',sans-serif;font-size:13px;font-weight:700;color:var(--text)"></select>
-      <button class="duo-min-btn" onclick="openChampionsHistory()" style="font-size:12px;padding:4px 10px">🏆 Champions</button>
-    </div>
-    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)">
-        <span>Up to month:</span>
-        <select id="ranking-month-filter" onchange="rankingMonthFilter=parseInt(this.value)||'all';renderStats()" style="padding:5px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);font-family:'Barlow',sans-serif;font-size:12px;color:var(--text)">
-          <option value="all">All</option>
-        </select>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)">
-        <span>Min. % of games played:</span>
-        <div style="display:flex;gap:4px" id="pct-filter-btns">
-          <button class="filter-pill active" onclick="setGamesFilter(0,this)">All</button>
-          <button class="filter-pill" id="ranking-eligible-btn" onclick="setGamesFilter(ELIGIBILITY_PCT,this)">30%+</button>
-        </div>
-      </div>
-    </div>
+  <div class="rk-bar">
+    <select id="ranking-year-filter" class="rk-sel rk-year" onchange="setRankingYear(this.value)"></select>
+    <button class="rk-btn" onclick="stepRankingGame(-1)" title="Previous game">◀</button>
+    <select id="ranking-game-filter" class="rk-sel rk-grow" onchange="setRankingGame(this.value)"></select>
+    <button class="rk-btn" onclick="stepRankingGame(1)" title="Next game">▶</button>
+  </div>
+  <div class="rk-bar" style="margin-bottom:10px">
+    <select id="ranking-month-filter" class="rk-sel rk-grow" onchange="rankingMonthFilter=parseInt(this.value)||'all';rankingGameFilter='all';renderStats()">
+      <option value="all">All months</option>
+    </select>
+    <button class="rk-btn" id="ranking-eligible-btn" onclick="toggleRankingEligible(this)" title="Only players with the minimum % of games">30%+</button>
+    <button class="rk-btn" onclick="openChampionsHistory()">🏆 Champions</button>
   </div>
   <div class="card" style="padding:18px">
     <div class="table-wrap">
       <table class="data-table">
         <thead><tr>
           <th style="width:34px">#</th>
+          <th style="width:30px;text-align:center" title="Change vs previous game">±</th>
           <th>Player</th>
           <th>G</th>
           <th>Adj%</th>
@@ -2798,6 +2803,10 @@ let rankingMonthFilter = 'all'; // 'all' or month number — filters to games up
 let goalStatsMonthFilter = 'all';
 let TOTAL_GAMES_COUNT = GAMES.length;
 
+function toggleRankingEligible(btn) {
+  gamesFilter = gamesFilter > 0 ? 0 : ELIGIBILITY_PCT;
+  renderStats();
+}
 function setGamesFilter(pct, btn) {
   gamesFilter = pct;
   document.querySelectorAll('#pct-filter-btns .filter-pill').forEach(b => b.classList.remove('active'));
@@ -2829,6 +2838,7 @@ function setRankingYear(val) {
   const y = parseInt(val, 10);
   rankingYear = (isNaN(y) || y === SELECTED_YEAR) ? null : y;
   rankingMonthFilter = 'all';
+  rankingGameFilter = 'all';
   renderStats();
 }
 function openChampionsHistory() {
@@ -2867,7 +2877,7 @@ function openChampionsHistory() {
 function renderStats() {
   const tbody = document.getElementById('stats-tbody');
   const elBtn = document.getElementById('ranking-eligible-btn');
-  if (elBtn) elBtn.textContent = ELIGIBILITY_PCT + '%+';
+  if (elBtn) { elBtn.textContent = ELIGIBILITY_PCT + '%+'; elBtn.classList.toggle('active', gamesFilter > 0); }
   const minPct = gamesFilter / 100;
 
   // Year shown here is independent of the global Season setting (defaults to it)
@@ -2885,61 +2895,51 @@ function renderStats() {
     const mNames = {1:'January',2:'February',3:'March',4:'April',5:'May',6:'June',7:'July',8:'August',9:'September',10:'October',11:'November',12:'December'};
     const months = [...new Set(yearGames.map(g=>g.month))].sort((a,b)=>a-b);
     if (rankingMonthFilter !== 'all' && !months.includes(rankingMonthFilter)) rankingMonthFilter = 'all';
-    msel.innerHTML = '<option value="all">All</option>' + months.map(m => `<option value="${m}">${mNames[m]}</option>`).join('');
+    msel.innerHTML = '<option value="all">All months</option>' + months.map(m => `<option value="${m}">Up to ${mNames[m]}</option>`).join('');
     msel.value = String(rankingMonthFilter);
   }
 
-  // Filter games up to selected month
-  const filteredGames = rankingMonthFilter === 'all'
-    ? yearGames
-    : yearGames.filter(g => g.month <= rankingMonthFilter);
+  // Chronological games of the year; "Up to game" (jornada) has priority over "Up to month"
+  const chrono = [...yearGames].sort((a,b) => (parseInt(a.id,10)||0) - (parseInt(b.id,10)||0));
+  if (rankingGameFilter !== 'all' && (rankingGameFilter < 1 || rankingGameFilter > chrono.length)) rankingGameFilter = 'all';
+  const gsel = document.getElementById('ranking-game-filter');
+  if (gsel) {
+    gsel.innerHTML = '<option value="all">Latest game</option>' + chrono.map((g,i) => `<option value="${i+1}">After game ${i+1} · ${g.date}</option>`).join('');
+    gsel.value = String(rankingGameFilter);
+  }
+  let filteredGames;
+  if (rankingGameFilter !== 'all') {
+    filteredGames = chrono.slice(0, rankingGameFilter);
+    if (msel) msel.value = 'all';
+  } else {
+    filteredGames = rankingMonthFilter === 'all' ? chrono : chrono.filter(g => g.month <= rankingMonthFilter);
+  }
 
   const totalFiltered = filteredGames.length;
   if (!totalFiltered) { tbody.innerHTML = '<tr><td colspan="10" style="color:var(--dim);font-style:italic;padding:12px">No games for selected period.</td></tr>'; return; }
 
-  // Recompute per-player stats from filtered games
-  const pm = {};
-  filteredGames.forEach(g => {
-    const process = (players, won) => players.filter(p=>p!=='Outro').forEach(p => {
-      if (!pm[p]) pm[p] = {name:p, games:0, w:0, l:0, streak:'', maxW:0, maxL:0};
-      pm[p].games++; won ? pm[p].w++ : pm[p].l++;
-    });
-    process(g.teamA, g.winner==='A');
-    process(g.teamB, g.winner==='B');
-  });
-  // Compute streaks from filtered games
-  Object.keys(pm).forEach(name => {
-    let cur = 0, best = 0, worst = 0, curChar = '';
-    filteredGames.forEach(g => {
-      const all = [...g.teamA,...g.teamB];
-      if (!all.includes(name)) return;
-      const won = g.teamA.includes(name) ? g.winner==='A' : g.winner==='B';
-      if (won) { if (curChar==='W') cur++; else { cur=1; curChar='W'; } if(cur>best) best=cur; }
-      else     { if (curChar==='L') cur++; else { cur=1; curChar='L'; } if(cur>worst) worst=cur; }
-    });
-    pm[name].streak = cur > 0 ? curChar+cur : '';
-    pm[name].maxW = best;
-    pm[name].maxL = worst;
-  });
+  const current = rankingTableFor(filteredGames, minPct);
+  // Previous "jornada" = same period without its last game → position change per player
+  const prevGames = filteredGames.slice(0, -1);
+  const prevRank = {};
+  if (prevGames.length) rankingTableFor(prevGames, minPct).forEach(p => { prevRank[p.name] = p.rank; });
 
-  const getAdj = p => {
-    const base = Math.round((p.w + 10) / (p.games + 20) * 100);
-    return Math.min(100, Math.max(0, base + (playerAdj[p.name] || 0)));
-  };
-  const sorted = Object.values(pm)
-    .filter(p => (p.games / totalFiltered) >= minPct)
-    .sort((a, b) => {
-      if (statsSortKey === 'wr') return (b.w / b.games) - (a.w / a.games);
-      return getAdj(b) - getAdj(a);
-    });
-
-  tbody.innerHTML = sorted.map((p, i) => {
-    const adjPct = Math.min(100, Math.max(0, Math.round((p.w + 10) / (p.games + 20) * 100) + (playerAdj[p.name] || 0)));
+  tbody.innerHTML = current.map(p => {
+    const adjPct = p.adj;
     const adjColor = adjPct >= 60 ? 'var(--scp-green)' : adjPct >= 45 ? 'var(--amber)' : 'var(--red)';
     const sc = p.streak.startsWith('W') ? 'tag-green' : p.streak.startsWith('L') ? 'tag-red' : 'tag-amber';
-    const rankLabel = i===0 ? '🏆' : i===1 ? '🥈' : i===2 ? '🥉' : (i+1);
+    const rankLabel = rankMedal(p.rank);
+    let delta = '';
+    if (prevGames.length) {
+      const pr = prevRank[p.name];
+      if (pr == null) delta = '<span style="font-size:10px;font-weight:700;color:var(--amber)">NEW</span>';
+      else if (pr > p.rank) delta = `<span style="font-size:11px;font-weight:700;color:var(--scp-green)">▲${pr-p.rank}</span>`;
+      else if (pr < p.rank) delta = `<span style="font-size:11px;font-weight:700;color:var(--red)">▼${p.rank-pr}</span>`;
+      else delta = '<span style="color:var(--dim)">=</span>';
+    }
     return `<tr style="cursor:pointer" onclick="openPlayerStatsFor('${p.name.replace(/'/g,"\\'")}')">
       <td style="text-align:center;font-weight:700;color:var(--dim);width:34px">${rankLabel}</td>
+      <td style="text-align:center;width:30px">${delta}</td>
       <td class="player-name-cell" style="color:var(--scp-green)">${p.name}</td>
       <td style="text-align:center;font-size:12px">${p.games}</td>
       <td style="font-weight:700;color:${adjColor};text-align:center">${adjPct}%</td>
@@ -2947,7 +2947,46 @@ function renderStats() {
       <td style="color:var(--scp-green);font-weight:600;text-align:center">${p.w}</td>
       <td style="color:var(--red);font-weight:600;text-align:center">${p.l}</td>
     </tr>`;
-  }).join('') || '<tr><td colspan="7" style="color:var(--dim);font-style:italic;padding:12px">No players match the filter.</td></tr>';
+  }).join('') || '<tr><td colspan="8" style="color:var(--dim);font-style:italic;padding:12px">No players match the filter.</td></tr>';
+}
+
+// Ranking table for a set of games (chronological) — Adj%, streaks, shared positions on ties
+function rankingTableFor(games, minPct) {
+  const total = games.length;
+  const pm = {};
+  games.forEach(g => {
+    [[g.teamA, g.winner==='A'], [g.teamB, g.winner==='B']].forEach(([players, won]) => players.forEach(p => {
+      if (!p || p.startsWith('Outro')) return;
+      if (!pm[p]) pm[p] = { name:p, games:0, w:0, l:0, _res:[] };
+      pm[p].games++; won ? pm[p].w++ : pm[p].l++; pm[p]._res.push(won?'W':'L');
+    }));
+  });
+  const list = Object.values(pm).map(p => {
+    const r = p._res; let c = 0;
+    for (let k = r.length-1; k >= 0 && r[k] === r[r.length-1]; k--) c++;
+    const adj = Math.min(100, Math.max(0, Math.round((p.w+10)/(p.games+20)*100) + (playerAdj[p.name]||0)));
+    return { name:p.name, games:p.games, w:p.w, l:p.l, adj, streak: r.length ? r[r.length-1]+c : '' };
+  }).filter(p => (p.games / total) >= minPct);
+  const byWr = statsSortKey === 'wr';
+  list.sort((a,b) => byWr ? (b.w/b.games - a.w/a.games) : (b.adj - a.adj));
+  const ranks = competitionRanks(list, (a,b) => byWr ? (a.w/a.games === b.w/b.games) : (a.adj === b.adj));
+  list.forEach((p,i) => p.rank = ranks[i]);
+  return list;
+}
+
+let rankingGameFilter = 'all'; // 'all' or 1-based game number within the year
+function setRankingGame(val) {
+  const n = parseInt(val, 10);
+  rankingGameFilter = isNaN(n) ? 'all' : n;
+  renderStats();
+}
+function stepRankingGame(dir) {
+  const n = GAMES_ALL_YEARS.filter(g => g.year === rankingYearShown()).length;
+  if (!n) return;
+  let cur = rankingGameFilter === 'all' ? n : rankingGameFilter;
+  cur = Math.min(n, Math.max(1, cur + dir));
+  rankingGameFilter = (cur === n) ? 'all' : cur;
+  renderStats();
 }
 
 // ══════════════════════════════════════════
