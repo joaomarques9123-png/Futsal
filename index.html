@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#006633">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Futebol Stats">
+<title>Futebol — Stats</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--g:#006633;--g2:#007a3d;--gold:#c8a84b;--bg:#f4f6f2;--s:#fff;--s2:#eef2ec;--b:rgba(0,102,51,.12);--b2:rgba(0,102,51,.22);--t:#0d1f0d;--m:#5a7060;--d:#8aa890;--red:#c0392b;--amb:#c8a84b;--blue:#4a7fb5;--r:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--t);font-family:'Barlow',sans-serif;font-size:14px;min-height:100vh}
+.cond{font-family:'Barlow Condensed',sans-serif}
+.page{display:none;padding:14px 14px 30px}.page.on{display:block}
+#bar{display:none;align-items:center;gap:10px;padding:0 14px;padding-top:env(safe-area-inset-top,0);min-height:calc(50px + env(safe-area-inset-top,0));background:var(--g);position:sticky;top:0;z-index:50;box-shadow:0 2px 12px rgba(0,80,30,.18)}
+#bar button{background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:17px;cursor:pointer}
+#bar-t{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;color:#fff}
+.top{display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top,0)) 2px 2px}
+.top h1{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900}
+.upd{font-size:11px;color:var(--d);margin:0 2px 12px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:700px){.grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}}
+.tile{background:var(--s);border:1px solid var(--b2);border-radius:14px;padding:13px;min-height:76px;cursor:pointer;min-width:0}
+.tile:active{transform:scale(.98)}
+.tile .ic{font-size:20px}.tile .lb{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;margin-top:6px}
+.wt{display:flex;align-items:center;gap:6px;margin-bottom:7px}.wt span:last-child{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card{background:var(--s);border:1px solid var(--b);border-radius:var(--r);min-width:0}
+.sel,.btn{padding:6px 9px;border:1px solid var(--b2);border-radius:8px;background:var(--s2);font-family:'Barlow',sans-serif;font-size:12px;color:var(--t);min-width:0}
+.btn{background:var(--s);font-weight:700;color:var(--m);cursor:pointer;white-space:nowrap}
+.btn.on{background:var(--g);border-color:var(--g);color:#fff}
+.row{display:flex;align-items:center;gap:6px;margin-bottom:8px}.grow{flex:1}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{font-size:10px;font-weight:700;color:var(--d);padding:8px 4px;border-bottom:2px solid var(--g);text-align:center;white-space:nowrap}
+table.t td{padding:8px 4px;border-bottom:1px solid var(--b);text-align:center;white-space:nowrap}
+table.t td.n,table.t th.n{text-align:left;font-weight:600}
+table.t tr.cl{cursor:pointer}table.t tr.cl td.n{color:var(--g)}
+.tag{display:inline-block;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:700}
+.tg{background:rgba(0,102,51,.1);color:var(--g)}.tr{background:rgba(192,57,43,.1);color:var(--red)}
+.up{color:var(--g);font-weight:700;font-size:11px}.dn{color:var(--red);font-weight:700;font-size:11px}.dim{color:var(--d)}
+.sec{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--g);margin:18px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--b2)}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.sc{background:var(--s2);border:1px solid var(--b);border-radius:10px;padding:10px}
+.sc .l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--d)}
+.sc .v{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;line-height:1.1}
+.sc .s{font-size:10px;color:var(--d)}
+.li{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--b);font-size:13px}
+.li:last-child{border-bottom:none}.li .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.li .v{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800}.li .s{font-size:11px;color:var(--m);white-space:nowrap}
+.rk{width:24px;text-align:center;font-weight:700;color:var(--d)}
+.bar{margin-bottom:10px}.bar .h{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}.bar .tk{height:6px;background:var(--s2);border-radius:99px;overflow:hidden}.bar .f{height:100%;border-radius:99px}
+.mh{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;color:var(--g);text-transform:uppercase;letter-spacing:.07em;margin:14px 2px 6px}
+.gr{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--b);cursor:pointer}.gr:last-child{border-bottom:none}
+.gr .id{font-size:11px;color:var(--d);width:34px}.gr .dt{flex:1;font-size:13px}.gr b{font-family:'Barlow Condensed',sans-serif;font-size:18px}
+.chip{padding:5px 11px;border-radius:99px;border:1px solid var(--b2);background:var(--s);font-size:12px;font-weight:600;color:var(--m);cursor:pointer}.chip.on{background:var(--g);border-color:var(--g);color:#fff}
+#ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100}
+#md{display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,94vw);max-height:88vh;overflow-y:auto;background:var(--s);border-radius:14px;z-index:101;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+.mhd{background:var(--g);color:#fff;padding:14px 16px;border-radius:14px 14px 0 0;display:flex;align-items:center;justify-content:space-between;gap:8px;position:sticky;top:0;z-index:2}
+.mhd .tt{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800}
+.mhd button{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:50%;width:30px;height:30px;font-size:18px;cursor:pointer;flex-shrink:0}
+.mb{padding:12px 16px 18px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.tab{padding:4px 10px;border-radius:99px;border:1px solid var(--b2);background:none;font-size:12px;font-weight:600;color:var(--m);cursor:pointer}.tab.on{background:var(--g);border-color:var(--g);color:#fff}
+.gd-s{font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:900;text-align:center;line-height:1}
+.tm{display:grid;grid-template-columns:minmax(0,1fr) 30px 30px;gap:2px;align-items:center;padding:7px 0;border-bottom:1px solid var(--b);font-size:13px}
+.tm span{text-align:center}.tm .n{text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--g);cursor:pointer}.tm.h{font-size:10px;font-weight:700;color:var(--d);border-bottom:2px solid var(--b2)}.tm.h .n{color:var(--m);cursor:default}
+.tl-h{display:grid;grid-template-columns:1fr 70px 1fr;align-items:center;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;text-transform:uppercase;color:var(--m);margin-bottom:6px}
+.tl{position:relative}.tl::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;background:var(--b2)}
+.tl-r{display:grid;grid-template-columns:1fr 70px 1fr;align-items:center;min-height:40px;padding:3px 0;position:relative}
+.tl-m{display:flex;flex-direction:column;align-items:center;z-index:1}.tl-m .mn{background:var(--g);color:#fff;border-radius:99px;padding:1px 8px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800}.tl-m .scr{background:var(--s);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;padding:0 3px}
+.gm{display:grid;grid-template-columns:62px 1fr 30px;align-items:center;gap:8px;padding:4px 0;font-size:12px}.gm .tk{height:14px;background:var(--s2);border-radius:99px;overflow:hidden}.gm .f{height:100%;background:var(--g);border-radius:99px}.gm .f.top{background:var(--gold)}
+.ps-head{background:var(--g);color:#fff;border-radius:var(--r);padding:12px 14px}.ps-head .nm{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900}.ps-head .sb{font-size:12px;opacity:.85}
+.pill{display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;border-radius:5px;font-size:10px;font-weight:800;margin-right:2px}.pill.w{background:rgba(0,102,51,.12);color:var(--g)}.pill.l{background:rgba(192,57,43,.1);color:var(--red)}
+.m12{display:grid;grid-template-columns:repeat(12,1fr);gap:2px;flex:1}.mc{font-size:9px;text-align:center;padding:4px 0;border-radius:4px;background:var(--s2);font-weight:700}
+.mc.hi{background:rgba(0,102,51,.15);color:var(--g)}.mc.md{background:rgba(200,168,75,.18);color:#8a6d00}.mc.lo{background:rgba(192,57,43,.12);color:var(--red)}
+.ax{display:grid;grid-template-columns:1fr auto;font-size:12px;padding:3px 0;position:relative}.ax i{position:absolute;left:0;bottom:0;height:2px;background:var(--g)}
+.tgl{width:100%;margin-top:14px;display:flex;justify-content:space-between;padding:10px 12px;border:1px solid var(--b2);border-radius:var(--r);background:var(--s);font-size:13px;font-weight:700;color:var(--g);cursor:pointer}
+.empty{padding:16px;color:var(--d);font-style:italic;font-size:13px;text-align:center}
+</style>
+</head>
+<body>
+
+<div id="bar"><button onclick="back()" aria-label="Back">←</button><button onclick="home()" aria-label="Home">🏠</button><div id="bar-t"></div></div>
+
+<div id="p-home" class="page on">
+  <div class="top"><h1>FUTEBOL</h1><select id="year" class="sel cond" style="font-size:18px;font-weight:900;color:var(--gold)" onchange="setYear(this.value)"></select></div>
+  <div class="upd" id="upd">Loading…</div>
+  <div class="grid">
+    <div class="tile" id="w-rank" onclick="go('rank')"></div>
+    <div class="tile" id="w-goals" onclick="go('goals')"></div>
+    <div class="tile" id="w-form" onclick="go('form')"></div>
+    <div class="tile" onclick="go('games')"><div class="ic">📋</div><div class="lb">Games</div></div>
+    <div class="tile" onclick="go('records')"><div class="ic">📊</div><div class="lb">Records</div></div>
+    <div class="tile" onclick="go('player')"><div class="ic">👤</div><div class="lb">Player Stats</div></div>
+    <div class="tile" onclick="go('duos')"><div class="ic">🤝</div><div class="lb">Duos</div></div>
+    <div class="tile" onclick="go('minutes')"><div class="ic">⏱</div><div class="lb">Goal Minutes</div></div>
+  </div>
+</div>
+
+<div id="p-rank" class="page">
+  <div class="row"><button class="btn" onclick="rkStep(-1)">◀</button><select id="rk-game" class="sel grow" onchange="rkGame=this.value==='all'?'all':+this.value;renderRank()"></select><button class="btn" onclick="rkStep(1)">▶</button></div>
+  <div class="row"><select id="rk-month" class="sel grow" onchange="rkMonth=this.value==='all'?'all':+this.value;rkGame='all';renderRank()"></select><button class="btn" id="rk-el" onclick="rkElig=!rkElig;renderRank()"></button><button class="btn" onclick="champions()">🏆 Champions</button></div>
+  <div class="card" style="padding:6px;overflow-x:auto"><table class="t"><thead><tr><th>#</th><th title="Change vs previous game">±</th><th class="n">Player</th><th>G</th><th>Adj%</th><th>Streak</th><th>W</th><th>L</th></tr></thead><tbody id="rk-body"></tbody></table></div>
+</div>
+
+<div id="p-goals" class="page">
+  <div class="row"><select id="gs-sort" class="sel grow" onchange="renderGoals()"></select><button class="btn" id="gs-el" onclick="gsElig=!gsElig;renderGoals()"></button></div>
+  <div class="card" style="padding:6px;overflow-x:auto"><table class="t"><thead id="gs-head"></thead><tbody id="gs-body"></tbody></table></div>
+  <div class="upd" style="margin-top:8px">Filmed games only</div>
+</div>
+
+<div id="p-form" class="page"><div class="grid" id="form-grid"></div></div>
+
+<div id="p-games" class="page">
+  <div class="row"><button class="chip" id="gf-all" onclick="gFilm=false;renderGames()">All</button><button class="chip" id="gf-film" onclick="gFilm=true;renderGames()">🎥 Filmed</button><select id="g-player" class="sel grow" onchange="renderGames()"></select></div>
+  <div id="g-list"></div>
+</div>
+
+<div id="p-records" class="page">
+  <div class="row"><select id="rec-month" class="sel grow" onchange="renderRecords()"></select></div>
+  <div class="grid" id="rec-grid"></div>
+</div>
+
+<div id="p-player" class="page">
+  <div class="row"><select id="ps-sel" class="sel grow" onchange="psName=this.value;renderPlayer()"></select><button class="btn" id="ps-el" onclick="psElig=!psElig;renderPlayer()"></button></div>
+  <div id="ps-body"></div>
+</div>
+
+<div id="p-duos" class="page">
+  <div class="grid">
+    <div class="tile" onclick="go('duox')"><div class="ic">🤝</div><div class="lb">Duo explorer</div></div>
+    <div class="tile" onclick="go('duoi')"><div class="ic">💡</div><div class="lb">Duo insights</div></div>
+  </div>
+</div>
+
+<div id="p-duox" class="page">
+  <div class="row"><select id="dx-a" class="sel grow" onchange="renderDuoX()"></select><select id="dx-b" class="sel grow" onchange="renderDuoX()"></select></div>
+  <div class="row"><span style="font-size:12px;color:var(--m)">Min. games</span><input id="dx-min" type="number" min="1" value="3" class="sel" style="width:56px;text-align:center" onchange="renderDuoX()"></div>
+  <div id="dx-body"></div>
+</div>
+
+<div id="p-duoi" class="page">
+  <div class="row"><span style="font-size:12px;color:var(--m)">Min. games together/against</span><input id="di-min" type="number" min="1" value="5" class="sel" style="width:56px;text-align:center" onchange="renderDuoI()"></div>
+  <div id="di-body"></div>
+</div>
+
+<div id="p-minutes" class="page">
+  <div id="mn-all"></div>
+  <div class="row" style="margin-top:12px"><select id="mn-sel" class="sel grow" onchange="renderMinutes()"></select><button class="btn" id="mn-el" onclick="mnElig=!mnElig;renderMinutes()"></button></div>
+  <div id="mn-player"></div>
+</div>
+
+<div id="ov" onclick="closeM()"></div>
+<div id="md"></div>
+
+<script>
+'use strict';
+// ════════════════════════════════════════════════════════════
+// DATA — read-only, loaded from data.json (exported from the main app)
+// ════════════════════════════════════════════════════════════
+let ALL = [], ROWS = [], DEFS = [], ELIG = 30, YEAR = new Date().getFullYear();
+let G = [];                  // games of the selected year, chronological
+const BY = {};               // gameId -> stat rows
+const DEFAULT_DEFS = [
+  {key:'goals',icon:'⚽',name:'Goals',enabled:true},{key:'assists',icon:'🎯',name:'Assists',enabled:true},
+  {key:'ownGoals',icon:'⭕',name:'Own Goals',enabled:true},{key:'recoveries',icon:'🛡️',name:'Ball Recoveries',enabled:true}];
+const MN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+const real = p => p && !p.startsWith('Outro');
+const num = id => parseInt(id,10) || 0;
+const adj = (w,g) => g ? Math.round((w+10)/(g+20)*100) : 0;
+const pct = (w,g) => g ? Math.round(w/g*100) : 0;
+const minFor = n => Math.ceil(n * ELIG / 100);
+const medal = r => r===1?'🏆':r===2?'🥈':r===3?'🥉':r;
+const col = v => v>=60?'var(--g)':v>=45?'var(--amb)':'var(--red)';
+const won = (g,p) => (g.teamA.includes(p) && g.winner==='A') || (g.teamB.includes(p) && g.winner==='B');
+const plays = (g,p) => g.teamA.includes(p) || g.teamB.includes(p);
+const defs = () => DEFS.filter(d => d.enabled);
+const def = k => DEFS.find(d => d.key===k) || {key:k,icon:'•',name:k};
+const fmtMin = t => (Math.floor(t/60)+1) + "'";
+function ranks(list, same) { const r=[]; list.forEach((x,i)=>r.push(i>0&&same(list[i-1],x)?r[i-1]:i+1)); return r; }
+function rowsOf(g) { return BY[g.id] || []; }
+function filmed(g) { return rowsOf(g).length > 0; }
+function score(g) {
+  let A=0,B=0; rowsOf(g).forEach(r => { if (g.teamA.includes(r.player)) { A+=r.goals||0; B+=r.ownGoals||0; } else if (g.teamB.includes(r.player)) { B+=r.goals||0; A+=r.ownGoals||0; } });
+  return {A,B};
+}
+function playerGames(games) {   // name -> {g,w,res[]}
+  const m = {};
+  games.forEach(g => [...g.teamA,...g.teamB].filter(real).forEach(p => { (m[p]=m[p]||{g:0,w:0,res:[]}); m[p].g++; const w=won(g,p); if(w) m[p].w++; m[p].res.push(w); }));
+  return m;
+}
+function streakOf(res) { if(!res.length) return ''; const l=res[res.length-1]; let c=0; for(let i=res.length-1;i>=0&&res[i]===l;i--) c++; return (l?'W':'L')+c; }
+function maxRun(res, v) { let m=0,c=0; res.forEach(x=>{c=x===v?c+1:0;m=Math.max(m,c);}); return m; }
+
+async function load() {
+  try {
+    const r = await fetch('data.json?v=' + Date.now(), {cache:'no-store'});
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    ALL = (d.GAMES_ALL_YEARS || []).slice();
+    ROWS = (d.GOAL_STATS || []).slice();
+    DEFS = Array.isArray(d.STAT_DEFS) && d.STAT_DEFS.length ? d.STAT_DEFS : DEFAULT_DEFS;
+    ELIG = d.ELIGIBILITY_PCT || 30;
+    ROWS.forEach(r => (BY[r.gameId] = BY[r.gameId] || []).push(r));
+    const years = [...new Set(ALL.map(g => g.year))].sort((a,b)=>b-a);
+    YEAR = years.includes(d.SELECTED_YEAR) ? d.SELECTED_YEAR : (years[0] || YEAR);
+    document.getElementById('year').innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+    document.getElementById('upd').textContent = d.exportedAt ? 'Updated ' + new Date(d.exportedAt).toLocaleDateString('pt-PT') : '';
+    setYear(YEAR);
+  } catch (e) {
+    document.getElementById('upd').innerHTML = '<span style="color:var(--red)">Could not load data.json (' + esc(e.message) + ')</span>';
+  }
+}
+function setYear(y) {
+  YEAR = +y; document.getElementById('year').value = YEAR;
+  G = ALL.filter(g => g.year === YEAR).sort((a,b) => num(a.id)-num(b.id));
+  rkGame = 'all'; rkMonth = 'all';
+  renderHome(); const cur = stack[stack.length-1]; if (cur !== 'home') go(cur, true);
+}
+
+// ════════════════════════════════════════════════════════════
+// NAVIGATION + MODAL
+// ════════════════════════════════════════════════════════════
+const TITLES = {rank:'Player Ranking',goals:'Goals & Assists',form:'Current Form',games:'Games',records:'Records',player:'Player Stats',duos:'Duos',duox:'Duo Explorer',duoi:'Duo Insights',minutes:'Goal Minutes'};
+const RENDER = {rank:()=>renderRank(),goals:()=>renderGoals(),form:()=>renderForm(),games:()=>renderGames(),records:()=>renderRecords(),player:()=>renderPlayer(),duox:()=>renderDuoX(),duoi:()=>renderDuoI(),minutes:()=>renderMinutes()};
+let stack = ['home'];
+function show(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.getElementById('p-'+id).classList.add('on');
+  document.getElementById('bar').style.display = id==='home' ? 'none' : 'flex';
+  document.getElementById('bar-t').textContent = TITLES[id] || '';
+  if (RENDER[id]) RENDER[id]();
+  window.scrollTo(0,0);
+}
+function go(id, replace) { if (!replace && stack[stack.length-1] !== id) stack.push(id); show(id); }
+function back() { stack.pop(); if (!stack.length) stack=['home']; show(stack[stack.length-1]); }
+function home() { stack=['home']; show('home'); }
+function modal(title, body) {
+  document.getElementById('md').innerHTML = `<div class="mhd"><div class="tt">${title}</div><button onclick="closeM()" aria-label="Close">×</button></div><div class="mb">${body}</div>`;
+  document.getElementById('ov').style.display = document.getElementById('md').style.display = 'block';
+  document.getElementById('md').scrollTop = 0; document.body.style.overflow = 'hidden';
+}
+function closeM() { document.getElementById('ov').style.display = document.getElementById('md').style.display = 'none'; document.body.style.overflow = ''; }
+function openPlayer(n) { closeM(); psName = n; go('player'); }
+const plink = n => real(n) ? `<span style="color:var(--g);cursor:pointer" data-p="${esc(n)}" onclick="openPlayer(this.dataset.p)">${esc(n)}</span>` : esc(n);
+function tabsHtml(id, labels, bodies) {
+  return `<div class="tabs">${labels.map((l,i)=>`<button class="tab ${i?'':'on'}" onclick="tabTo('${id}',${i},${labels.length})" id="${id}-t${i}">${l}</button>`).join('')}</div>`
+    + bodies.map((b,i)=>`<div id="${id}-b${i}" style="${i?'display:none':''}">${b}</div>`).join('');
+}
+function tabTo(id,i,n) { for (let k=0;k<n;k++) { document.getElementById(id+'-b'+k).style.display = k===i?'':'none'; document.getElementById(id+'-t'+k).classList.toggle('on', k===i); } }
+function eligToggleHtml() { return `<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="btn" onclick="this.classList.toggle('on');eligFilter(this.classList.contains('on'))">${ELIG}%+ games</button></div>`; }
+function eligFilter(on) {
+  const pg = playerGames(G), mn = minFor(G.length);
+  document.querySelectorAll('#md [data-pl]').forEach(el => { el.style.display = on && ((pg[el.dataset.pl]||{g:0}).g < mn) ? 'none' : ''; });
+}
+const barRow = (name, val, max, color, sub) => `<div class="bar" data-pl="${esc(name)}"><div class="h"><span style="font-weight:500">${esc(name)}</span><span style="color:${color};font-weight:700">${sub}</span></div><div class="tk"><div class="f" style="width:${max>0?Math.min(100,Math.round(val/max*100)):0}%;background:${color}"></div></div></div>`;
+
+// ════════════════════════════════════════════════════════════
+// HOME WIDGETS
+// ════════════════════════════════════════════════════════════
+function renderHome() {
+  const t = rankingTable(G, true);
+  document.getElementById('w-rank').innerHTML = `<div class="wt"><span>🏆</span><span>Ranking</span></div>` + (t.length
+    ? t.slice(0,2).map(p => `<div style="display:flex;justify-content:space-between;font-size:12px"><span>${medal(p.rank)} ${esc(p.name)}</span><b>${p.adj}%</b></div>`).join('')
+    : '<div class="dim" style="font-size:12px">No eligible players</div>');
+  const tot = statTotals(G), mn = minFor(G.length), pg = playerGames(G);
+  const el = Object.entries(tot).filter(([n]) => (pg[n]||{g:0}).g >= mn);
+  const ts = el.sort((a,b)=>b[1].goals-a[1].goals)[0], ta = [...el].sort((a,b)=>b[1].assists-a[1].assists)[0];
+  document.getElementById('w-goals').innerHTML = `<div class="wt"><span>⚽</span><span>Goals &amp; Assists</span></div>`
+    + (ts ? `<div style="font-size:12px">⚽ ${esc(ts[0])} (${ts[1].goals})</div>` : '') + (ta ? `<div style="font-size:12px">🎯 ${esc(ta[0])} (${ta[1].assists})</div>` : '')
+    + (!ts ? '<div class="dim" style="font-size:12px">No stats yet</div>' : '');
+  const act = activePlayers(), hot = Object.entries(pg).filter(([n,v]) => act.has(n) && v.res[v.res.length-1]).map(([n,v]) => [n, +streakOf(v.res).slice(1)]).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('w-form').innerHTML = `<div class="wt"><span>📶</span><span>Current Form</span></div>`
+    + (hot ? `<div style="font-size:13px">🔥 <b>${esc(hot[0])}</b></div><div class="dim" style="font-size:10px">${hot[1]}W streak</div>` : '<div class="dim" style="font-size:12px">No streak yet</div>');
+}
+function statTotals(games) {
+  const ids = new Set(games.map(g => g.id)), t = {};
+  ROWS.forEach(r => { if (!ids.has(r.gameId) || !real(r.player)) return; const x = t[r.player] = t[r.player] || {games:0}; x.games++; DEFS.forEach(d => x[d.key] = (x[d.key]||0) + (r[d.key]||0)); });
+  return t;
+}
+function activePlayers() {
+  const ms = [...new Set(G.map(g => g.month))].sort((a,b)=>a-b).slice(-2);
+  return new Set(G.filter(g => ms.includes(g.month)).flatMap(g => [...g.teamA,...g.teamB]).filter(real));
+}
+
+// ════════════════════════════════════════════════════════════
+// PLAYER RANKING — by game ("jornada"), with change vs previous game
+// ════════════════════════════════════════════════════════════
+let rkGame = 'all', rkMonth = 'all', rkElig = false;
+function rankingTable(games, onlyElig) {
+  const pg = playerGames(games), mn = onlyElig ? minFor(games.length) : 0;
+  const list = Object.entries(pg).filter(([,v]) => v.g >= mn).map(([n,v]) => ({name:n, games:v.g, w:v.w, l:v.g-v.w, adj:adj(v.w,v.g), streak:streakOf(v.res)}));
+  list.sort((a,b) => b.adj-a.adj || b.games-a.games);
+  const r = ranks(list, (a,b) => a.adj===b.adj); list.forEach((p,i) => p.rank = r[i]);
+  return list;
+}
+function rkStep(d) { const n = G.length; if (!n) return; let c = rkGame==='all' ? n : rkGame; c = Math.min(n, Math.max(1, c+d)); rkGame = c===n ? 'all' : c; renderRank(); }
+function renderRank() {
+  const gs = document.getElementById('rk-game'), ms = document.getElementById('rk-month');
+  gs.innerHTML = '<option value="all">Latest game</option>' + G.map((g,i) => `<option value="${i+1}">After game ${i+1} · ${esc(g.date)}</option>`).join('');
+  gs.value = String(rkGame);
+  const months = [...new Set(G.map(g => g.month))].sort((a,b)=>a-b);
+  ms.innerHTML = '<option value="all">All months</option>' + months.map(m => `<option value="${m}">Up to ${MN[m-1]}</option>`).join('');
+  ms.value = rkGame==='all' ? String(rkMonth) : 'all';
+  const b = document.getElementById('rk-el'); b.textContent = ELIG+'%+'; b.classList.toggle('on', rkElig);
+  const games = rkGame!=='all' ? G.slice(0, rkGame) : (rkMonth==='all' ? G : G.filter(g => g.month <= rkMonth));
+  const body = document.getElementById('rk-body');
+  if (!games.length) { body.innerHTML = '<tr><td colspan="8" class="empty">No games</td></tr>'; return; }
+  const cur = rankingTable(games, rkElig), prevG = games.slice(0,-1), prev = {};
+  if (prevG.length) rankingTable(prevG, rkElig).forEach(p => prev[p.name] = p.rank);
+  body.innerHTML = cur.map(p => {
+    let d = '';
+    if (prevG.length) { const pr = prev[p.name]; d = pr==null ? '<span class="tag" style="color:var(--amb);font-size:9px">NEW</span>' : pr>p.rank ? `<span class="up">▲${pr-p.rank}</span>` : pr<p.rank ? `<span class="dn">▼${p.rank-pr}</span>` : '<span class="dim">=</span>'; }
+    return `<tr class="cl" data-p="${esc(p.name)}" onclick="openPlayer(this.dataset.p)"><td style="font-weight:700;color:var(--d)">${medal(p.rank)}</td><td>${d}</td><td class="n">${esc(p.name)}</td><td>${p.games}</td><td style="font-weight:700;color:${col(p.adj)}">${p.adj}%</td><td>${p.streak?`<span class="tag ${p.streak[0]==='W'?'tg':'tr'}">${p.streak}</span>`:'—'}</td><td style="color:var(--g);font-weight:600">${p.w}</td><td style="color:var(--red);font-weight:600">${p.l}</td></tr>`;
+  }).join('') || '<tr><td colspan="8" class="empty">No players match the filter</td></tr>';
+}
+function seasonRanking(y) { const gs = ALL.filter(g => g.year===y); return { total:gs.length, min:minFor(gs.length), all:playerGames(gs), elig:rankingTable(gs, true) }; }
+function champions() {
+  const years = [...new Set(ALL.map(g => g.year))].sort((a,b)=>b-a), now = new Date().getFullYear();
+  modal('🏆 Champions history', years.map(y => {
+    const s = seasonRanking(y), pod = s.elig.filter(p => p.rank<=3);
+    return `<div style="padding:10px 0;border-bottom:1px solid var(--b)"><div style="display:flex;justify-content:space-between;align-items:baseline"><span class="cond" style="font-size:20px;font-weight:900">${y}${y>=now?' <span style="font-size:10px;color:var(--amb)">IN PROGRESS</span>':''}</span><span class="dim" style="font-size:11px">${s.total} games · ${s.elig.length} eligible (min ${s.min})</span></div>`
+      + pod.map(p => `<div class="li" style="border:none;padding:4px 0"><span class="rk">${medal(p.rank)}</span><span class="nm">${plink(p.name)}</span><span class="s">${p.w}W ${p.l}L</span><span class="v">${p.adj}%</span></div>`).join('') + '</div>';
+  }).join('') + `<div class="dim" style="font-size:10px;margin-top:8px">Best Adj% among players with ≥${ELIG}% of that season's games</div>`);
+}
+
+// ════════════════════════════════════════════════════════════
+// GOALS & ASSISTS — table of every collected stat (filmed games)
+// ════════════════════════════════════════════════════════════
+let gsElig = false;
+function renderGoals() {
+  const sel = document.getElementById('gs-sort'), ds = defs();
+  if (!sel.options.length) sel.innerHTML = '<option value="ga">Sort: G+A</option>' + ds.map(d => `<option value="${d.key}">Sort: ${esc(d.name)}</option>`).join('');
+  const b = document.getElementById('gs-el'); b.textContent = ELIG+'%+'; b.classList.toggle('on', gsElig);
+  const t = statTotals(G), pg = playerGames(G), mn = gsElig ? minFor(G.length) : 0, k = sel.value || 'ga';
+  const list = Object.entries(t).filter(([n]) => (pg[n]||{g:0}).g >= mn).map(([n,v]) => ({n, ...v, ga:(v.goals||0)+(v.assists||0)})).sort((a,b) => (b[k]||0)-(a[k]||0));
+  document.getElementById('gs-head').innerHTML = `<tr><th>#</th><th class="n">Player</th><th>GP</th>${ds.map(d=>`<th title="${esc(d.name)}">${d.icon}</th>`).join('')}<th>G+A</th></tr>`;
+  const r = ranks(list, (a,b) => (a[k]||0)===(b[k]||0));
+  document.getElementById('gs-body').innerHTML = list.map((p,i) => `<tr class="cl" data-p="${esc(p.n)}" onclick="openPlayer(this.dataset.p)"><td class="dim">${r[i]}</td><td class="n">${esc(p.n)}</td><td class="dim">${p.games}</td>${ds.map(d=>`<td>${p[d.key]||0}</td>`).join('')}<td style="font-weight:800">${p.ga}</td></tr>`).join('') || '<tr><td colspan="9" class="empty">No stats yet</td></tr>';
+}
+
+// ════════════════════════════════════════════════════════════
+// CURRENT FORM
+// ════════════════════════════════════════════════════════════
+function renderForm() {
+  const act = activePlayers(), pg = playerGames(G);
+  const lists = [];
+  const cur = Object.entries(pg).filter(([n]) => act.has(n)).map(([n,v]) => ({n, s:streakOf(v.res)}));
+  lists.push(['🔥','Current winning streaks', cur.filter(x=>x.s[0]==='W').map(x=>[x.n,+x.s.slice(1)]), v=>v+' in a row']);
+  lists.push(['❄️','Current losing streaks', cur.filter(x=>x.s[0]==='L').map(x=>[x.n,+x.s.slice(1)]), v=>v+' in a row']);
+  const last5 = G.slice(-5), f5 = Object.keys(pg).filter(n=>act.has(n)).map(n => { const gs = last5.filter(g=>plays(g,n)); const w = gs.filter(g=>won(g,n)).length; return {n, p:gs.length, w}; }).filter(x=>x.p>=3);
+  lists.push(['🌡️','Hottest form — last 5 games', f5.map(x=>[x.n, x.w/x.p, `${x.w}W ${x.p-x.w}L`]), (v,x)=>x]);
+  lists.push(['🧊','Coldest form — last 5 games', f5.map(x=>[x.n, 1-x.w/x.p, `${x.w}W ${x.p-x.w}L`]), (v,x)=>x]);
+  const att = Object.keys(pg).filter(n=>act.has(n)).map(n => { let c=0; for (let i=G.length-1;i>=0&&plays(G[i],n);i--) c++; return [n,c]; }).filter(x=>x[1]>0);
+  lists.push(['📅','Consecutive games attended', att, v=>v+' games']);
+  // scoring streaks over filmed games
+  const fg = G.filter(filmed), sc = {};
+  fg.forEach(g => rowsOf(g).filter(r=>real(r.player)).forEach(r => (sc[r.player]=sc[r.player]||[]).push(r)));
+  const run = (arr, test) => { let c=0; for (let i=arr.length-1;i>=0&&test(arr[i]);i--) c++; return c; };
+  lists.push(['⚽','Scoring in consecutive filmed games', Object.entries(sc).filter(([n])=>act.has(n)).map(([n,a])=>[n,run(a,r=>(r.goals||0)>0)]).filter(x=>x[1]>0), v=>v+' games']);
+  lists.push(['🥶','Games without scoring (filmed)', Object.entries(sc).filter(([n])=>act.has(n)).map(([n,a])=>[n,run(a,r=>!(r.goals||0))]).filter(x=>x[1]>0), v=>v+' games']);
+  lists.push(['🎯','G+A in consecutive filmed games', Object.entries(sc).filter(([n])=>act.has(n)).map(([n,a])=>[n,run(a,r=>(r.goals||0)+(r.assists||0)>0)]).filter(x=>x[1]>0), v=>v+' games']);
+  window._form = lists;
+  document.getElementById('form-grid').innerHTML = lists.map(([ic,t,arr,fmt],i) => {
+    const s = [...arr].sort((a,b)=>b[1]-a[1]);
+    return `<div class="tile" onclick="formModal(${i})"><div class="wt"><span>${ic}</span><span>${t}</span></div>${s[0]?`<div style="display:flex;justify-content:space-between;gap:6px"><b style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s[0][0])}</b><b class="cond" style="font-size:17px;color:var(--g)">${fmt(s[0][1],s[0][2])}</b></div>`:'<div class="dim" style="font-size:12px">None</div>'}</div>`;
+  }).join('');
+}
+function formModal(i) {
+  const [ic,t,arr,fmt] = window._form[i]; const s = [...arr].sort((a,b)=>b[1]-a[1]); const r = ranks(s,(a,b)=>a[1]===b[1]);
+  modal(ic+' '+t, s.map((x,k) => `<div class="li"><span class="rk">${r[k]}</span><span class="nm">${plink(x[0])}</span><span class="v" style="color:var(--g)">${fmt(x[1],x[2])}</span></div>`).join('') || '<div class="empty">None</div>');
+}
+
+// ════════════════════════════════════════════════════════════
+// GAMES + GAME DETAIL
+// ════════════════════════════════════════════════════════════
+let gFilm = false;
+function renderGames() {
+  document.getElementById('gf-all').classList.toggle('on', !gFilm); document.getElementById('gf-film').classList.toggle('on', gFilm);
+  const ps = document.getElementById('g-player'), cur = ps.value;
+  const players = [...new Set(G.flatMap(g=>[...g.teamA,...g.teamB]))].filter(real).sort();
+  ps.innerHTML = '<option value="">All players</option>' + players.map(p=>`<option${p===cur?' selected':''}>${esc(p)}</option>`).join('');
+  const pl = ps.value;
+  const list = G.filter(g => (!gFilm || filmed(g)) && (!pl || plays(g,pl))).slice().reverse();
+  const by = {}; list.forEach(g => (by[g.month]=by[g.month]||[]).push(g));
+  document.getElementById('g-list').innerHTML = Object.keys(by).sort((a,b)=>b-a).map(m => `<div class="mh">${MN[m-1]} · ${by[m].length} game${by[m].length>1?'s':''}</div><div class="card">${by[m].map(g => {
+    const s = score(g), f = filmed(g), you = pl ? `<span class="tag ${won(g,pl)?'tg':'tr'}">${won(g,pl)?'W':'L'}</span>` : '';
+    return `<div class="gr" onclick="gameDetail('${esc(g.id)}')"><span class="id">#${esc(g.id.slice(-3))}</span><span class="dt">${esc(g.date)} ${f?'🎥':''}</span>${f?`<b>${s.A} – ${s.B}</b>`:`<b class="dim" style="font-size:14px">Team ${g.winner}</b>`}${you}</div>`;
+  }).join('')}</div>`).join('') || '<div class="empty">No games</div>';
+}
+function gameDetail(id) {
+  const i = G.findIndex(g => g.id===id); const g = G[i]; if (!g) return;
+  const s = score(g), f = filmed(g), rows = rowsOf(g);
+  const team = t => `<div class="tm h"><span class="n">${g.winner===t?'🏆 ':''}Team ${t}</span><span>G</span><span>A</span></div>` + g['team'+t].map(p => {
+    const r = rows.find(x => x.player===p) || {};
+    return `<div class="tm" style="${g.winner===t?'font-weight:700':''}"><span class="n" ${real(p)?`data-p="${esc(p)}" onclick="openPlayer(this.dataset.p)"`:'style="color:var(--t);cursor:default"'}>${esc(p)}</span><span>${f?(r.goals||0):'–'}</span><span>${f?(r.assists||0):'–'}</span></div>`;
+  }).join('');
+  const nav = (j, ic) => `<button onclick="gameDetail('${G[j]?esc(G[j].id):''}')" ${G[j]?'':'disabled style="opacity:.3"'}>${ic}</button>`;
+  const hasEv = (g.events||[]).some(e => e.key==='goals' || e.key==='ownGoals');
+  document.getElementById('md').innerHTML = `<div class="mhd">${nav(i-1,'‹')}<div style="text-align:center;flex:1"><div style="font-size:12px;opacity:.85">#${esc(g.id)} · ${esc(g.date)}${f?' · 🎥':''}</div><div class="gd-s">${f?s.A+' – '+s.B:'Team '+g.winner+' won'}</div></div>${nav(i+1,'›')}</div>
+    <div class="mb"><div class="g2">${'<div>'+team('A')+'</div><div>'+team('B')+'</div>'}</div>
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">${f?`<button class="btn grow" onclick="allStats('${esc(g.id)}')">📊 All stats</button>`:''}${hasEv?`<button class="btn grow" onclick="timeline('${esc(g.id)}')">⏱ Timeline</button>`:''}<button class="btn grow" onclick="closeM()">Close</button></div></div>`;
+  document.getElementById('ov').style.display = document.getElementById('md').style.display = 'block'; document.getElementById('md').scrollTop = 0; document.body.style.overflow = 'hidden';
+}
+function allStats(id) {
+  const g = G.find(x => x.id===id); const rows = rowsOf(g).filter(r => real(r.player)); const ds = defs();
+  const players = [...g.teamA,...g.teamB].filter(real).map(p => rows.find(r=>r.player===p) || {player:p});
+  const bodies = ds.map(d => { const s = [...players].sort((a,b)=>(b[d.key]||0)-(a[d.key]||0)); const r = ranks(s,(a,b)=>(a[d.key]||0)===(b[d.key]||0));
+    return s.map((x,i) => `<div class="li"><span class="rk">${medal(r[i])}</span><span class="nm">${plink(x.player)}</span><span class="v" style="color:var(--g)">${x[d.key]||0}</span></div>`).join(''); });
+  modal('📊 Game #'+esc(g.id), tabsHtml('as', ds.map(d=>d.icon+' '+esc(d.name)), bodies));
+}
+function timeline(id) {
+  const g = G.find(x => x.id===id); const ev = (g.events||[]).slice();
+  const team = p => g.teamA.includes(p) ? 'A' : 'B';
+  const sorted = ev.some(e => 'goalId' in e) || ev.some(e => typeof e.t !== 'number') ? ev : ev.sort((a,b)=>a.t-b.t);
+  const ast = {}; sorted.forEach(e => { if (e.key==='assists' && e.goalId) ast[e.goalId] = e.player; });
+  let a=0,b=0;
+  const rows = sorted.filter(e => e.key==='goals' || e.key==='ownGoals').map(e => {
+    let side = team(e.player); if (e.key==='ownGoals') side = side==='A'?'B':'A'; side==='A'?a++:b++;
+    const sub = e.key==='goals' && ast[e.id] ? `<div style="font-size:11px;color:var(--m)">🎯 ${esc(ast[e.id])}</div>` : '';
+    const who = `<div style="display:inline-flex;gap:6px;align-items:center;${side==='B'?'flex-direction:row-reverse':''}"><b style="font-size:13px">${esc(e.player)}${e.key==='ownGoals'?' <span style="color:var(--red);font-size:10px">(OG)</span>':''}</b><span>${e.key==='ownGoals'?'⭕':'⚽'}</span></div>`;
+    const cell = sd => side===sd ? `<div style="text-align:${sd==='A'?'right':'left'}">${who}${sub}</div>` : '<div></div>';
+    return `<div class="tl-r">${cell('A')}<div class="tl-m"><span class="mn">${typeof e.t==='number'?fmtMin(e.t):'–'}</span><span class="scr">${a}–${b}</span></div>${cell('B')}</div>`;
+  }).join('');
+  modal('⏱ Game #'+esc(g.id), `<div class="tl-h"><span style="text-align:right">Team A</span><span class="cond" style="text-align:center;font-size:22px;color:var(--t)">${a} – ${b}</span><span>Team B</span></div><div class="tl">${rows}</div>`);
+}
+
+// ════════════════════════════════════════════════════════════
+// RECORDS — category tiles, each opens a window with tabs
+// ════════════════════════════════════════════════════════════
+function renderRecords() {
+  const ms = document.getElementById('rec-month'), cur = ms.value;
+  const months = [...new Set(G.map(g=>g.month))].sort((a,b)=>a-b);
+  ms.innerHTML = '<option value="all">All months</option>' + months.map(m=>`<option value="${m}">Up to ${MN[m-1]}</option>`).join('');
+  ms.value = months.includes(+cur) ? cur : 'all';
+  const games = ms.value==='all' ? G : G.filter(g => g.month <= +ms.value);
+  const cats = buildRecords(games); window._rec = cats;
+  document.getElementById('rec-grid').innerHTML = cats.map((c,i) => `<div class="tile" onclick="recModal(${i})"><div class="wt"><span>${c.icon}</span><span>${esc(c.title)}</span></div>${c.glance||'<div class="dim" style="font-size:12px">Tap to view</div>'}</div>`).join('');
+}
+function recModal(i) { const c = window._rec[i]; modal(c.icon+' '+esc(c.title), (c.noElig?'':eligToggleHtml()) + tabsHtml('rc', c.tabs.map(t=>t[0]), c.tabs.map(t=>t[1]||'<div class="empty">No data</div>'))); }
+const glance = (n, v) => n ? `<div style="display:flex;justify-content:space-between;gap:6px"><b style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n)}</b><b class="cond" style="font-size:17px;color:var(--g)">${v}</b></div>` : '';
+function buildRecords(games) {
+  const cats = [], pg = playerGames(games), total = games.length;
+  const ids = new Set(games.map(g=>g.id)), rows = ROWS.filter(r => ids.has(r.gameId) && real(r.player));
+  const fg = games.filter(filmed);
+  // Season overview
+  const tg = rows.reduce((s,r)=>s+(r.goals||0),0), ta = rows.reduce((s,r)=>s+(r.assists||0),0);
+  const sc = (l,v,s) => `<div class="sc"><div class="l">${l}</div><div class="v" style="color:var(--g)">${v}</div><div class="s">${s||''}</div></div>`;
+  cats.push({icon:'📅', title:'Season Overview', noElig:true, glance:glance('Total games', total), tabs:[['Overview', `<div class="g2">${sc('Total games',total)}${sc('Players',Object.keys(pg).length)}${sc('Filmed games',fg.length,'of '+total)}${sc('Players filmed',new Set(rows.map(r=>r.player)).size)}${sc('Goals recorded',tg,fg.length?(tg/fg.length).toFixed(1)+'/game':'')}${sc('Assists recorded',ta)}</div>`]]});
+  // Streaks & attendance
+  const st = Object.entries(pg).map(([n,v]) => { let a=0,b=0; games.forEach(g=>{ if(plays(g,n)){a++;b=Math.max(b,a);} else a=0; }); return {n, w:maxRun(v.res,true), l:maxRun(v.res,false), g:v.g, att:b}; });
+  const list = (arr, k, color, f) => { const s = arr.filter(x=>x[k]>0).sort((a,b)=>b[k]-a[k]); const mx = s[0]?s[0][k]:1; return [s, s.map(x=>barRow(x.n, x[k], mx, color, f(x))).join('')]; };
+  const [sw,bw] = list(st,'w','var(--g)',x=>x.w+' wins'), [sl,bl] = list(st,'l','var(--red)',x=>x.l+' losses'), [sp,bp] = list(st,'g','var(--g)',x=>`${x.g} games (${pct(x.g,total)}%)`), [sa,ba] = list(st,'att','var(--g)',x=>x.att+' in a row');
+  cats.push({icon:'🔥', title:'Streaks & Attendance', glance:sw[0]?glance(sw[0].n, sw[0].w+' wins'):'', tabs:[['Best streaks',bw],['Worst streaks',bl],['Participation',bp],['Attendance',ba]]});
+  // Per-stat categories (filmed games)
+  const per = {};
+  rows.forEach(r => { const x = per[r.player] = per[r.player] || {n:r.player, gp:0, best:{}, bestId:{}}; x.gp++; DEFS.forEach(d => { const v = r[d.key]||0; x[d.key]=(x[d.key]||0)+v; if (v > (x.best[d.key]||0)) { x.best[d.key]=v; x.bestId[d.key]=r.gameId; } }); x.ga=(x.ga||0)+(r.goals||0)+(r.assists||0); const gi=(r.goals||0)+(r.assists||0); if (gi>(x.best.ga||0)) { x.best.ga=gi; x.bestId.ga=r.gameId; } });
+  const P = Object.values(per);
+  const statTabs = (key, color, word) => {
+    const tot = [...P].filter(x=>x[key]>0).sort((a,b)=>b[key]-a[key]), mT = tot[0]?tot[0][key]:1;
+    const best = [...P].filter(x=>(x.best[key]||0)>0).sort((a,b)=>b.best[key]-a.best[key]), mB = best[0]?best[0].best[key]:1;
+    const avg = [...P].filter(x=>x.gp).sort((a,b)=>b[key]/b.gp-a[key]/a.gp), mA = avg[0]?avg[0][key]/avg[0].gp:1;
+    return { glance: tot[0]?glance(tot[0].n, tot[0][key]+' '+word):'', tabs: [
+      ['Total', tot.map(x=>barRow(x.n,x[key],mT,color,`${x[key]} · ${x.gp}g`)).join('')],
+      ['Single game', best.map(x=>barRow(x.n,x.best[key],mB,color,`${x.best[key]} · #${x.bestId[key]}`)).join('')],
+      ['Avg/game', avg.map(x=>barRow(x.n,x[key]/x.gp,mA,color,(x[key]/x.gp).toFixed(2)+'/g')).join('')]]};
+  };
+  const topOfGame = (key, color) => { const c = {}; fg.forEach(g => { const rs = rowsOf(g).filter(r=>real(r.player)); const mx = Math.max(0,...rs.map(r=>r[key]||0)); if (mx>0) rs.filter(r=>(r[key]||0)===mx).forEach(r=>c[r.player]=(c[r.player]||0)+1); }); const s = Object.entries(c).sort((a,b)=>b[1]-a[1]); const m = s[0]?s[0][1]:1; return s.map(([n,v])=>barRow(n,v,m,color,v+' game'+(v>1?'s':''))).join(''); };
+  const perf = (key, color, word) => { const s = rows.filter(r=>(r[key]||0)>0).sort((a,b)=>b[key]-a[key]); const m = s[0]?s[0][key]:1; return s.map(r=>{ const g=games.find(x=>x.id===r.gameId); return barRow(r.player,r[key],m,color,`${r[key]} ${word} · #${r.gameId} · ${g?g.date:''}`); }).join(''); };
+  const scoreRuns = (want) => { const by = {}; fg.forEach(g => rowsOf(g).filter(r=>real(r.player)).forEach(r => (by[r.player]=by[r.player]||[]).push((r.goals||0)>0))); const s = Object.entries(by).map(([n,a])=>[n,maxRun(a,want)]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]); const m=s[0]?s[0][1]:1; return s.map(([n,v])=>barRow(n,v,m,want?'var(--g)':'var(--red)',v+' in a row')).join(''); };
+  if (rows.length) {
+    const gG = statTabs('goals','var(--g)','goals');
+    cats.push({icon:'⚽', title:'Goals', glance:gG.glance, tabs:[...gG.tabs, ['Top scorer count', topOfGame('goals','var(--gold)')], ['Best performances', perf('goals','var(--g)','goals')], ['Hot streak', scoreRuns(true)], ['Cold streak', scoreRuns(false)]]});
+    const aA = statTabs('assists','var(--amb)','assists');
+    cats.push({icon:'🎯', title:'Assists', glance:aA.glance, tabs:[...aA.tabs, ['Top assister count', topOfGame('assists','var(--amb)')], ['Best performances', perf('assists','var(--amb)','assists')]]});
+    const gi = statTabs('ga','var(--amb)','G+A');
+    cats.push({icon:'🔥', title:'Goal Involvement', glance:gi.glance, tabs:gi.tabs});
+    defs().filter(d => !['goals','assists','ownGoals'].includes(d.key)).forEach(d => {
+      const statGames = new Set(rows.filter(r => r[d.key] !== undefined).map(r => r.gameId)); if (!statGames.size) return;
+      const sub = statTabs(d.key, 'var(--blue)', d.name.toLowerCase());
+      cats.push({icon:d.icon, title:d.name, glance:sub.glance, tabs:[...sub.tabs, ['Top count', topOfGame(d.key,'var(--blue)')], ['Best performances', perf(d.key,'var(--blue)', d.name.toLowerCase())]]});
+    });
+    // Game records
+    const gi2 = fg.map(g => { const s = score(g); const w = g.winner==='A'?s.A:s.B, l = g.winner==='A'?s.B:s.A; return {g, w, l, tot:s.A+s.B, diff:w-l}; });
+    const gl = (arr, f) => arr.map((x,i) => `<div class="li" style="cursor:pointer" onclick="closeM();gameDetail('${esc(x.g.id)}')"><span class="rk">${i+1}</span><span class="nm" style="font-weight:500">#${esc(x.g.id)} · ${esc(x.g.date)}</span><span class="v">${x.w}–${x.l}</span><span class="s">${f(x)}</span></div>`).join('');
+    const hi = [...gi2].sort((a,b)=>b.tot-a.tot), lo = [...gi2].sort((a,b)=>a.tot-b.tot), mg = [...gi2].sort((a,b)=>b.diff-a.diff);
+    cats.push({icon:'🎮', title:'Game Records', noElig:true, glance:hi[0]?glance('#'+hi[0].g.id, hi[0].w+'–'+hi[0].l):'', tabs:[['Highest scoring', gl(hi,x=>x.tot+' goals')],['Lowest scoring', gl(lo,x=>x.tot+' goals')],['Biggest margin', gl(mg,x=>'Δ'+x.diff)]]});
+  }
+  return cats;
+}
+
+// ════════════════════════════════════════════════════════════
+// PLAYER STATS
+// ════════════════════════════════════════════════════════════
+let psName = '', psElig = false;
+function renderPlayer() {
+  const pg = playerGames(G), mn = psElig ? minFor(G.length) : 0;
+  const names = Object.keys(pg).filter(n => pg[n].g >= mn).sort();
+  const sel = document.getElementById('ps-sel');
+  if (psName && !names.includes(psName) && pg[psName]) names.push(psName), names.sort();
+  sel.innerHTML = '<option value="">— select player —</option>' + names.map(n=>`<option${n===psName?' selected':''}>${esc(n)}</option>`).join('');
+  const b = document.getElementById('ps-el'); b.textContent = ELIG+'%+'; b.classList.toggle('on', psElig);
+  const body = document.getElementById('ps-body');
+  if (!psName || !pg[psName]) { body.innerHTML = '<div class="empty">Select a player</div>'; return; }
+  const n = psName, me = pg[n], my = G.filter(g => plays(g,n)), l = me.g-me.w, a = adj(me.w,me.g), wp = pct(me.w,me.g);
+  const tot = statTotals(G), mine = tot[n] || {games:0};
+  const fgN = mine.games||0;
+  // radar vs eligible group
+  const grp = Object.keys(pg).filter(x => pg[x].g >= minFor(G.length) || x===n);
+  const met = x => { const t = tot[x]||{games:0}; const gp = t.games||0; const teamG = G.filter(g=>plays(g,x) && filmed(g)).reduce((s,g)=>{const sc=score(g); return s+(g.teamA.includes(x)?sc.A:sc.B);},0);
+    return [pct(pg[x].w,pg[x].g), gp?(t.goals||0)/gp:0, gp?(t.assists||0)/gp:0, gp?(t.recoveries||0)/gp:0, teamG?(t.goals||0)/teamG*100:0, pg[x].g/Math.max(1,G.length)*100]; };
+  const mv = met(n), mx = mv.map((_,i) => Math.max(0.0001, ...grp.map(x=>met(x)[i])));
+  const vals = mv.map((v,i) => Math.min(1, v/mx[i]));
+  const axes = [['Win %',Math.round(mv[0])+'%'],['Goals/g',mv[1].toFixed(2)],['Assists/g',mv[2].toFixed(2)],['Recov./g',mv[3].toFixed(2)],['% team goals',Math.round(mv[4])+'%'],['Attendance',Math.round(mv[5])+'%']];
+  // months
+  const now = new Date(), lastM = YEAR < now.getFullYear() ? 12 : YEAR > now.getFullYear() ? 0 : now.getMonth()+1;
+  let cj=0,cw=0; const r1=[], r2=[];
+  for (let k=1;k<=12;k++) { if (k>lastM) { r1.push('<div class="mc">–</div>'); r2.push('<div class="mc">–</div>'); continue; }
+    const mg = my.filter(g=>g.month===k), mw = mg.filter(g=>won(g,n)).length; cj+=mg.length; cw+=mw;
+    const tier = v => v>=60?'hi':v>=45?'md':'lo';
+    r1.push(mg.length?`<div class="mc ${tier(mw/mg.length*100)}">${mw}/${mg.length}</div>`:'<div class="mc">0</div>');
+    r2.push(cj?`<div class="mc ${tier(adj(cw,cj))}">${adj(cw,cj)}</div>`:'<div class="mc">–</div>'); }
+  const lbl = 'JFMAMJJASOND'.split('').map(c=>`<div class="mc" style="background:none">${c}</div>`).join('');
+  // partners / opponents
+  const tm={}, op={};
+  my.forEach(g => { const onA=g.teamA.includes(n), w=won(g,n); (onA?g.teamA:g.teamB).filter(p=>real(p)&&p!==n).forEach(p=>{tm[p]=tm[p]||[0,0];tm[p][0]++;if(w)tm[p][1]++;}); (onA?g.teamB:g.teamA).filter(real).forEach(p=>{op[p]=op[p]||[0,0];op[p][0]++;if(w)op[p][1]++;}); });
+  const top = (o,d) => Object.entries(o).filter(([,v])=>v[0]>=4).sort((a,b)=>d*(b[1][1]/b[1][0]-a[1][1]/a[1][0])||b[1][0]-a[1][0]).slice(0,2);
+  const rel = (t,arr) => `<div class="sc"><div class="l">${t}</div>${arr.length?arr.map(([p,v])=>`<div style="font-size:13px;margin-top:3px">${plink(p)} <span class="dim">${v[1]}/${v[0]}</span></div>`).join(''):'<div class="dim">—</div>'}</div>`;
+  const sc = (l,v,c,s) => `<div class="sc"><div class="l">${l}</div><div class="v" style="${c?'color:'+c:''}">${v}</div><div class="s">${s||''}</div></div>`;
+  const ds = defs().filter(d=>d.key!=='ownGoals');
+  // previous seasons
+  const years = [...new Set(ALL.map(g=>g.year))].filter(y=>y<YEAR).sort((a,b)=>b-a);
+  const past = years.map(y => { const s = seasonRanking(y), m = s.all[n], e = s.elig.find(p=>p.name===n);
+    return `<div class="li"><span class="cond" style="font-size:16px;font-weight:800;width:44px">${y}</span><span class="s" style="flex:1">${m?`${m.g} games · ${m.w}W ${m.g-m.w}L · ${adj(m.w,m.g)}%`:'Did not play'}</span><b>${m?(e?`${e.rank<=3?medal(e.rank)+' ':''}#${e.rank} <span class="dim" style="font-weight:400">/ ${s.elig.length}</span>`:`<span class="dim" style="font-weight:400">Not eligible (min ${s.min})</span>`):'—'}</b></div>`; }).join('');
+  // game by game
+  const list = G.slice().reverse().filter(g=>plays(g,n)).map(g => { const r = rowsOf(g).find(x=>x.player===n), s = score(g), onA = g.teamA.includes(n), f = filmed(g);
+    return `<div class="gr" onclick="gameDetail('${esc(g.id)}')"><span class="tag ${won(g,n)?'tg':'tr'}">${won(g,n)?'W':'L'}</span><span class="dt">#${esc(g.id.slice(-3))} · ${esc(g.date)} ${f?'🎥':''}</span>${f?`<b style="font-size:15px">${onA?s.A:s.B}–${onA?s.B:s.A}</b><span class="s" style="font-size:12px;width:64px;text-align:right">${r?(r.goals||0)+'⚽ '+(r.assists||0)+'🎯':''}</span>`:''}</div>`; }).join('');
+  body.innerHTML = `<div class="ps-head"><div class="nm">${esc(n)}</div><div class="sb">${me.g} of ${G.length} games · ${pct(me.g,G.length)}% attendance</div></div>
+    <div class="g3" style="margin-top:8px">${sc('W – L',me.w+'–'+l,'',wp+'% real')}${sc('Win rate adj',a+'%',col(a))}${sc('Streak now',streakOf(me.res),me.res[me.res.length-1]?'var(--g)':'var(--red)','missed '+(G.length-me.g))}</div>
+    <div class="sec">Compared with the group · bar = % of the best</div>
+    <div style="display:grid;grid-template-columns:150px 1fr;gap:10px;align-items:center">${radar(vals)}<div>${axes.map((x,i)=>`<div class="ax"><span>${x[0]}</span><b>${x[1]}</b><i style="width:${Math.round(vals[i]*100)}%"></i></div>`).join('')}</div></div>
+    <div class="sec">Form</div>
+    <div style="margin-bottom:6px"><span class="dim" style="font-size:10px;margin-right:6px">Last 10</span>${me.res.slice(-10).map(w=>`<span class="pill ${w?'w':'l'}">${w?'W':'L'}</span>`).join('')}</div>
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:3px"><span class="dim" style="font-size:10px;width:36px">Wins</span><div class="m12">${r1.join('')}</div></div>
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:3px"><span class="dim" style="font-size:10px;width:36px">Adj %</span><div class="m12">${r2.join('')}</div></div>
+    <div style="display:flex;gap:6px"><span style="width:36px"></span><div class="m12">${lbl}</div></div>
+    ${fgN?`<div class="sec">Production · ${fgN} of ${me.g} games filmed</div><div class="g3">${ds.map(d=>sc(d.name, mine[d.key]||0, d.key==='goals'?'var(--g)':d.key==='assists'?'var(--amb)':'var(--blue)', ((mine[d.key]||0)/fgN).toFixed(2)+'/game')).join('')}${sc('G+A',(mine.goals||0)+(mine.assists||0),'',(((mine.goals||0)+(mine.assists||0))/fgN).toFixed(2)+'/game')}</div>`:''}
+    <div class="sec">Partners &amp; opponents · min 4 games</div>
+    <div class="g2">${rel('Best with',top(tm,1))}${rel('Worst with',top(tm,-1))}${rel('Hardest vs',top(op,-1))}${rel('Easiest vs',top(op,1))}</div>
+    ${past?`<button class="tgl" onclick="const x=this.nextElementSibling;x.style.display=x.style.display==='none'?'':'none'"><span>📜 Previous seasons</span><span>▾</span></button><div style="display:none">${past}</div>`:''}
+    <button class="tgl" onclick="const x=this.nextElementSibling;x.style.display=x.style.display==='none'?'':'none'"><span>📋 Game by game (${me.g})</span><span>▾</span></button><div class="card" style="display:none;margin-top:6px">${list}</div>`;
+}
+function radar(v) {
+  const cx=75,cy=72,R=54, L=['W%','G','A','R','%G','Att'];
+  const pt=(i,k)=>{const a=-Math.PI/2+i*Math.PI/3;return [(cx+k*Math.cos(a)).toFixed(1),(cy+k*Math.sin(a)).toFixed(1)];};
+  let s=''; [.25,.5,.75,1].forEach(k=>{ s+=`<polygon points="${L.map((_,i)=>pt(i,R*k).join(',')).join(' ')}" fill="none" stroke="rgba(0,102,51,.22)"/>`; });
+  s+=`<polygon points="${v.map((x,i)=>pt(i,R*Math.max(x,.03)).join(',')).join(' ')}" fill="#006633" fill-opacity=".22" stroke="#006633" stroke-width="2"/>`;
+  L.forEach((l,i)=>{ const [x,y]=pt(i,R+11); s+=`<text x="${x}" y="${+y+4}" text-anchor="middle" font-size="10" font-weight="700" fill="#5a7060">${l}</text>`; });
+  return `<svg viewBox="0 0 150 146" style="width:100%">${s}</svg>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// DUOS — explorer + insights
+// ════════════════════════════════════════════════════════════
+function duoData() {
+  const tog = {}, vs = {}, pl = {};
+  G.forEach(g => {
+    [[g.teamA,g.winner==='A'],[g.teamB,g.winner==='B']].forEach(([t,w]) => { const r = t.filter(real);
+      r.forEach(p => { (pl[p]=pl[p]||{g:0,w:0,games:[]}); pl[p].g++; if(w) pl[p].w++; pl[p].games.push(g); });
+      for (let i=0;i<r.length;i++) for (let j=i+1;j<r.length;j++) { const [a,b]=[r[i],r[j]].sort(), k=a+'|'+b; (tog[k]=tog[k]||{a,b,g:0,w:0}); tog[k].g++; if(w) tog[k].w++; } });
+    g.teamA.filter(real).forEach(a => g.teamB.filter(real).forEach(b => { [[a,b,g.winner==='A'],[b,a,g.winner==='B']].forEach(([x,y,w]) => { const k=x+'|'+y; (vs[k]=vs[k]||{a:x,b:y,g:0,w:0}); vs[k].g++; if(w) vs[k].w++; }); }));
+  });
+  return {tog, vs, pl};
+}
+function renderDuoX() {
+  const {tog, vs, pl} = duoData(), names = Object.keys(pl).sort();
+  const A = document.getElementById('dx-a'), B = document.getElementById('dx-b'), a0 = A.value, b0 = B.value;
+  A.innerHTML = '<option value="">Player 1</option>' + names.map(n=>`<option${n===a0?' selected':''}>${esc(n)}</option>`).join('');
+  B.innerHTML = '<option value="">Player 2 (optional)</option>' + names.filter(n=>n!==A.value).map(n=>`<option${n===b0?' selected':''}>${esc(n)}</option>`).join('');
+  const a = A.value, b = B.value, mn = Math.max(1, +document.getElementById('dx-min').value || 1), out = document.getElementById('dx-body');
+  if (!a) { out.innerHTML = '<div class="empty">Choose a player</div>'; return; }
+  if (b) {
+    const t = tog[[a,b].sort().join('|')] || {g:0,w:0}, v = vs[a+'|'+b] || {g:0,w:0};
+    const sc = (l,v2,s) => `<div class="sc"><div class="l">${l}</div><div class="v">${v2}</div><div class="s">${s}</div></div>`;
+    out.innerHTML = `<div class="sec">🤝 Together</div><div class="g3">${sc('Games',t.g,'')}${sc('Wins',t.w,'')}${sc('Win %',t.g?pct(t.w,t.g)+'%':'—','')}</div>
+      <div class="sec">⚔️ Against</div><div class="g3">${sc('Games',v.g,'')}${sc(esc(a)+' wins',v.w,'')}${sc(esc(b)+' wins',v.g-v.w,'')}</div>`;
+    return;
+  }
+  const part = Object.values(tog).filter(d => (d.a===a||d.b===a) && d.g>=mn).map(d => ({n:d.a===a?d.b:d.a, g:d.g, w:d.w})).sort((x,y)=>pct(y.w,y.g)-pct(x.w,x.g)||y.g-x.g);
+  const opp = Object.values(vs).filter(d => d.a===a && d.g>=mn).map(d => ({n:d.b, g:d.g, w:d.w})).sort((x,y)=>pct(y.w,y.g)-pct(x.w,x.g)||y.g-x.g);
+  const li = x => `<div class="li"><span class="nm">${plink(x.n)}</span><span class="s">${x.w}W ${x.g-x.w}L</span><span class="v" style="color:${col(pct(x.w,x.g))}">${pct(x.w,x.g)}%</span></div>`;
+  out.innerHTML = `<div class="sec">🤝 Playing with ${esc(a)}</div><div class="card" style="padding:0 12px">${part.map(li).join('')||'<div class="empty">None</div>'}</div>
+    <div class="sec">⚔️ Playing against (${esc(a)}'s record)</div><div class="card" style="padding:0 12px">${opp.map(li).join('')||'<div class="empty">None</div>'}</div>`;
+}
+function renderDuoI() {
+  const {tog, vs, pl} = duoData(), mn = Math.max(1, +document.getElementById('di-min').value || 5);
+  const T = Object.values(tog).filter(d=>d.g>=mn);
+  const li = (n,v,s) => `<div class="li"><span class="nm">${n}</span><span class="s">${s||''}</span><span class="v">${v}</span></div>`;
+  const card = (t,s,body) => `<div class="card" style="padding:12px 14px;margin-bottom:10px"><div class="cond" style="font-size:16px;font-weight:800">${t}</div><div class="dim" style="font-size:10px;margin-bottom:4px">${s}</div>${body||'<div class="dim" style="font-size:12px">Not enough games yet</div>'}</div>`;
+  const best = [...T].sort((x,y)=>pct(y.w,y.g)-pct(x.w,x.g)||y.g-x.g).slice(0,5), worst = [...T].sort((x,y)=>pct(x.w,x.g)-pct(y.w,y.g)||y.g-x.g).slice(0,5);
+  const insep = Object.values(tog).sort((x,y)=>y.g-x.g).slice(0,5), riv = Object.values(vs).filter(d=>d.a<d.b).sort((x,y)=>y.g-x.g).slice(0,5);
+  const nem = Object.values(vs).filter(d=>d.g>=mn && d.w>d.g-d.w).sort((x,y)=>pct(y.w,y.g)-pct(x.w,x.g)||y.g-x.g).slice(0,5);
+  const minP = Math.max(mn, minFor(G.length));
+  const charm = Object.keys(pl).filter(p=>pl[p].g>=minP).map(p => { let s=0,wt=0; Object.keys(pl).forEach(t => { if (t===p) return; const w = tog[[p,t].sort().join('|')]; if (!w||w.g<3) return;
+      const wo = pl[t].games.filter(g => !((g.teamA.includes(p)&&g.teamA.includes(t))||(g.teamB.includes(p)&&g.teamB.includes(t)))); if (wo.length<3) return;
+      s += (w.w/w.g - wo.filter(g=>won(g,t)).length/wo.length)*w.g; wt += w.g; }); return {p, d: wt?Math.round(s/wt*100):null}; }).filter(x=>x.d!=null).sort((x,y)=>y.d-x.d).slice(0,5);
+  const reg = Object.keys(pl).filter(p=>pl[p].g>=minP).sort(), never = [];
+  for (let i=0;i<reg.length;i++) for (let j=i+1;j<reg.length;j++) if (!tog[[reg[i],reg[j]].sort().join('|')]) never.push(esc(reg[i])+' &amp; '+esc(reg[j]));
+  document.getElementById('di-body').innerHTML =
+    card('🔥 Best duos',`Highest win % together · ≥${mn} games`, best.map(d=>li(esc(d.a)+' &amp; '+esc(d.b), pct(d.w,d.g)+'%', `${d.w}W ${d.g-d.w}L`)).join(''))
+    + card('🥶 Worst duos',`Lowest win % together · ≥${mn} games`, worst.map(d=>li(esc(d.a)+' &amp; '+esc(d.b), pct(d.w,d.g)+'%', `${d.w}W ${d.g-d.w}L`)).join(''))
+    + card('👯 Inseparable','Most games on the same team', insep.map(d=>li(esc(d.a)+' &amp; '+esc(d.b), d.g, pct(d.w,d.g)+'% wins')).join(''))
+    + card('⚔️ Biggest rivalries','Most games against each other', riv.map(d=>li(esc(d.a)+' vs '+esc(d.b), d.g, `${d.w}–${d.g-d.w}`)).join(''))
+    + card('😈 Nemesis',`Who beats a specific opponent the most · ≥${mn} games`, nem.map(d=>li(`${esc(d.a)} <span class="dim" style="font-weight:400">over</span> ${esc(d.b)}`, d.w+'–'+(d.g-d.w), pct(d.w,d.g)+'%')).join(''))
+    + card('🍀 Lucky charm',`Teammates win more with him than without · ≥${minP} games`, charm.map(c=>li(esc(c.p),(c.d>0?'+':'')+c.d+' pp')).join(''))
+    + card('🚫 Never together',`Regular players (≥${minP} games) who never played on the same team`, never.slice(0,12).map(x=>li(x,'')).join('') + (never.length>12?`<div class="dim" style="font-size:10px">+${never.length-12} more</div>`:''));
+}
+
+// ════════════════════════════════════════════════════════════
+// GOAL MINUTES — 15-minute blocks, overall and per player
+// ════════════════════════════════════════════════════════════
+let mnElig = false;
+function blocks(goals) {
+  if (!goals.length) return '<div class="dim" style="font-size:12px;margin:6px 0">No goals with minutes yet</div>';
+  const maxM = Math.max(...goals.map(e=>Math.floor(e.t/60)+1)), nb = Math.max(4, Math.ceil(maxM/15)), c = Array(nb).fill(0);
+  goals.forEach(e => c[Math.min(nb-1, Math.floor(Math.floor(e.t/60)/15))]++);
+  const top = Math.max(...c), uniq = c.filter(x=>x===top).length===1;
+  return c.map((v,i) => `<div class="gm"><span>${i*15+1}'–${(i+1)*15}'</span><div class="tk"><div class="f ${uniq&&v===top&&v>0?'top':''}" style="width:${top?Math.round(v/top*100):0}%"></div></div><b style="text-align:right">${v}</b></div>`).join('');
+}
+function renderMinutes() {
+  const all = []; G.forEach(g => (g.events||[]).forEach(e => { if (e.key==='goals' && typeof e.t==='number') all.push({...e, g}); }));
+  const avg = all.length ? all.reduce((s,e)=>s+e.t,0)/all.length : 0;
+  let topTxt = ''; if (all.length) { const cnt = {}; all.forEach(e => { const b=Math.floor(Math.floor(e.t/60)/15); cnt[b]=(cnt[b]||0)+1; }); const b = +Object.keys(cnt).sort((x,y)=>cnt[y]-cnt[x])[0]; topTxt = `Most goals between ${b*15+1}' and ${(b+1)*15}'`; }
+  document.getElementById('mn-all').innerHTML = `<div class="card" style="padding:12px 14px"><div class="cond" style="font-size:16px;font-weight:800">⏱ All goals</div><div class="dim" style="font-size:10px;margin-bottom:6px">${all.length} goals in ${new Set(all.map(e=>e.g.id)).size} games with minutes${all.length?' · average '+fmtMin(avg):''}</div>${blocks(all)}${topTxt?`<div style="font-size:11px;color:var(--g);font-weight:700;margin-top:6px">${topTxt}</div>`:''}</div>`;
+  const b = document.getElementById('mn-el'); b.textContent = ELIG+'%+'; b.classList.toggle('on', mnElig);
+  const pg = playerGames(G), mn = mnElig ? minFor(G.length) : 0;
+  const sc = [...new Set(all.map(e=>e.player))].filter(p => (pg[p]||{g:0}).g >= mn).sort();
+  const sel = document.getElementById('mn-sel'), prev = sel.value;
+  sel.innerHTML = sc.length ? sc.map(p=>`<option>${esc(p)}</option>`).join('') : '<option value="">No players yet</option>';
+  sel.value = sc.includes(prev) ? prev : (sc[0]||'');
+  const n = sel.value, out = document.getElementById('mn-player');
+  if (!n) { out.innerHTML = ''; return; }
+  const mine = all.filter(e=>e.player===n), a2 = mine.reduce((s,e)=>s+e.t,0)/mine.length, d = Math.round((a2-avg)/60);
+  const astOf = e => { const x = (e.g.events||[]).find(y => y.key==='assists' && y.goalId===e.id); return x ? ' · 🎯 '+esc(x.player) : ''; };
+  out.innerHTML = `<div class="card" style="padding:12px 14px"><div class="cond" style="font-size:16px;font-weight:800">⚽ ${esc(n)}</div><div class="dim" style="font-size:10px;margin-bottom:6px">${mine.length} goal${mine.length>1?'s':''} · average ${fmtMin(a2)} · ${d===0?'same as the group':d<0?Math.abs(d)+' min earlier than average':d+' min later than average'}</div>${blocks(mine)}
+    <div style="margin-top:8px">${mine.slice().sort((x,y)=>num(y.g.id)-num(x.g.id)||x.t-y.t).map(e=>`<div class="li" style="cursor:pointer" onclick="gameDetail('${esc(e.g.id)}')"><span class="nm" style="font-weight:500">#${esc(e.g.id)} · ${esc(e.g.date)}<span class="s">${astOf(e)}</span></span><span class="v">${fmtMin(e.t)}</span></div>`).join('')}</div></div>`;
+}
+
+load();
+</script>
+</body>
+</html>
