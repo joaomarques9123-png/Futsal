@@ -686,6 +686,17 @@ select.st-in { width: auto; }
 .rk-grow { flex:1; }
 .rk-btn { padding:6px 9px; border:1px solid var(--border2); border-radius:8px; background:var(--surface); font-family:'Barlow',sans-serif; font-size:12px; font-weight:700; color:var(--muted); cursor:pointer; white-space:nowrap; }
 .rk-btn.active { background:var(--scp-green); border-color:var(--scp-green); color:#fff; }
+
+/* GAME TIMELINE — TV style, Team A left / Team B right */
+.tl-head { display:grid; grid-template-columns:1fr 70px 1fr; align-items:center; padding:12px 16px 6px; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+.tl-final { text-align:center; font-size:22px; color:var(--text); letter-spacing:0; }
+.tl-wrap { position:relative; padding:6px 16px 18px; }
+.tl-wrap::before { content:''; position:absolute; top:0; bottom:12px; left:50%; width:2px; margin-left:-1px; background:var(--border2); }
+.tl-row { position:relative; display:grid; grid-template-columns:1fr 70px 1fr; align-items:center; min-height:40px; padding:4px 0; }
+.tl-mid { display:flex; flex-direction:column; align-items:center; gap:2px; z-index:1; }
+.tl-min { background:var(--surface); border:2px solid var(--border2); border-radius:99px; padding:1px 7px; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:800; color:var(--muted); }
+.tl-min.goal { background:var(--scp-green); border-color:var(--scp-green); color:#fff; }
+.tl-score { background:var(--surface); font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:800; color:var(--text); padding:0 3px; }
 </style>
 </head>
 <body>
@@ -767,15 +778,23 @@ select.st-in { width: auto; }
      TAB — LOG STATS (entry)
 ════════════════════════════════ -->
 <div id="tab-log-stats-entry" class="page">
-  <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px">
-    <button class="duo-min-btn" id="ls-undo-btn" onclick="lsUndoLast()" disabled>↩ Undo last</button>
+  <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+    <div id="ls-timer-ctrls" style="display:flex;align-items:center;gap:6px">
+      <button class="rk-btn" id="ls-timer-btn" onclick="lsTimerToggle()">▶ Start</button>
+      <span id="ls-clock" onclick="lsTimerSet()" title="Tap to set the time" style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;min-width:58px;text-align:center;cursor:pointer">00:00</span>
+      <button class="rk-btn" onclick="lsTimerReset()" title="Reset timer">↺</button>
+    </div>
+    <button class="duo-min-btn" id="ls-undo-btn" onclick="lsUndoLast()" disabled style="margin-left:auto">↩ Undo last</button>
   </div>
   <div id="ls-live-score-bar" style="position:sticky;top:0;z-index:5;background:var(--scp-green);border-radius:var(--radius);padding:10px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:14px">
     <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:rgba(255,255,255,0.75)">Team A</div>
       <div id="ls-scoreA" style="font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:900;color:#fff;line-height:1">0</div>
     </div>
-    <div style="color:rgba(255,255,255,0.5);font-size:20px">–</div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+      <div style="color:rgba(255,255,255,0.5);font-size:20px;line-height:1">–</div>
+      <div id="ls-clock-mini" style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.8)"></div>
+    </div>
     <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:rgba(255,255,255,0.75)">Team B</div>
       <div id="ls-scoreB" style="font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:900;color:#fff;line-height:1">0</div>
@@ -4799,6 +4818,7 @@ function openGameDetail(gameId) {
     + (s.filmed ? '<div class="gd-hint">Tap a MOTM score to see how it was calculated · tap a name to open their stats</div>' : '<div class="gd-hint">Tap a name to open their stats</div>')
     + '<div class="gd-act">'
     +  (s.filmed ? '<button type="button" class="gd-btn" onclick="openAllStatsModal(\''+g.id+'\')">📊 All stats</button>' : '')
+    +  ((g.events && g.events.some(e => e.key==='goals' || e.key==='ownGoals')) ? '<button type="button" class="gd-btn" onclick="openGameTimeline(\''+g.id+'\')">⏱ Timeline</button>' : '')
     +  '<button type="button" class="gd-btn" aria-label="More options" onclick="gdToggleMenu()">⋯</button>'
     +  '<button type="button" class="gd-btn" onclick="closeGameDetail()">Close</button>'
     + '</div>'
@@ -4958,6 +4978,9 @@ let lsIsLocked = false;
 let lsLiveStats = {};
 let lsOrigRows = {};
 let lsUndoStack = [];
+// Match clock for Log Stats — each tap is stored with the game time it happened at
+let lsEvents = [];   // [{t: seconds, player, key}]
+let lsTimer = { gameId:null, running:false, startedAt:0, acc:0, iv:null };
 
 function lsCssId(name) { return name.replace(/[^a-zA-Z0-9]/g, ''); }
 function lsHasStats(gameId) { return GOAL_STATS.some(r => r.gameId === gameId); }
@@ -4987,6 +5010,8 @@ function lsPickGame(gameId) {
   const hasStats = lsHasStats(gameId);
   lsIsLocked = hasStats || !!g.notFilmedLocked;
   lsUndoStack = [];
+  lsEvents = Array.isArray(g.events) ? g.events.map(e => Object.assign({}, e)) : [];
+  if (lsTimer.gameId !== gameId) { lsTimerPause(); lsTimer = { gameId, running:false, startedAt:0, acc:0, iv:null }; }
 
   lsLiveStats = {};
   lsOrigRows = {};
@@ -5004,6 +5029,7 @@ function lsPickGame(gameId) {
 }
 
 function renderLogStatsEntry() {
+  setTimeout(lsTimerRender, 0);
   const g = lsCurrentGame;
   if (!g) return;
   const banner = document.getElementById('ls-entry-banner');
@@ -5107,10 +5133,137 @@ function lsRefreshCell(name, field) {
   return ctrl;
 }
 
+// ── Match clock ──
+function lsTimerElapsed() { return lsTimer.acc + (lsTimer.running ? (Date.now() - lsTimer.startedAt) / 1000 : 0); }
+function lsTimerStarted() { return lsTimer.running || lsTimer.acc > 0; }
+function fmtClock(sec) { sec = Math.max(0, Math.floor(sec)); const m = Math.floor(sec/60), s = sec % 60; return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0'); }
+function fmtMinute(sec) { return (Math.floor(sec/60) + 1) + "'"; }
+function lsTimerRender() {
+  const el = document.getElementById('ls-clock'), mini = document.getElementById('ls-clock-mini'), btn = document.getElementById('ls-timer-btn');
+  const txt = fmtClock(lsTimerElapsed());
+  if (el) { el.textContent = txt; el.style.color = lsTimer.running ? 'var(--scp-green)' : (lsTimerStarted() ? 'var(--amber)' : 'var(--dim)'); }
+  if (mini) mini.textContent = lsTimerStarted() ? '⏱ ' + txt + (lsTimer.running ? '' : ' ⏸') : '';
+  if (btn) { btn.textContent = lsTimer.running ? '⏸ Pause' : (lsTimer.acc > 0 ? '▶ Resume' : '▶ Start'); btn.classList.toggle('active', lsTimer.running); }
+  const ctr = document.getElementById('ls-timer-ctrls');
+  if (ctr) ctr.style.visibility = lsIsLocked ? 'hidden' : 'visible';
+}
+function lsTimerToggle() { lsTimer.running ? lsTimerPause() : lsTimerStart(); }
+function lsTimerStart() {
+  if (lsIsLocked || lsTimer.running) return;
+  lsTimer.running = true; lsTimer.startedAt = Date.now();
+  clearInterval(lsTimer.iv); lsTimer.iv = setInterval(lsTimerRender, 500);
+  lsTimerRender();
+}
+function lsTimerPause() {
+  if (lsTimer.running) { lsTimer.acc = lsTimerElapsed(); lsTimer.running = false; }
+  clearInterval(lsTimer.iv); lsTimer.iv = null;
+  lsTimerRender();
+}
+function lsTimerReset() {
+  if (lsTimerStarted() && !confirm('Reset the clock to 00:00? Minutes already recorded stay as they are.')) return;
+  clearInterval(lsTimer.iv);
+  lsTimer.running = false; lsTimer.acc = 0; lsTimer.startedAt = 0; lsTimer.iv = null;
+  lsTimerRender();
+}
+// Tap the clock to set it (e.g. to continue a replay you paused on another day)
+function lsTimerSet() {
+  if (lsIsLocked) return;
+  const v = prompt('Set clock (mm:ss)', fmtClock(lsTimerElapsed()));
+  if (v == null) return;
+  const m = String(v).trim().match(/^(\d{1,3})(?::(\d{1,2}))?$/);
+  if (!m) { alert('Use the format mm:ss, e.g. 23:40'); return; }
+  const sec = parseInt(m[1],10)*60 + (m[2] ? parseInt(m[2],10) : 0);
+  const wasRunning = lsTimer.running;
+  lsTimer.acc = sec; lsTimer.startedAt = Date.now();
+  if (!wasRunning) lsTimer.running = false;
+  lsTimerRender();
+}
+
+// ⏱ Timeline of a game: every recorded action by minute, with the running score after each goal
+function openGameTimeline(gameId) {
+  const g = GAMES.find(x => x.id === gameId);
+  if (!g || !Array.isArray(g.events) || !g.events.some(e => e.key==='goals' || e.key==='ownGoals')) return;
+  const teamOf = p => g.teamA.includes(p) ? 'A' : (g.teamB.includes(p) ? 'B' : '');
+  const evs = g.events.every(e => typeof e.t === 'number') && !g.events.some(e => 'goalId' in e)
+    ? g.events.slice().sort((x,y) => x.t - y.t)   // older recordings: by minute
+    : g.events.slice();                           // tap order
+  const used = new Set();
+  const assistFor = new Map();
+  // Exact links recorded at the moment the assist was tapped
+  evs.forEach((a, ai) => {
+    if (a.key !== 'assists' || !a.goalId) return;
+    const gi = evs.findIndex(x => x.id === a.goalId);
+    if (gi >= 0 && !assistFor.has(gi)) { assistFor.set(gi, a); used.add(ai); }
+  });
+  evs.forEach((a, ai) => { if (a.key === 'assists' && 'goalId' in a) used.add(ai); }); // unlinked new-style assists are not shown
+  // Older recordings without links: closest teammate assist within 60 s
+  evs.forEach((e, gi) => {
+    if (e.key !== 'goals' || assistFor.has(gi) || typeof e.t !== 'number') return;
+    let best = -1, bestD = Infinity;
+    evs.forEach((a, ai) => {
+      if (a.key !== 'assists' || used.has(ai) || ('goalId' in a) || typeof a.t !== 'number' || a.player === e.player || teamOf(a.player) !== teamOf(e.player)) return;
+      const dd = Math.abs(a.t - e.t);
+      if (dd <= 60 && dd < bestD) { best = ai; bestD = dd; }
+    });
+    if (best >= 0) { used.add(best); assistFor.set(gi, evs[best]); }
+  });
+  // TV-style timeline: Team A on the left, Team B on the right, minutes on a centre line.
+  // An own goal is shown on the side of the team that benefited, marked (OG).
+  let a = 0, b = 0;
+  const rows = evs.map((e, idx) => {
+    if (used.has(idx)) return ''; // shown under its goal
+    if (e.key !== 'goals' && e.key !== 'ownGoals') return ''; // timeline shows only goals and own goals
+    const def = statDef(e.key) || { icon:'•', name:e.key };
+    const team = teamOf(e.player);
+    let side = team, score = '';
+    if (e.key === 'goals') { team === 'A' ? a++ : b++; score = a+'–'+b; }
+    else if (e.key === 'ownGoals') { side = team === 'A' ? 'B' : 'A'; side === 'A' ? a++ : b++; score = a+'–'+b; }
+    const big = e.key === 'goals' || e.key === 'ownGoals';
+    const ast = assistFor.get(idx);
+    const name = `<span style="font-size:13px;font-weight:${big?800:500}">${e.player}${e.key==='ownGoals'?' <span style="font-size:10px;font-weight:600;color:var(--red)">(OG)</span>':''}</span>`;
+    const icon = `<span style="font-size:15px">${def.icon}</span>`;
+    const sub = ast ? `<div style="font-size:11px;color:var(--muted);margin-top:1px">🎯 ${ast.player}</div>` : '';
+    const cell = (s) => side === s
+      ? `<div style="text-align:${s==='A'?'right':'left'};${big?'':'opacity:.65'}">
+           <div style="display:inline-flex;align-items:center;gap:6px;${s==='A'?'flex-direction:row':'flex-direction:row-reverse'}">${name}${icon}</div>${sub}
+         </div>`
+      : '<div></div>';
+    return `<div class="tl-row">
+      ${cell('A')}
+      <div class="tl-mid"><span class="tl-min ${big?'goal':''}">${typeof e.t === 'number' ? fmtMinute(e.t) : '–'}</span>${score?`<span class="tl-score">${score}</span>`:''}</div>
+      ${cell('B')}
+    </div>`;
+  }).join('');
+  openAppModal(`<div style="background:var(--scp-green);padding:14px 18px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:#fff">⏱ Game #${g.id} — timeline</div>
+      <button onclick="closeAppModal()" style="background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:28px;height:28px;font-size:18px;cursor:pointer;color:#fff;line-height:1">×</button>
+    </div>
+    <div class="tl-head">
+      <span style="text-align:right">Team A</span>
+      <span class="tl-final">${a} – ${b}</span>
+      <span>Team B</span>
+    </div>
+    <div class="tl-wrap">${rows}</div>`);
+}
+
 function lsTapCount(name, field) {
   if (lsIsLocked) return;
   lsLiveStats[name][field] = (lsLiveStats[name][field]||0) + 1;
-  lsUndoStack.push({name, field});
+  const key = field === 'og' ? 'ownGoals' : field;
+  const ev = { id: 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2,6), t: lsTimerStarted() ? Math.floor(lsTimerElapsed()) : null, player: name, key };
+  if (key === 'assists') {
+    // exact link: the most recent goal by a teammate that doesn't have an assist yet
+    const g = lsCurrentGame;
+    const myTeam = g.teamA.includes(name) ? g.teamA : g.teamB;
+    const linked = new Set(lsEvents.filter(x => x.key === 'assists' && x.goalId).map(x => x.goalId));
+    for (let k = lsEvents.length - 1; k >= 0; k--) {
+      const x = lsEvents[k];
+      if (x.key === 'goals' && x.player !== name && myTeam.includes(x.player) && !linked.has(x.id)) { ev.goalId = x.id; break; }
+    }
+    if (!ev.goalId) ev.goalId = null;
+  }
+  lsEvents.push(ev);
+  lsUndoStack.push({name, field, ev});
   const el = lsRefreshCell(name, field);
   if (el) { el.classList.add('just-tapped'); setTimeout(()=>el.classList.remove('just-tapped'), 150); }
   lsUpdateUndoBtn();
@@ -5119,8 +5272,9 @@ function lsTapCount(name, field) {
 
 function lsUndoLast() {
   if (!lsUndoStack.length) return;
-  const {name, field} = lsUndoStack.pop();
+  const {name, field, ev} = lsUndoStack.pop();
   lsLiveStats[name][field] = Math.max(0, (lsLiveStats[name][field]||0)-1);
+  if (ev) { const k = lsEvents.indexOf(ev); if (k >= 0) lsEvents.splice(k, 1); }
   lsRefreshCell(name, field);
   lsUpdateUndoBtn();
   lsUpdateLiveScore();
@@ -5199,6 +5353,8 @@ function lsSaveStats() {
     extraStats().forEach(s => { row[s.key] = v[s.key]||0; });
     GOAL_STATS.push(row);
   });
+  lsCurrentGame.events = lsEvents.slice();
+  lsTimerPause();
   lsCurrentGame.notFilmedLocked = false;
   refreshAll();
   goHome();
