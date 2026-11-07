@@ -743,14 +743,15 @@ select.st-in { width: auto; }
   </div>
 
   <div class="home-grid">
-    <div class="home-card home-widget-compact" id="home-widget-lastgame"></div>
     <div class="home-card home-widget-compact" id="home-widget-topranking" onclick="navigateTo('stats')"></div>
-    <div class="home-card home-shortcut" onclick="navigateTo('builder')"><span class="icon">⚽</span><span class="label">Team Builder</span></div>
     <div class="home-card home-shortcut" onclick="navigateTo('games-detail')"><span class="icon">📋</span><span class="label">Games</span></div>
     <div class="home-card home-widget-compact" id="home-widget-goals"></div>
-    <div class="home-card home-widget-compact" id="home-widget-form" onclick="navigateTo('live')"></div>
+    <div class="home-card home-shortcut" onclick="navigateTo('goal-analysis')"><span class="icon">⏱</span><span class="label">Goals &amp; Minutes</span></div>
     <div class="home-card home-shortcut" onclick="navigateTo('records')"><span class="icon">📊</span><span class="label">Records</span></div>
+    <div class="home-card home-widget-compact" id="home-widget-form" onclick="navigateTo('live')"></div>
+    <div class="home-card home-shortcut" onclick="navigateTo('builder')"><span class="icon">⚽</span><span class="label">Team Builder</span></div>
     <div class="home-card home-widget-compact" id="home-widget-paynext"></div>
+    <div id="home-widget-lastgame" style="display:none"></div>
     <div class="home-card home-shortcut" onclick="navigateTo('player-stats')"><span class="icon">👤</span><span class="label">Player Stats</span></div>
     <div class="home-card home-shortcut" onclick="navigateTo('players-manage')"><span class="icon">👥</span><span class="label">Players</span></div>
     <div class="home-card home-shortcut" onclick="navigateTo('log-stats-pick')"><span class="icon">📝</span><span class="label">Log Stats</span></div>
@@ -766,7 +767,6 @@ select.st-in { width: auto; }
   <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;margin-bottom:16px">More Stats</div>
   <div class="home-grid" style="padding:0">
     <div class="home-card home-shortcut" onclick="navigateTo('duos-menu')"><span class="icon">🤝</span><span class="label">Duos</span></div>
-    <div class="home-card home-shortcut" onclick="navigateTo('goal-minutes')"><span class="icon">⏱</span><span class="label">Goal Minutes</span></div>
     <div class="home-card home-shortcut" onclick="navigateTo('elo-history')"><span class="icon">📉</span><span class="label">ELO History</span></div>
     <div class="home-card home-shortcut" onclick="navigateTo('compare')"><span class="icon">🗓️</span><span class="label">Year Comparison</span></div>
     <div class="home-card home-shortcut" onclick="navigateTo('combinations')"><span class="icon">🧩</span><span class="label">Team Combinations</span></div>
@@ -789,6 +789,12 @@ select.st-in { width: auto; }
     <input type="number" id="di-min" min="1" value="5" class="rk-sel" style="width:60px;text-align:center" onchange="renderDuoInsights()">
   </div>
   <div id="di-content"></div>
+</div>
+
+<!-- GOALS & MINUTES — analysis built from the order (and minute) of every goal -->
+<div id="tab-goal-analysis" class="page">
+  <div id="ga-note" style="font-size:11px;color:var(--dim);margin-bottom:10px"></div>
+  <div class="home-grid" id="ga-grid" style="padding:0"></div>
 </div>
 
 <!-- GOAL MINUTES -->
@@ -2029,6 +2035,7 @@ const PAGE_TITLES = {
   'duos-menu':      'Duos',
   'duo-insights':   'Duo Insights',
   'goal-minutes':   'Goal Minutes',
+  'goal-analysis':  'Goals & Minutes',
   'motm-history':   'MOTM History',
   'log-stats-pick':  'Log Stats',
   'log-stats-entry': 'Log Stats',
@@ -2056,6 +2063,7 @@ function showPage(id) {
   if (id === 'log-stats-pick') renderLogStatsPick();
   if (id === 'duo-insights') renderDuoInsights();
   if (id === 'goal-minutes') renderGoalMinutes();
+  if (id === 'goal-analysis') renderGoalAnalysis();
   window.scrollTo(0, 0);
 }
 
@@ -4018,6 +4026,142 @@ function renderDuoInsights() {
 }
 
 // ══════════════════════════════════════════
+// GOALS & MINUTES — analysis from the order of goals (and their minute, when the clock was used)
+// ══════════════════════════════════════════
+function gameGoalSequence(g) {
+  const ev = Array.isArray(g.events) ? g.events : [];
+  if (!ev.some(e => e.key==='goals' || e.key==='ownGoals')) return null;
+  const ordered = ev.every(e => typeof e.t === 'number') && !ev.some(e => 'goalId' in e) ? ev.slice().sort((a,b)=>a.t-b.t) : ev.slice();
+  const assist = {}; ordered.forEach(e => { if (e.key==='assists' && e.goalId) assist[e.goalId] = e.player; });
+  let A = 0, B = 0;
+  return ordered.filter(e => e.key==='goals' || e.key==='ownGoals').map(e => {
+    const team = g.teamA.includes(e.player) ? 'A' : 'B';
+    const side = e.key==='ownGoals' ? (team==='A'?'B':'A') : team;   // team that gets the goal
+    const before = side==='A' ? A-B : B-A;                            // from the scoring side's view
+    side==='A' ? A++ : B++;
+    return { ...e, side, before, A, B, assist: assist[e.id] || null };
+  });
+}
+function renderGoalAnalysis() {
+  const grid = document.getElementById('ga-grid'), note = document.getElementById('ga-note');
+  if (!grid) return;
+  const minG = minEligibleGames();
+  const seqs = GAMES.map(g => ({ g, s: gameGoalSequence(g) })).filter(x => x.s && x.s.length);
+  const timed = seqs.filter(x => x.s.some(e => typeof e.t === 'number'));
+  note.textContent = `${seqs.length} game${seqs.length===1?'':'s'} with goal order · ${timed.length} with minutes — recorded in Log Stats`;
+  const row = (rank, name, val, sub, gameId) => `<div class="di-row" data-player="${String(name).replace(/"/g,'&quot;')}"${gameId?` style="cursor:pointer" onclick="closeAppModal();openGameDetail('${gameId}')"`:''}><span style="width:22px;color:var(--dim);font-weight:700">${rank}</span><span class="nm">${name}</span><span class="s">${sub||''}</span><span class="v">${val}</span></div>`;
+  const rankList = (arr, valFn, subFn, gameFn, asc) => {
+    const s = arr.slice().sort((a,b) => asc ? valFn(a)-valFn(b) : valFn(b)-valFn(a));
+    const r = competitionRanks(s, (a,b) => valFn(a)===valFn(b));
+    return s.map((x,i) => row(rankMedal(r[i]), x.name, x.disp != null ? x.disp : valFn(x), subFn ? subFn(x) : '', gameFn ? gameFn(x) : null)).join('') || '<div class="di-sub" style="margin:6px 0">No data yet</div>';
+  };
+  const gl = (name, v) => name ? `<div style="display:flex;justify-content:space-between;gap:6px"><b style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</b><b style="font-family:'Barlow Condensed',sans-serif;font-size:17px;color:var(--scp-green)">${v}</b></div>` : '';
+  const real = p => p && !p.startsWith('Outro');
+  const mmss = s => Math.floor(s/60)+"'"+String(Math.floor(s%60)).padStart(2,'0')+'"';
+
+  // ⚡ Speed
+  const braces = [], hats = [], allGoals = [];
+  timed.forEach(({g,s}) => {
+    const by = {};
+    s.filter(e => e.key==='goals' && typeof e.t==='number' && real(e.player)).forEach(e => { (by[e.player]=by[e.player]||[]).push(e.t); allGoals.push({ name:e.player, t:e.t, g }); });
+    Object.entries(by).forEach(([p,ts]) => { ts.sort((a,b)=>a-b);
+      let b2 = Infinity, b3 = Infinity;
+      for (let i=1;i<ts.length;i++) b2 = Math.min(b2, ts[i]-ts[i-1]);
+      for (let i=2;i<ts.length;i++) b3 = Math.min(b3, ts[i]-ts[i-2]);
+      if (b2 < Infinity) braces.push({ name:p, v:b2, g });
+      if (b3 < Infinity) hats.push({ name:p, v:b3, g });
+    });
+  });
+  const gsub = x => '#'+x.g.id.slice(-3)+' · '+x.g.date;
+  const speed = [
+    { tabLabel:'Fastest hat-trick', previewHtml: '', body: rankList(hats.map(x=>({...x, disp:mmss(x.v)})), x=>x.v, gsub, x=>x.g.id, true) },
+    { tabLabel:'Fastest brace', previewHtml: '', body: rankList(braces.map(x=>({...x, disp:mmss(x.v)})), x=>x.v, gsub, x=>x.g.id, true) },
+    { tabLabel:'Earliest goal', previewHtml: '', body: rankList(allGoals.slice().sort((a,b)=>a.t-b.t).slice(0,15).map(x=>({...x, disp:fmtMinute(x.t)})), x=>x.t, gsub, x=>x.g.id, true) },
+    { tabLabel:'Latest goal', previewHtml: '', body: rankList(allGoals.slice().sort((a,b)=>b.t-a.t).slice(0,15).map(x=>({...x, disp:fmtMinute(x.t)})), x=>x.t, gsub, x=>x.g.id, false) },
+  ];
+  const fh = hats.slice().sort((a,b)=>a.v-b.v)[0], fb = braces.slice().sort((a,b)=>a.v-b.v)[0];
+  speed[0].previewHtml = fh ? gl(fh.name, mmss(fh.v)) : (fb ? gl(fb.name, mmss(fb.v)+' (2)') : '');
+
+  // 📊 Game state + 🎯 decisive + 🤝 partnerships + last 10'
+  const st = {}, dec = {}, pairs = {}, clutch = {};
+  const S = p => st[p] = st[p] || { name:p, win:0, draw:0, lose:0, tot:0 };
+  const D = p => dec[p] = dec[p] || { name:p, eq:0, ahead:0, winner:0, opener:0 };
+  seqs.forEach(({g,s}) => {
+    const fA = s[s.length-1].A, fB = s[s.length-1].B;
+    const wSide = fA>fB ? 'A' : fB>fA ? 'B' : null, lGoals = Math.min(fA,fB);
+    let wCount = 0;
+    const endT = Math.max(...s.filter(e=>typeof e.t==='number').map(e=>e.t), 0);
+    s.forEach((e, i) => {
+      if (e.side === wSide) wCount++;
+      if (e.key !== 'goals' || !real(e.player)) return;
+      const x = S(e.player); x.tot++; e.before>0 ? x.win++ : e.before<0 ? x.lose++ : x.draw++;
+      const d = D(e.player);
+      if (e.before === -1) d.eq++;
+      if (e.before === 0) d.ahead++;
+      if (i === 0) d.opener++;
+      if (e.side === wSide && wCount === lGoals+1) d.winner++;
+      if (e.assist && real(e.assist)) { const k = e.assist+' → '+e.player; pairs[k] = (pairs[k]||0)+1; }
+      if (typeof e.t === 'number' && endT && e.t >= endT-600 && Math.abs(e.before) <= 1) { clutch[e.player] = (clutch[e.player]||0)+1; }
+    });
+  });
+  const stArr = Object.values(st);
+  const stBody = (k, label) => rankList(stArr.filter(x=>x[k]>0).map(x=>({...x, disp:x[k]})), x=>x[k], x=>`${Math.round(x[k]/x.tot*100)}% of ${x.tot}`);
+  const profile = stArr.filter(x=>x.tot>=3).sort((a,b)=>b.tot-a.tot).map(x => `<div class="di-row" data-player="${x.name.replace(/"/g,'&quot;')}"><span class="nm">${x.name}</span>
+      <span class="s" style="display:flex;gap:6px"><span style="color:var(--scp-green)">▲${Math.round(x.win/x.tot*100)}%</span><span>=${Math.round(x.draw/x.tot*100)}%</span><span style="color:var(--red)">▼${Math.round(x.lose/x.tot*100)}%</span></span><span class="v">${x.tot}</span></div>`).join('') || '<div class="di-sub" style="margin:6px 0">No data yet</div>';
+  const state = [
+    { tabLabel:'Profile', previewHtml:'', body: '<div class="di-sub">▲ winning · = drawing · ▼ losing, at the moment of the goal (≥3 goals)</div>' + profile },
+    { tabLabel:'When winning', previewHtml:'', body: stBody('win') },
+    { tabLabel:'When drawing', previewHtml:'', body: stBody('draw') },
+    { tabLabel:'When losing', previewHtml:'', body: stBody('lose') },
+  ];
+  const loser = stArr.filter(x=>x.lose>0).sort((a,b)=>b.lose-a.lose)[0];
+  state[0].previewHtml = loser ? gl(loser.name, loser.lose+' ▼') : '';
+  const dArr = Object.values(dec);
+  const dBody = (k, word) => rankList(dArr.filter(x=>x[k]>0).map(x=>({...x, disp:x[k]})), x=>x[k], () => word);
+  const decisive = [
+    { tabLabel:'Winning goal', previewHtml:'', body: dBody('winner','winning goals') },
+    { tabLabel:'Equalisers', previewHtml:'', body: dBody('eq','equalisers') },
+    { tabLabel:'Go-ahead goals', previewHtml:'', body: dBody('ahead','put team ahead') },
+    { tabLabel:'Opens the score', previewHtml:'', body: dBody('opener','first goal') },
+  ];
+  const tw = dArr.filter(x=>x.winner>0).sort((a,b)=>b.winner-a.winner)[0];
+  decisive[0].previewHtml = tw ? gl(tw.name, tw.winner) : '';
+
+  // 🔄 Moments (team level)
+  const comebacks = [], runs = [];
+  seqs.forEach(({g,s}) => {
+    const fA = s[s.length-1].A, fB = s[s.length-1].B, w = fA>fB?'A':fB>fA?'B':null;
+    if (w) { let worst = 0; s.forEach(e => { const diff = w==='A' ? e.A-e.B : e.B-e.A; worst = Math.min(worst, diff); });
+      if (worst < 0) comebacks.push({ name:'#'+g.id.slice(-3)+' · Team '+w, v:-worst, g, fin:fA+'–'+fB }); }
+    let best = { n:0 }, cur = { side:null, n:0, from:null };
+    s.forEach(e => { if (e.side === cur.side) cur.n++; else cur = { side:e.side, n:1, from:(e.A-(e.side==='A'?1:0))+'–'+(e.B-(e.side==='B'?1:0)) }; if (cur.n > best.n) best = { ...cur, to:e.A+'–'+e.B }; });
+    if (best.n >= 3) runs.push({ name:'#'+g.id.slice(-3)+' · Team '+best.side, v:best.n, g, txt:best.from+' → '+best.to });
+  });
+  const moments = [
+    { tabLabel:'Comebacks', previewHtml:'', body: rankList(comebacks.map(x=>({...x, disp:'−'+x.v})), x=>x.v, x=>'won '+x.fin, x=>x.g.id) },
+    { tabLabel:'Goal runs', previewHtml:'', body: rankList(runs.map(x=>({...x, disp:x.v})), x=>x.v, x=>x.txt, x=>x.g.id) },
+    { tabLabel:"Last 10' (close game)", previewHtml:'', body: rankList(Object.entries(clutch).map(([name,v])=>({name, v})), x=>x.v, () => 'goals') },
+  ];
+  const cb = comebacks.slice().sort((a,b)=>b.v-a.v)[0];
+  moments[0].previewHtml = cb ? gl(cb.name, '−'+cb.v) : '';
+
+  const pArr = Object.entries(pairs).map(([name,v]) => ({ name, v }));
+  const partners = [{ tabLabel:'Assist → goal', previewHtml:'', body: rankList(pArr, x=>x.v, () => 'goals') }];
+  const tp = pArr.slice().sort((a,b)=>b.v-a.v)[0];
+  partners[0].previewHtml = tp ? gl(tp.name, tp.v) : '';
+
+  const minutesTile = `<div class="home-card home-widget-compact" onclick="navigateTo('goal-minutes')">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px"><span style="font-size:15px">⏱</span><span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--dim)">Minutes</span></div>
+      <div style="font-size:12px;color:var(--muted)">Goals by 15-minute blocks</div></div>`;
+  grid.innerHTML = minutesTile
+    + categoryTile('⚡', 'Speed', speed)
+    + categoryTile('📊', 'Game state', state)
+    + categoryTile('🎯', 'Decisive goals', decisive)
+    + categoryTile('🔄', 'Moments', moments)
+    + categoryTile('🤝', 'Partnerships', partners);
+}
+
+// ══════════════════════════════════════════
 // GOAL MINUTES — when goals happen (15-minute blocks), overall and per player
 // Only games logged with the match clock running have minutes.
 // ══════════════════════════════════════════
@@ -5027,12 +5171,14 @@ function openGameDetail(gameId) {
     + (s.filmed && !SHARE_MODE ? '<div class="gd-hint">Tap a MOTM score to see how it was calculated · tap a name to open their stats</div>' : '<div class="gd-hint">Tap a name to open their stats</div>')
     + '<div class="gd-act">'
     +  (s.filmed ? '<button type="button" class="gd-btn" onclick="openAllStatsModal(\''+g.id+'\')">📊 All stats</button>' : '')
+    +  (!SHARE_MODE && g.youtube ? '<button type="button" class="gd-btn" onclick="openYouTubeAt(\''+g.id+'\',null)">▶ YouTube</button>' : '')
     +  ((g.events && g.events.some(e => e.key==='goals' || e.key==='ownGoals')) ? '<button type="button" class="gd-btn" onclick="openGameTimeline(\''+g.id+'\')">⏱ Timeline</button>' : '')
     +  (SHARE_MODE ? '' : '<button type="button" class="gd-btn" aria-label="More options" onclick="gdToggleMenu()">⋯</button>')
     +  '<button type="button" class="gd-btn" onclick="closeGameDetail()">Close</button>'
     + '</div>'
     + '<div id="gd-more" class="gd-more" style="display:none">'
     +  '<button type="button" onclick="openEditGameStats(\''+g.id+'\')">'+(s.filmed?'Edit stats':'+ Add goals/assists')+'</button>'
+    +  '<button type="button" onclick="setGameYouTube(\''+g.id+'\')">🎬 YouTube link'+(g.youtube?' ✓':'')+'</button>'
     +  '<button type="button" class="del" onclick="deleteGame(\''+g.id+'\')">🗑 Delete game</button>'
     + '</div>';
 
@@ -5438,9 +5584,10 @@ function openGameTimeline(gameId) {
            <div style="display:inline-flex;align-items:center;gap:6px;${s==='A'?'flex-direction:row':'flex-direction:row-reverse'}">${name}${icon}</div>${sub}
          </div>`
       : '<div></div>';
-    return `<div class="tl-row">
+    const yt = !SHARE_MODE && g.youtube && typeof e.t === 'number';
+    return `<div class="tl-row" ${yt?`style="cursor:pointer" onclick="openYouTubeAt('${g.id}',${e.t})" title="Watch on YouTube"`:''}>
       ${cell('A')}
-      <div class="tl-mid"><span class="tl-min ${big?'goal':''}">${typeof e.t === 'number' ? fmtMinute(e.t) : '–'}</span>${score?`<span class="tl-score">${score}</span>`:''}</div>
+      <div class="tl-mid"><span class="tl-min ${big?'goal':''}">${typeof e.t === 'number' ? fmtMinute(e.t) : '–'}${yt?' ▶':''}</span>${score?`<span class="tl-score">${score}</span>`:''}</div>
       ${cell('B')}
     </div>`;
   }).join('');
@@ -5453,7 +5600,40 @@ function openGameTimeline(gameId) {
       <span class="tl-final">${a} – ${b}</span>
       <span>Team B</span>
     </div>
-    <div class="tl-wrap">${rows}</div>`);
+    <div class="tl-wrap">${rows}</div>
+    ${!SHARE_MODE && g.youtube ? '<div style="padding:0 18px 14px;font-size:11px;color:var(--dim);text-align:center">Tap a goal to watch it on YouTube (10 s before)</div>' : ''}`);
+}
+
+// ── YouTube link per game ──
+function ytVideoId(url) {
+  const m = String(url||'').match(/(?:youtu\.be\/|v=|\/live\/|\/shorts\/|\/embed\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : (/^[A-Za-z0-9_-]{11}$/.test(String(url||'').trim()) ? String(url).trim() : null);
+}
+function parseClock(v) {
+  const p = String(v||'').trim().split(':').map(x => parseInt(x,10));
+  if (!p.length || p.some(isNaN)) return null;
+  return p.reduce((s,x) => s*60 + x, 0);   // h:mm:ss, mm:ss or ss
+}
+function setGameYouTube(gameId) {
+  const g = GAMES_ALL_YEARS.find(x => x.id === gameId); if (!g) return;
+  const url = prompt('YouTube link for game #' + g.id + ' (leave empty to remove)', g.youtube || '');
+  if (url === null) return;
+  if (!url.trim()) { delete g.youtube; delete g.ytStart; saveState(); openGameDetail(gameId); return; }
+  if (!ytVideoId(url)) { alert('That does not look like a YouTube link.'); return; }
+  const cur = g.ytStart ? Math.floor(g.ytStart/60)+':'+String(g.ytStart%60).padStart(2,'0') : '0:00';
+  const st = prompt('At what time of the video does the game start? (mm:ss or h:mm:ss)', cur);
+  if (st === null) return;
+  const sec = parseClock(st);
+  if (sec === null) { alert('Use the format mm:ss, e.g. 0:45'); return; }
+  g.youtube = url.trim(); g.ytStart = sec;
+  saveState(); openGameDetail(gameId);
+}
+// t = game clock seconds of the goal (null = start of the game); opens 10 s before
+function openYouTubeAt(gameId, t) {
+  const g = GAMES_ALL_YEARS.find(x => x.id === gameId); if (!g || !g.youtube) return;
+  const id = ytVideoId(g.youtube); if (!id) return;
+  const at = Math.max(0, (g.ytStart||0) + (t == null ? 0 : t - 10));
+  window.open('https://www.youtube.com/watch?v=' + id + '&t=' + Math.floor(at) + 's', '_blank');
 }
 
 function lsTapCount(name, field) {
