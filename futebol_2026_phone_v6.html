@@ -721,6 +721,9 @@ select.st-in { width: auto; }
 .gm-track { height:14px; background:var(--surface2); border-radius:99px; overflow:hidden; }
 .gm-fill { height:100%; background:var(--scp-green); border-radius:99px; }
 .gm-fill.top { background:var(--scp-gold); }
+
+/* SHARE MODE — game detail without MOTM/ELO columns */
+.gd-share .gd-pr { grid-template-columns: minmax(0,1fr) 34px 34px; }
 </style>
 </head>
 <body>
@@ -1306,6 +1309,7 @@ select.st-in { width: auto; }
   </div>
   <div class="card st-list" style="margin-top:12px">
     <div class="st-row st-link" onclick="exportJsonBackup()"><span>⬇ Export backup</span><span class="st-v">›</span></div>
+    <div class="st-row st-link" onclick="exportShareData()"><span>📤 Export for sharing (data.json)</span><span class="st-v">›</span></div>
     <div class="st-row st-link" onclick="document.getElementById('json-import-input').click()"><span>⬆ Import backup</span><span class="st-v">›</span></div>
     <div class="st-row st-link" onclick="document.getElementById('file-input').click()"><span>📂 Import Excel</span><span class="st-v">›</span></div>
     <div class="st-row st-link" onclick="resetAppData()" style="color:var(--red)"><span>🗑 Reset app data</span><span class="st-v">›</span></div>
@@ -1603,6 +1607,7 @@ function parseWorkbook(wb) {
 // ══════════════════════════════════════════
 // DATA
 // ══════════════════════════════════════════
+const SHARE_MODE = false; // true only in the read-only app shared with the group
 const ALL_PLAYERS = [];
 const PLAYER_STATS = [];
 const GAMES = []; // the CURRENTLY VIEWED year's games — a derived slice, rebuilt by applyYearFilter()
@@ -1725,6 +1730,7 @@ function minEligibleGames() {
 }
 
 function saveState() {
+  if (SHARE_MODE) return;
   try {
     const state = {
       version: 3,
@@ -3772,7 +3778,7 @@ function renderRecords() {
     customCatKeys.push(cat);
   });
   const recOn = !!(statDef('recoveries') && statDef('recoveries').enabled);
-  const CATEGORY_ORDER = ['streaks','goals','assists','involvement', ...(recOn?['recovery']:[]), ...customCatKeys, 'motm','gamerecords'];
+  const CATEGORY_ORDER = ['streaks','goals','assists','involvement', ...(recOn?['recovery']:[]), ...customCatKeys, ...(SHARE_MODE?[]:['motm']),'gamerecords'];
   const categoryTilesHtml = CATEGORY_ORDER.filter(k => categoryGroups[k] && categoryGroups[k].length).map(catKey => {
     const meta = CATEGORY_META[catKey];
     return categoryTile(meta.icon, meta.title, categoryGroups[catKey]);
@@ -4819,11 +4825,11 @@ function gdProbBar(g) {
 }
 function gdBadges(g, s) {
   let b = '';
-  const w = s.filmed ? getGameMOTMWinners(g.id) : [];
+  const w = s.filmed && !SHARE_MODE ? getGameMOTMWinners(g.id) : [];
   if (w.length) b += '<span class="gd-bd motm">🏅 '+w.map(x=>x.player).join(' & ')+'</span>';
   if (gdIsClose(g,s)) b += '<span class="gd-bd close">Close game</span>';
   if (gdIsRout(g,s))  b += '<span class="gd-bd rout">Rout</span>';
-  if (gdIsUpset(g))   b += '<span class="gd-bd upset">Upset</span>';
+  if (!SHARE_MODE && gdIsUpset(g))   b += '<span class="gd-bd upset">Upset</span>';
   return b ? '<div class="gd-bds">'+b+'</div>' : '';
 }
 
@@ -4867,7 +4873,7 @@ function renderGamesDetail() {
 
   function compactHtml(g) {
     const s = scores[g.id];
-    const w = s.filmed ? getGameMOTMWinners(g.id) : [];
+    const w = s.filmed && !SHARE_MODE ? getGameMOTMWinners(g.id) : [];
     const res = s.filmed ? '<b>'+s.A+' – '+s.B+'</b>' : '<b class="dim">Team '+g.winner+'</b>';
     return '<div class="gd-row" onclick="openGameDetail(\''+g.id+'\')">'
       + '<span class="gd-row-id">#'+g.id.slice(-3)+'</span>'
@@ -4924,7 +4930,7 @@ function openAllStatsModal(gameId) {
   if (!g || !results.length) return;
   const { scoreA, scoreB } = getGameScore(g);
   const teamGoals = { A: scoreA, B: scoreB };
-  const tabs = [{ key:'__motm', icon:'🏅', name:'MOTM' }, ...enabledStats()];
+  const tabs = SHARE_MODE ? enabledStats() : [{ key:'__motm', icon:'🏅', name:'MOTM' }, ...enabledStats()];
   const rowHtml = (rank, r, val, extra) => `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
       <span style="width:26px;text-align:center;font-size:${rank<=3?'17':'12'}px;font-weight:700;color:var(--dim);flex-shrink:0">${rankMedal(rank)}</span>
       <span style="flex:1;min-width:0;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.player}</span>
@@ -4979,8 +4985,8 @@ function openGameDetail(gameId) {
 
   function teamBlock(t) {
     const won = g.winner===t;
-    const head = '<div class="gd-pr gd-pr-h"><span class="n">'+(won?'🏆 ':'')+'Team '+t+(avgElo(t)!=null?' · '+avgElo(t)+' ELO':'')+'</span>'
-      + '<span>G</span><span>A</span><span>MOTM</span><span>ELO</span></div>';
+    const head = '<div class="gd-pr gd-pr-h"><span class="n">'+(won?'🏆 ':'')+'Team '+t+(!SHARE_MODE && avgElo(t)!=null?' · '+avgElo(t)+' ELO':'')+'</span>'
+      + '<span>G</span><span>A</span>'+(SHARE_MODE?'':'<span>MOTM</span><span>ELO</span>')+'</div>';
     const rows = g['team'+t].map((name,i) => {
       const r = GOAL_STATS.find(x=>x.gameId===g.id && x.player===name);
       const isOutro = !name || name.startsWith('Outro');
@@ -4989,16 +4995,16 @@ function openGameDetail(gameId) {
       const bid = 'gd-mb-'+t+i;
       const nameCell = isOutro
         ? '<span class="n">'+name+'</span>'
-        : '<span class="n gd-plink" role="button" tabindex="0" onclick="openPlayerStatsFor(\''+gdEsc(name)+'\')">'+name+(motmWin.has(name)?' <b class="star">★</b>':'')+' <i>›</i></span>';
+        : '<span class="n gd-plink" role="button" tabindex="0" onclick="openPlayerStatsFor(\''+gdEsc(name)+'\')">'+name+(!SHARE_MODE && motmWin.has(name)?' <b class="star">★</b>':'')+' <i>›</i></span>';
       const motmCell = m
         ? '<span class="gd-mlink" role="button" tabindex="0" onclick="gdToggleMotm(\''+bid+'\')">'+Math.round(m.score)+'</span>'
         : '<span class="dim">–</span>';
       const row = '<div class="gd-pr'+(won?' win':'')+'">'+nameCell
         + '<span>'+(s.filmed? (r?r.goals:0) : '–')+'</span>'
         + '<span>'+(s.filmed? (r?r.assists:0) : '–')+'</span>'
-        + motmCell
-        + '<span class="'+(adj>0?'up':adj<0?'down':'dim')+'">'+(adj==null||isOutro?'–':(adj>0?'+':'')+adj.toFixed(1))+'</span></div>';
-      return row + (m ? '<div id="'+bid+'" style="display:none">'+gdMotmBreakdown(g,name,t,teamGoals[t])+'</div>' : '');
+        + (SHARE_MODE ? '' : motmCell
+        + '<span class="'+(adj>0?'up':adj<0?'down':'dim')+'">'+(adj==null||isOutro?'–':(adj>0?'+':'')+adj.toFixed(1))+'</span>') + '</div>';
+      return row + (!SHARE_MODE && m ? '<div id="'+bid+'" style="display:none">'+gdMotmBreakdown(g,name,t,teamGoals[t])+'</div>' : '');
     }).join('');
     return '<div class="gd-tb">'+head+rows+'</div>';
   }
@@ -5011,18 +5017,18 @@ function openGameDetail(gameId) {
   modal.innerHTML =
     '<div class="gd-hd">'
     +  nav(prev,'‹','Previous game')
-    +  '<div class="gd-hd-c"><div class="gd-hd-t">#'+g.id+' · '+g.date+(s.filmed?' · 🎥':'')+(g.eloAdjust?' · ELO ±'+Math.abs(g.eloAdjust).toFixed(1):'')+'</div>'
+    +  '<div class="gd-hd-c"><div class="gd-hd-t">#'+g.id+' · '+g.date+(s.filmed?' · 🎥':'')+(!SHARE_MODE && g.eloAdjust?' · ELO ±'+Math.abs(g.eloAdjust).toFixed(1):'')+'</div>'
     +  '<div class="gd-hd-s">'+scoreTxt+'</div></div>'
     +  nav(next,'›','Next game')
     + '</div>'
-    + '<div style="padding:10px 14px 4px">'+gdProbBar(g)+'</div>'
+    + (SHARE_MODE ? '<div style="height:8px"></div>' : '<div style="padding:10px 14px 4px">'+gdProbBar(g)+'</div>')
     + commentHtml
     + '<div class="gd-teams">'+teamBlock('A')+teamBlock('B')+'</div>'
-    + (s.filmed ? '<div class="gd-hint">Tap a MOTM score to see how it was calculated · tap a name to open their stats</div>' : '<div class="gd-hint">Tap a name to open their stats</div>')
+    + (s.filmed && !SHARE_MODE ? '<div class="gd-hint">Tap a MOTM score to see how it was calculated · tap a name to open their stats</div>' : '<div class="gd-hint">Tap a name to open their stats</div>')
     + '<div class="gd-act">'
     +  (s.filmed ? '<button type="button" class="gd-btn" onclick="openAllStatsModal(\''+g.id+'\')">📊 All stats</button>' : '')
     +  ((g.events && g.events.some(e => e.key==='goals' || e.key==='ownGoals')) ? '<button type="button" class="gd-btn" onclick="openGameTimeline(\''+g.id+'\')">⏱ Timeline</button>' : '')
-    +  '<button type="button" class="gd-btn" aria-label="More options" onclick="gdToggleMenu()">⋯</button>'
+    +  (SHARE_MODE ? '' : '<button type="button" class="gd-btn" aria-label="More options" onclick="gdToggleMenu()">⋯</button>')
     +  '<button type="button" class="gd-btn" onclick="closeGameDetail()">Close</button>'
     + '</div>'
     + '<div id="gd-more" class="gd-more" style="display:none">'
@@ -5030,6 +5036,7 @@ function openGameDetail(gameId) {
     +  '<button type="button" class="del" onclick="deleteGame(\''+g.id+'\')">🗑 Delete game</button>'
     + '</div>';
 
+  modal.classList.toggle('gd-share', SHARE_MODE);
   overlay.style.display = 'block';
   modal.style.display = 'block';
   modal.scrollTop = 0;
@@ -6367,6 +6374,26 @@ function exportJsonBackup() {
   URL.revokeObjectURL(url);
 }
 
+// Data for the read-only app shared with the group — no ELO, probabilities, payments or comments
+function exportShareData() {
+  const games = GAMES_ALL_YEARS.map(g => ({
+    id: g.id, date: g.date, month: g.month, year: g.year,
+    teamA: g.teamA.slice(), teamB: g.teamB.slice(), winner: g.winner,
+    events: Array.isArray(g.events) ? g.events.map(e => ({...e})) : undefined
+  }));
+  const data = {
+    share: true, version: 1, exportedAt: new Date().toISOString(),
+    GAMES_ALL_YEARS: games, GOAL_STATS: GOAL_STATS.map(r => ({...r})),
+    STAT_DEFS, ELIGIBILITY_PCT, SELECTED_YEAR
+  };
+  const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'data.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function importJsonBackup(file) {
   if (!file) return;
   if (!confirm('Importing a backup will replace all current data. Continue?')) return;
@@ -6675,7 +6702,7 @@ function psPlayerMetrics(name) {
 function psRadarSvg(vals) {
   const cx=80, cy=78, R0=58;
   const pt=(i,k)=>{const a=-Math.PI/2+i*Math.PI/3;return [(cx+k*Math.cos(a)).toFixed(1),(cy+k*Math.sin(a)).toFixed(1)];};
-  const labels=['W%','G','A','R','%G','ELO'];
+  const labels=['W%','G','A','R','%G', SHARE_MODE?'Att':'ELO'];
   let s='';
   [.25,.5,.75,1].forEach(k=>{ s+='<polygon points="'+labels.map((_,i)=>pt(i,R0*k).join(',')).join(' ')+'" fill="none" stroke="var(--border2)" stroke-width="1"/>'; });
   s+='<polygon points="'+vals.map((v,i)=>pt(i,R0*Math.max(v,0.03)).join(',')).join(' ')+'" fill="var(--scp-green)" fill-opacity="0.22" stroke="var(--scp-green)" stroke-width="2"/>';
@@ -6719,12 +6746,13 @@ function buildPlayerProfileHtml(name, statCard, sectionLabel) {
   // Radar — each axis = value ÷ best in the group (eligible players + this player)
   const minG = minEligibleGames();
   const group = PLAYER_STATS.filter(p=>!p.name.startsWith('Outro') && (p.games>=minG || p.name===name)).map(p=>psPlayerMetrics(p.name));
-  const keys=['wp','gpg','apg','rpg','share','elo'];
+  const keys=['wp','gpg','apg','rpg','share', SHARE_MODE?'att':'elo'];
+  group.forEach(m => m.att = (m.games||0)/Math.max(1,GAMES.length)*100); me.att = me.games/Math.max(1,GAMES.length)*100;
   const mx={}; keys.forEach(k=>{ mx[k]=Math.max(...group.map(m=>m[k]), me[k], 0.0001); });
   const radarVals = keys.map(k=>Math.min(1, me[k]/mx[k]));
   const axisRows = [
     ['Win %', Math.round(me.wp)+'%'], ['Goals/g', me.gpg.toFixed(2)], ['Assists/g', me.apg.toFixed(2)],
-    ['Recov./g', me.rpg.toFixed(2)], ['% team goals', Math.round(me.share)+'%'], ['ELO', Math.round(elo)]
+    ['Recov./g', me.rpg.toFixed(2)], ['% team goals', Math.round(me.share)+'%'], SHARE_MODE ? ['Attendance', Math.round(me.att)+'%'] : ['ELO', Math.round(elo)]
   ].map((r,i)=>'<div class="ps-ax"><span>'+r[0]+'</span><b>'+r[1]+'</b><i style="width:'+Math.round(radarVals[i]*100)+'%"></i></div>').join('');
 
   // Months: Jan–Dec, future months "–"
@@ -6772,13 +6800,13 @@ function buildPlayerProfileHtml(name, statCard, sectionLabel) {
   return ''
     + '<div class="ps-head"><div><div class="ps-head-name">'+name+'</div>'
     +   '<div class="ps-head-sub">'+me.games+' of '+GAMES.length+' games · '+Math.round(me.games/GAMES.length*100)+'% attendance</div></div>'
-    +   '<div style="text-align:right"><div class="ps-head-elo">'+Math.round(elo)+'</div><div class="ps-head-sub">ELO '+(eloD>=0?'+':'')+eloD+'</div></div></div>'
+    +   (SHARE_MODE ? '' : '<div style="text-align:right"><div class="ps-head-elo">'+Math.round(elo)+'</div><div class="ps-head-sub">ELO '+(eloD>=0?'+':'')+eloD+'</div></div>') + '</div>'
     + '<div class="ps-g3" style="margin-top:8px">'
     +   statCard('W – L', me.wins+'–'+losses, '', Math.round(me.wp)+'% real')
     +   statCard('Win rate adj', adjPct+'%', 'color:'+psTierCol(adjPct), 'real '+Math.round(me.wp)+'%')
     +   statCard('Streak now', curStr, 'color:'+(last?'var(--scp-green)':'var(--red)'), 'missed '+(GAMES.length-me.games))
     + '</div>'
-    + (pred!==null ? '<div class="ps-pred"><div class="ps-pred-bar"><i style="width:'+Math.min(100,me.wp)+'%;background:'+psTierCol(me.wp)+'"></i><b style="left:calc('+pred+'% - 1px)"></b></div>'
+    + (pred!==null && !SHARE_MODE ? '<div class="ps-pred"><div class="ps-pred-bar"><i style="width:'+Math.min(100,me.wp)+'%;background:'+psTierCol(me.wp)+'"></i><b style="left:calc('+pred+'% - 1px)"></b></div>'
       + '<div class="ps-pred-txt">'+Math.round(me.wp)+'% vs '+Math.round(pred)+'% predicted'
       + (verdict ? ' <span style="background:'+verdict[2]+';color:'+verdict[1]+'">'+verdict[0]+' '+(dev>0?'+':'')+dev.toFixed(0)+'pp</span>' : '')+'</div></div>' : '')
     // Radar + axis values side by side
@@ -6797,7 +6825,7 @@ function buildPlayerProfileHtml(name, statCard, sectionLabel) {
       +   statCard('G+A', me.G+me.A, '', (me.gpg+me.apg).toFixed(2)+'/game')
       +   statCard('Recoveries', me.R, 'color:#4a7fb5', me.rpg.toFixed(2)+'/game')
       +   statCard('G+A W / L', avg(gaW)+' / '+avg(gaL), '', 'per game')
-      +   statCard('MOTM', motmAwards, 'color:var(--scp-gold)', 'avg '+(motmN? (motmTot/motmN).toFixed(1) : '—')+' pts')
+      +   (SHARE_MODE ? '' : statCard('MOTM', motmAwards, 'color:var(--scp-gold)', 'avg '+(motmN? (motmTot/motmN).toFixed(1) : '—')+' pts'))
       + '</div>' : '')
     // Partners & opponents
     + sectionLabel('Partners & opponents · min 4 games')
@@ -7020,7 +7048,7 @@ function showPlayerStats(name, btn) {
 
     const statsRow = GOAL_STATS.find(r=>r.gameId===g.id&&r.player===name);
     const filmed = !!statsRow;
-    const isMotm = filmed && isGameMOTMWinner(g.id, name);
+    const isMotm = !SHARE_MODE && filmed && isGameMOTMWinner(g.id, name);
     const resColor = won ? 'var(--scp-green)' : 'var(--red)';
     const streakStr = curCharR+(curStreakR>1?curStreakR:'');
     const streakCol = curCharR==='W'?'var(--scp-green)':'var(--red)';
@@ -7206,7 +7234,7 @@ function showPlayerStats(name, btn) {
           const streakCol = curC2==='W'?'var(--scp-green)':'var(--red)';
           const sr = GOAL_STATS.find(r=>r.gameId===g.id&&r.player===name);
           const filmed = !!sr;
-          const isMotm2 = filmed && isGameMOTMWinner(g.id, name);
+          const isMotm2 = !SHARE_MODE && filmed && isGameMOTMWinner(g.id, name);
           let scoreHtml = '—';
           if (filmed) {
             let gA=0,gB=0;
@@ -7402,6 +7430,43 @@ function renderYearComparison() {
   ].join('');
 }
 
+// SHARE MODE — read-only app: data comes from data.json next to the app (no saving, no editing)
+async function shareBoot() {
+  const home = document.getElementById('home-share-msg');
+  try {
+    const res = await fetch('data.json?v=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const d = await res.json();
+    ALL_PLAYERS.length = 0; (d.PLAYERS||[]).forEach(n => ALL_PLAYERS.push({ name:n, elo:400, initialElo:400 }));
+    ALL_PLAYERS.push({ name:'Outro', elo:400, initialElo:400 });
+    GAMES_ALL_YEARS.length = 0; (d.GAMES_ALL_YEARS||[]).forEach(g => GAMES_ALL_YEARS.push(g));
+    GOAL_STATS.length = 0; (d.GOAL_STATS||[]).forEach(r => GOAL_STATS.push(r));
+    if (Array.isArray(d.STAT_DEFS)) STAT_DEFS = d.STAT_DEFS;
+    normalizeStatConfig();
+    ELIGIBILITY_PCT = d.ELIGIBILITY_PCT || 30;
+    const years = [...new Set(GAMES_ALL_YEARS.map(g => g.year))].sort((a,b) => b-a);
+    SELECTED_YEAR = years.includes(d.SELECTED_YEAR) ? d.SELECTED_YEAR : (years[0] || SELECTED_YEAR);
+    applyYearFilter();
+    duoTabSelected = new Set(); streakSelected = new Set();
+    GAMES.forEach(g => [...g.teamA, ...g.teamB].forEach(p => { duoTabSelected.add(p); streakSelected.add(p); }));
+    refreshAll();
+    shareRenderYearSelect();
+    if (home) home.textContent = d.exportedAt ? 'Updated ' + new Date(d.exportedAt).toLocaleDateString('pt-PT') : '';
+  } catch (e) {
+    if (home) home.innerHTML = '<span style="color:var(--red)">Could not load data.json (' + e.message + ')</span>';
+  }
+  goHome();
+}
+function shareRenderYearSelect() {
+  const sel = document.getElementById('share-year');
+  if (!sel) return;
+  const years = [...new Set(GAMES_ALL_YEARS.map(g => g.year))].sort((a,b) => b-a);
+  sel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+  sel.value = SELECTED_YEAR;
+}
+function shareSetYear(v) { setSelectedYear(v); shareRenderYearSelect(); }
+
+if (SHARE_MODE) { shareBoot(); } else {
 // INIT — try to load previously saved data from this browser; otherwise show the upload tab
 const _hadStoredData = loadState();
 document.getElementById('settings-kfactor') && (document.getElementById('settings-kfactor').value = K_FACTOR);
@@ -7417,6 +7482,7 @@ if (_hadStoredData) {
   goHome();
 } else {
   navigateTo('upload');
+}
 }
 </script>
 </body>
