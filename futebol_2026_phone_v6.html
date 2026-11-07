@@ -697,6 +697,30 @@ select.st-in { width: auto; }
 .tl-min { background:var(--surface); border:2px solid var(--border2); border-radius:99px; padding:1px 7px; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:800; color:var(--muted); }
 .tl-min.goal { background:var(--scp-green); border-color:var(--scp-green); color:#fff; }
 .tl-score { background:var(--surface); font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:800; color:var(--text); padding:0 3px; }
+
+/* TEAM COMBINATIONS — collapsible blocks */
+.cmb-box { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:4px 14px; margin-bottom:10px; }
+.cmb-box > summary, .cmb-sub > summary { cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; font-weight:800; }
+.cmb-box > summary { padding:10px 0; font-family:'Barlow Condensed',sans-serif; font-size:16px; }
+.cmb-sub { border-top:1px solid var(--border); padding:2px 0 8px; }
+.cmb-sub > summary { padding:9px 0; font-size:13px; color:var(--scp-green); }
+.cmb-box > summary::after, .cmb-sub > summary::after { content:'▼'; font-size:10px; color:var(--dim); margin-left:8px; }
+.cmb-box[open] > summary::after, .cmb-sub[open] > summary::after { content:'▲'; }
+.cmb-box summary::-webkit-details-marker { display:none; }
+.cmb-n { margin-left:auto; font-size:11px; font-weight:700; color:var(--muted); background:var(--surface2); border-radius:99px; padding:1px 8px; }
+/* DUO INSIGHTS / GOAL MINUTES */
+.di-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; margin-bottom:10px; }
+.di-title { font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:800; margin-bottom:2px; }
+.di-sub { font-size:10px; color:var(--dim); margin-bottom:6px; }
+.di-row { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--border); font-size:13px; }
+.di-row:last-child { border-bottom:none; }
+.di-row .nm { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
+.di-row .v { font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:800; }
+.di-row .s { font-size:11px; color:var(--muted); white-space:nowrap; }
+.gm-bar { display:grid; grid-template-columns:62px 1fr 34px; align-items:center; gap:8px; padding:4px 0; font-size:12px; }
+.gm-track { height:14px; background:var(--surface2); border-radius:99px; overflow:hidden; }
+.gm-fill { height:100%; background:var(--scp-green); border-radius:99px; }
+.gm-fill.top { background:var(--scp-gold); }
 </style>
 </head>
 <body>
@@ -738,14 +762,40 @@ select.st-in { width: auto; }
 <div id="tab-more-stats" class="page">
   <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;margin-bottom:16px">More Stats</div>
   <div class="home-grid" style="padding:0">
-    <div class="home-card home-shortcut" onclick="navigateTo('streaks')"><span class="icon">🔥</span><span class="label">Winning Streaks</span></div>
-    <div class="home-card home-shortcut" onclick="navigateTo('duos')"><span class="icon">🤝</span><span class="label">Duos</span></div>
-    <div class="home-card home-shortcut" onclick="navigateTo('winrate')"><span class="icon">📈</span><span class="label">Win Rate</span></div>
+    <div class="home-card home-shortcut" onclick="navigateTo('duos-menu')"><span class="icon">🤝</span><span class="label">Duos</span></div>
+    <div class="home-card home-shortcut" onclick="navigateTo('goal-minutes')"><span class="icon">⏱</span><span class="label">Goal Minutes</span></div>
     <div class="home-card home-shortcut" onclick="navigateTo('elo-history')"><span class="icon">📉</span><span class="label">ELO History</span></div>
     <div class="home-card home-shortcut" onclick="navigateTo('compare')"><span class="icon">🗓️</span><span class="label">Year Comparison</span></div>
     <div class="home-card home-shortcut" onclick="navigateTo('combinations')"><span class="icon">🧩</span><span class="label">Team Combinations</span></div>
     <div class="home-card home-shortcut" onclick="navigateTo('motm-history')"><span class="icon">🏅</span><span class="label">MOTM History</span></div>
   </div>
+</div>
+
+<!-- DUOS — menu with 2 sub-widgets -->
+<div id="tab-duos-menu" class="page">
+  <div class="home-grid" style="padding:0">
+    <div class="home-card home-shortcut" onclick="navigateTo('duos')"><span class="icon">🤝</span><span class="label">Duo explorer</span></div>
+    <div class="home-card home-shortcut" onclick="navigateTo('duo-insights')"><span class="icon">💡</span><span class="label">Duo insights</span></div>
+  </div>
+</div>
+
+<!-- DUO INSIGHTS -->
+<div id="tab-duo-insights" class="page">
+  <div class="rk-bar" style="margin-bottom:10px">
+    <span style="font-size:12px;color:var(--muted)">Min. games together/against</span>
+    <input type="number" id="di-min" min="1" value="5" class="rk-sel" style="width:60px;text-align:center" onchange="renderDuoInsights()">
+  </div>
+  <div id="di-content"></div>
+</div>
+
+<!-- GOAL MINUTES -->
+<div id="tab-goal-minutes" class="page">
+  <div id="gm-overall"></div>
+  <div class="rk-bar" style="margin:14px 0 8px">
+    <select id="gm-player" class="rk-sel rk-grow" onchange="renderGoalMinutes()"></select>
+    <button class="rk-btn" id="gm-elig-btn" onclick="gmEligible=!gmEligible;renderGoalMinutes()">35%+</button>
+  </div>
+  <div id="gm-player-content"></div>
 </div>
 
 <!-- ════════════════════════════════
@@ -1826,6 +1876,8 @@ function refreshAll() {
   renderPlayerStats();
   renderLiveStats();
   renderCombinations();
+  if (document.getElementById('tab-duo-insights')?.classList.contains('active')) renderDuoInsights();
+  if (document.getElementById('tab-goal-minutes')?.classList.contains('active')) renderGoalMinutes();
   renderWinRate();
   renderRecords();
   populateMobileDropdowns();
@@ -1968,6 +2020,9 @@ const PAGE_TITLES = {
   combinations:     'Team Combinations',
   settings:         'Settings',
   'more-stats':     'More Stats',
+  'duos-menu':      'Duos',
+  'duo-insights':   'Duo Insights',
+  'goal-minutes':   'Goal Minutes',
   'motm-history':   'MOTM History',
   'log-stats-pick':  'Log Stats',
   'log-stats-entry': 'Log Stats',
@@ -1993,6 +2048,8 @@ function showPage(id) {
   if (id === 'settings') renderSettingsTab();
   if (id === 'home') renderHomeWidgets();
   if (id === 'log-stats-pick') renderLogStatsPick();
+  if (id === 'duo-insights') renderDuoInsights();
+  if (id === 'goal-minutes') renderGoalMinutes();
   window.scrollTo(0, 0);
 }
 
@@ -3880,6 +3937,137 @@ function renderWinRate() {
 }
 
 // TEAM COMBINATIONS TAB
+// ══════════════════════════════════════════
+// DUO INSIGHTS — automatic summary of the most interesting pairings (selected year)
+// ══════════════════════════════════════════
+function renderDuoInsights() {
+  const el = document.getElementById('di-content');
+  if (!el) return;
+  const minG = Math.max(1, parseInt((document.getElementById('di-min')||{}).value, 10) || 5);
+  const real = p => p && !p.startsWith('Outro');
+  const pct = (w,g) => g ? Math.round(w/g*100) : 0;
+  const together = {}, vs = {}, played = {};
+  GAMES.forEach(g => {
+    const sides = [[g.teamA, g.winner==='A'], [g.teamB, g.winner==='B']];
+    sides.forEach(([team, won]) => {
+      const t = team.filter(real);
+      t.forEach(p => { played[p] = played[p] || { g:0, w:0, games:[] }; played[p].g++; if (won) played[p].w++; played[p].games.push(g); });
+      for (let i=0;i<t.length;i++) for (let j=i+1;j<t.length;j++) {
+        const k = [t[i],t[j]].sort().join('|');
+        together[k] = together[k] || { a:[t[i],t[j]].sort()[0], b:[t[i],t[j]].sort()[1], g:0, w:0 };
+        together[k].g++; if (won) together[k].w++;
+      }
+    });
+    const A = g.teamA.filter(real), B = g.teamB.filter(real);
+    A.forEach(pa => B.forEach(pb => {
+      [[pa,pb,g.winner==='A'],[pb,pa,g.winner==='B']].forEach(([x,y,xw]) => {
+        const k = x+'|'+y;
+        vs[k] = vs[k] || { a:x, b:y, g:0, w:0 };
+        vs[k].g++; if (xw) vs[k].w++;
+      });
+    }));
+  });
+  const tog = Object.values(together).filter(d => d.g >= minG);
+  const row = (name, v, s) => `<div class="di-row"><span class="nm">${name}</span><span class="s">${s||''}</span><span class="v">${v}</span></div>`;
+  const card = (title, sub, rows) => `<div class="di-card"><div class="di-title">${title}</div><div class="di-sub">${sub}</div>${rows || '<div class="di-sub" style="margin:4px 0">Not enough games yet</div>'}</div>`;
+
+  const best = [...tog].sort((x,y) => pct(y.w,y.g)-pct(x.w,x.g) || y.g-x.g).slice(0,5);
+  const worst = [...tog].sort((x,y) => pct(x.w,x.g)-pct(y.w,y.g) || y.g-x.g).slice(0,5);
+  const insep = Object.values(together).sort((x,y) => y.g-x.g).slice(0,5);
+  const rivals = Object.values(vs).filter(d => d.a < d.b).sort((x,y) => y.g-x.g).slice(0,5);
+  const nemesis = Object.values(vs).filter(d => d.g >= minG && d.w > d.g - d.w).sort((x,y) => pct(y.w,y.g)-pct(x.w,x.g) || y.g-x.g).slice(0,5);
+
+  // Lucky charm: how much more teammates win WITH this player than in their games WITHOUT him
+  const minPlayer = Math.max(minG, Math.ceil(GAMES.length * ELIGIBILITY_PCT / 100));
+  const charms = Object.keys(played).filter(p => played[p].g >= minPlayer).map(p => {
+    let sum = 0, weight = 0;
+    Object.keys(played).forEach(t => {
+      if (t === p) return;
+      const k = [p,t].sort().join('|');
+      const w = together[k];
+      if (!w || w.g < 3) return;
+      const without = played[t].games.filter(g => !(g.teamA.includes(p) && g.teamA.includes(t)) && !(g.teamB.includes(p) && g.teamB.includes(t)));
+      if (without.length < 3) return;
+      const wW = without.filter(g => (g.teamA.includes(t) && g.winner==='A') || (g.teamB.includes(t) && g.winner==='B')).length;
+      sum += (w.w/w.g - wW/without.length) * w.g; weight += w.g;
+    });
+    return { p, d: weight ? Math.round(sum/weight*100) : null };
+  }).filter(x => x.d != null).sort((x,y) => y.d-x.d).slice(0,5);
+
+  // Regular players who never played on the same team
+  const regulars = Object.keys(played).filter(p => played[p].g >= minPlayer).sort();
+  const never = [];
+  for (let i=0;i<regulars.length;i++) for (let j=i+1;j<regulars.length;j++) {
+    if (!together[[regulars[i],regulars[j]].sort().join('|')]) never.push(regulars[i]+' & '+regulars[j]);
+  }
+
+  el.innerHTML =
+    card('🔥 Best duos', `Highest win % playing together · ≥${minG} games`, best.map(d => row(d.a+' & '+d.b, pct(d.w,d.g)+'%', `${d.w}W ${d.g-d.w}L`)).join('')) +
+    card('🥶 Worst duos', `Lowest win % playing together · ≥${minG} games`, worst.map(d => row(d.a+' & '+d.b, pct(d.w,d.g)+'%', `${d.w}W ${d.g-d.w}L`)).join('')) +
+    card('👯 Inseparable', 'Most games on the same team', insep.map(d => row(d.a+' & '+d.b, d.g, `${pct(d.w,d.g)}% wins`)).join('')) +
+    card('⚔️ Biggest rivalries', 'Most games against each other', rivals.map(d => row(d.a+' vs '+d.b, d.g, `${d.w}–${d.g-d.w}`)).join('')) +
+    card('😈 Nemesis', `Who beats a specific opponent the most · ≥${minG} games`, nemesis.map(d => row(`${d.a} <span style="font-weight:400;color:var(--muted)">over</span> ${d.b}`, d.w+'–'+(d.g-d.w), pct(d.w,d.g)+'%')).join('')) +
+    card('🍀 Lucky charm', `Teammates win more with him than without · players with ≥${minPlayer} games`, charms.map(c => row(c.p, (c.d>0?'+':'')+c.d+' pp', '')).join('')) +
+    card('🚫 Never together', `Regular players (≥${minPlayer} games) who never played on the same team`, never.slice(0,12).map(n => row(n, '', '')).join('') + (never.length>12?`<div class="di-sub" style="margin-top:4px">+${never.length-12} more</div>`:''));
+}
+
+// ══════════════════════════════════════════
+// GOAL MINUTES — when goals happen (15-minute blocks), overall and per player
+// Only games logged with the match clock running have minutes.
+// ══════════════════════════════════════════
+let gmEligible = false;
+function gmBlocksHtml(goals) {
+  if (!goals.length) return '<div class="di-sub" style="margin:6px 0">No goals with minutes yet — use the clock in Log Stats.</div>';
+  const maxMin = Math.max(...goals.map(e => Math.floor(e.t/60)+1));
+  const nb = Math.max(4, Math.ceil(maxMin/15));
+  const counts = Array(nb).fill(0);
+  goals.forEach(e => { counts[Math.min(nb-1, Math.floor((Math.floor(e.t/60))/15))]++; });
+  const top = Math.max(...counts);
+  const uniqueTop = counts.filter(c => c === top).length === 1;
+  return counts.map((c,i) => `<div class="gm-bar"><span>${i*15+1}'–${(i+1)*15}'</span>
+      <div class="gm-track"><div class="gm-fill ${uniqueTop&&c===top&&c>0?'top':''}" style="width:${top?Math.round(c/top*100):0}%"></div></div>
+      <b style="text-align:right">${c}</b></div>`).join('');
+}
+function gmTopBlockText(goals) {
+  if (!goals.length) return '';
+  const counts = {};
+  goals.forEach(e => { const b = Math.floor(Math.floor(e.t/60)/15); counts[b] = (counts[b]||0)+1; });
+  const b = +Object.keys(counts).sort((x,y) => counts[y]-counts[x])[0];
+  return `Most goals between ${b*15+1}' and ${(b+1)*15}'`;
+}
+function renderGoalMinutes() {
+  const ov = document.getElementById('gm-overall'), pc = document.getElementById('gm-player-content'), sel = document.getElementById('gm-player');
+  if (!ov || !sel) return;
+  const all = [];
+  GAMES.forEach(g => (g.events||[]).forEach(e => { if (e.key === 'goals' && typeof e.t === 'number') all.push(Object.assign({ game:g }, e)); }));
+  const avgAll = all.length ? all.reduce((s,e)=>s+e.t,0)/all.length : 0;
+  const gamesTimed = new Set(all.map(e => e.game.id)).size;
+  ov.innerHTML = `<div class="di-card"><div class="di-title">⏱ All goals</div>
+    <div class="di-sub">${all.length} goals in ${gamesTimed} games with minutes${all.length?' · average '+(Math.floor(avgAll/60)+1)+"'":''}</div>
+    ${gmBlocksHtml(all)}
+    ${all.length?`<div class="di-sub" style="margin-top:6px;color:var(--scp-green);font-weight:700">${gmTopBlockText(all)}</div>`:''}</div>`;
+
+  const btn = document.getElementById('gm-elig-btn');
+  if (btn) { btn.textContent = ELIGIBILITY_PCT + '%+'; btn.classList.toggle('active', gmEligible); }
+  const minG = gmEligible ? minEligibleGames() : 0;
+  const scorers = [...new Set(all.map(e => e.player))].filter(p => (PLAYER_STATS.find(s=>s.name===p)?.games||0) >= minG).sort();
+  const prev = sel.value;
+  sel.innerHTML = scorers.length ? scorers.map(p => `<option value="${p}">${p}</option>`).join('') : '<option value="">No players yet</option>';
+  sel.value = scorers.includes(prev) ? prev : (scorers[0] || '');
+  const name = sel.value;
+  if (!name) { pc.innerHTML = ''; return; }
+  const mine = all.filter(e => e.player === name);
+  const avg = mine.reduce((s,e)=>s+e.t,0)/mine.length;
+  const diff = Math.round((avg - avgAll)/60);
+  const assistOf = e => { const a = (e.game.events||[]).find(x => x.key==='assists' && x.goalId === e.id); return a ? ' · 🎯 '+a.player : ''; };
+  pc.innerHTML = `<div class="di-card"><div class="di-title">⚽ ${name}</div>
+    <div class="di-sub">${mine.length} goal${mine.length===1?'':'s'} with minutes · average ${Math.floor(avg/60)+1}' · ${diff===0?'same as the group average':(diff<0?Math.abs(diff)+" min earlier than average":diff+" min later than average")}</div>
+    ${gmBlocksHtml(mine)}
+    <div style="margin-top:8px">${mine.slice().sort((a,b)=>b.game.id.localeCompare(a.game.id)||a.t-b.t).map(e =>
+      `<div class="di-row" style="cursor:pointer" onclick="openGameDetail('${e.game.id}')"><span class="nm" style="font-weight:500">#${e.game.id} · ${e.game.date}<span class="s">${assistOf(e)}</span></span><span class="v">${fmtMinute(e.t)}</span></div>`).join('')}</div>
+  </div>`;
+}
+
 function renderCombinations() {
   const grid = document.getElementById('combinations-grid');
   if (!grid || !GAMES.length) return;
@@ -3945,9 +4133,24 @@ function renderCombinations() {
     </div>`;
   }
 
+  // Collapsible blocks: Full squads (grouped by how many games the exact same team played) and Guests
+  const tableOnly = (entries) => {
+    const html = buildTable(Object.fromEntries(entries.map((e,i)=>[i,e])), '', '');
+    return html.replace(/^<div class="card" style="padding:18px">[\s\S]*?<table/, '<table').replace(/<\/div>\s*$/, '');
+  };
+  const clean = Object.values(cleanMap);
+  const groups = [
+    { label:'3+ games together', list: clean.filter(c => c.count >= 3) },
+    { label:'2 games together',  list: clean.filter(c => c.count === 2) },
+    { label:'1 game together',   list: clean.filter(c => c.count === 1) },
+  ].filter(gr => gr.list.length);
+  const guests = Object.values(guestMap);
+  grid.style.gridTemplateColumns = '1fr';
   grid.innerHTML =
-    buildTable(cleanMap, '🔀 Team combinations', ' · full squads only') +
-    (Object.keys(guestMap).length ? buildTable(guestMap, '👤 Teams with guest(s)', ' · includes one or more guests') : '');
+    `<details class="cmb-box" open><summary>🔀 Full squads <span class="cmb-n">${clean.length}</span></summary>
+      ${groups.map(gr => `<details class="cmb-sub"${gr.list.length<=10?' open':''}><summary>${gr.label} <span class="cmb-n">${gr.list.length}</span></summary>${tableOnly(gr.list)}</details>`).join('')}
+    </details>` +
+    (guests.length ? `<details class="cmb-box"><summary>👤 Teams with guests <span class="cmb-n">${guests.length}</span></summary>${tableOnly(guests)}</details>` : '');
 }
 
 // ══════════════════════════════════════════
