@@ -781,7 +781,7 @@ select.st-in { width: auto; }
     <div id="home-widget-lastgame" style="display:none"></div>
     <div class="home-card home-shortcut" onclick="navigateTo('player-stats')"><span class="icon">👤</span><span class="label">Player Stats</span></div>
     <div class="home-card home-shortcut" onclick="navigateTo('players-manage')"><span class="icon">👥</span><span class="label">Players</span></div>
-    <div class="home-card home-shortcut" onclick="navigateTo('log-stats-pick')"><span class="icon">📝</span><span class="label">Log Stats</span></div>
+    <div class="home-card home-shortcut" onclick="navigateTo('log-menu')"><span class="icon">📝</span><span class="label">Log Stats</span></div>
     <div class="home-card home-shortcut" onclick="navigateTo('settings')"><span class="icon">⚙️</span><span class="label">Settings</span></div>
     <div class="home-card home-more-btn" onclick="navigateTo('more-stats')">More Stats →</div>
   </div>
@@ -822,6 +822,33 @@ select.st-in { width: auto; }
 <div id="tab-goal-analysis" class="page">
   <div id="ga-note" style="font-size:11px;color:var(--dim);margin-bottom:10px"></div>
   <div class="home-grid" id="ga-grid" style="padding:0"></div>
+</div>
+
+<!-- GOALS & ASSISTS — 2 sub-widgets -->
+<div id="tab-goals-menu" class="page">
+  <div class="home-grid" style="padding:0">
+    <div class="home-card home-shortcut" onclick="navigateTo('goalstats')"><span class="icon">📊</span><span class="label">Stats</span></div>
+    <div class="home-card home-shortcut" onclick="navigateTo('goals-list')"><span class="icon">🎬</span><span class="label">Goals list</span></div>
+  </div>
+</div>
+<div id="tab-goals-list" class="page">
+  <div class="rk-bar" style="margin-bottom:10px"><select id="gl-player" class="rk-sel rk-grow" onchange="renderGoalsList()"></select></div>
+  <div id="gl-body"></div>
+</div>
+
+<!-- LOG STATS — 2 sub-widgets -->
+<div id="tab-log-menu" class="page">
+  <div class="home-grid" style="padding:0">
+    <div class="home-card home-shortcut" onclick="navigateTo('log-stats-pick')"><span class="icon">📝</span><span class="label">Log stats</span></div>
+    <div class="home-card home-shortcut" onclick="navigateTo('add-minutes')"><span class="icon">⏱</span><span class="label">Add minutes</span></div>
+  </div>
+</div>
+<div id="tab-add-minutes" class="page">
+  <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Filmed games — write the minute of each goal (totals don't change)</div>
+  <div id="am-list"></div>
+</div>
+<div id="tab-add-minutes-edit" class="page">
+  <div id="am-edit"></div>
 </div>
 
 <!-- GOAL MINUTES -->
@@ -2065,6 +2092,11 @@ const PAGE_TITLES = {
   'goal-analysis':  'Goals & Minutes',
   'motm-history':   'MOTM History',
   'log-stats-pick':  'Log Stats',
+  'log-menu':        'Log Stats',
+  'add-minutes':     'Add Minutes',
+  'add-minutes-edit':'Add Minutes',
+  'goals-menu':      'Goals & Assists',
+  'goals-list':      'Goals List',
   'log-stats-entry': 'Log Stats',
 };
 
@@ -2088,6 +2120,8 @@ function showPage(id) {
   if (id === 'settings') renderSettingsTab();
   if (id === 'home') renderHomeWidgets();
   if (id === 'log-stats-pick') renderLogStatsPick();
+  if (id === 'goals-list') renderGoalsList();
+  if (id === 'add-minutes') renderAddMinutesList();
   if (id === 'duo-insights') renderDuoInsights();
   if (id === 'goal-minutes') renderGoalMinutes();
   if (id === 'goal-analysis') renderGoalAnalysis();
@@ -4050,6 +4084,134 @@ function renderDuoInsights() {
     card('😈 Nemesis', `Who beats a specific opponent the most · ≥${minG} games`, nemesis.map(d => row(`${d.a} <span style="font-weight:400;color:var(--muted)">over</span> ${d.b}`, d.w+'–'+(d.g-d.w), pct(d.w,d.g)+'%')).join('')) +
     card('🍀 Lucky charm', `Teammates win more with him than without · players with ≥${minPlayer} games`, charms.map(c => row(c.p, (c.d>0?'+':'')+c.d+' pp', '')).join('')) +
     card('🚫 Never together', `Regular players (≥${minPlayer} games) who never played on the same team`, never.slice(0,12).map(n => row(n, '', '')).join('') + (never.length>12?`<div class="di-sub" style="margin-top:4px">+${never.length-12} more</div>`:''));
+}
+
+// ══════════════════════════════════════════
+// GOALS LIST — every goal of a player (selected year), with a link to the moment on YouTube
+// Goals from games without recorded order/minutes are shown grouped, without a link.
+// ══════════════════════════════════════════
+function playerGoalItems(name) {
+  const items = [];
+  GAMES.slice().sort((a,b) => (parseInt(b.id,10)||0) - (parseInt(a.id,10)||0)).forEach(g => {
+    const row = GOAL_STATS.find(r => r.gameId === g.id && r.player === name);
+    const total = row ? (row.goals||0) : 0;
+    const seq = gameGoalSequence(g) || [];
+    const mine = seq.filter(e => e.key === 'goals' && e.player === name);
+    mine.slice().sort((a,b) => (typeof a.t==='number'?a.t:1e9) - (typeof b.t==='number'?b.t:1e9)).forEach(e => items.push({ g, t: typeof e.t === 'number' ? e.t : null, assist: e.assist, score: e.A+'–'+e.B }));
+    const missing = total - mine.length;
+    if (missing > 0) items.push({ g, count: missing });
+  });
+  return items;
+}
+function goalItemsHtml(items) {
+  if (!items.length) return '<div class="di-sub" style="margin:8px 0">No goals this season</div>';
+  return items.map(it => {
+    const head = `<span class="nm" style="font-weight:500">#${it.g.id.slice(-3)} · ${it.g.date}${it.assist?` <span class="s">🎯 ${it.assist}</span>`:''}${it.score?` <span class="s">· ${it.score}</span>`:''}</span>`;
+    if (it.count) return `<div class="di-row" style="cursor:pointer;opacity:.7" onclick="openGameDetail('${it.g.id}')">${head.replace('</span>', ` <span class="s">· no minute</span></span>`)}<span class="v">⚽${it.count>1?'×'+it.count:''}</span></div>`;
+    const yt = it.g.youtube && it.t != null;
+    return `<div class="di-row" style="cursor:pointer" onclick="${yt ? `openYouTubeAt('${it.g.id}',${it.t})` : `openGameDetail('${it.g.id}')`}">${head}<span class="v">${it.t!=null?fmtMinute(it.t):'–'}</span><span style="width:24px;text-align:center;color:${yt?'var(--scp-green)':'var(--dim)'};font-size:14px">${yt?'▶':''}</span></div>`;
+  }).join('');
+}
+function buildSeasonGoalsHtml(name) {
+  const items = playerGoalItems(name);
+  const n = items.reduce((s,it) => s + (it.count || 1), 0);
+  return `<button type="button" class="ps-games-toggle" onclick="const b=this.nextElementSibling;const o=b.style.display==='none';b.style.display=o?'':'none';this.querySelector('.arr').textContent=o?'▲':'▼'"><span>⚽ Goals of the season (${n})</span><span class="arr">▼</span></button>
+    <div style="display:none;padding:4px 2px 0">${goalItemsHtml(items)}<div class="di-sub" style="margin-top:6px">▶ opens the video 10 s before the goal</div></div>`;
+}
+function renderGoalsList() {
+  const sel = document.getElementById('gl-player'); if (!sel) return;
+  const tot = {};
+  GAMES.forEach(g => GOAL_STATS.filter(r => r.gameId === g.id && r.player && !r.player.startsWith('Outro')).forEach(r => tot[r.player] = (tot[r.player]||0) + (r.goals||0)));
+  const names = Object.keys(tot).filter(n => tot[n] > 0).sort((a,b) => tot[b]-tot[a] || a.localeCompare(b));
+  const prev = sel.value;
+  sel.innerHTML = names.map(n => `<option value="${n}">${n} (${tot[n]})</option>`).join('') || '<option value="">No goals yet</option>';
+  sel.value = names.includes(prev) ? prev : (names[0] || '');
+  const name = sel.value;
+  document.getElementById('gl-body').innerHTML = name ? `<div class="di-card">${goalItemsHtml(playerGoalItems(name))}<div class="di-sub" style="margin-top:6px">▶ opens the video 10 s before the goal · goals without minute open the game</div></div>` : '';
+}
+
+// ══════════════════════════════════════════
+// ADD MINUTES — for games already logged: write the minute of each goal and who assisted.
+// Totals (GOAL_STATS) never change here; only the goal events (order/minute/assist) are rebuilt.
+// ══════════════════════════════════════════
+let amGameId = null;
+function amStatus(g) {
+  const rows = GOAL_STATS.filter(r => r.gameId === g.id);
+  const need = rows.reduce((s,r) => s + (r.goals||0) + (r.ownGoals||0), 0);
+  const ev = (g.events||[]).filter(e => e.key==='goals' || e.key==='ownGoals');
+  const timed = ev.filter(e => typeof e.t === 'number').length;
+  return { need, timed, done: need > 0 && timed >= need };
+}
+function renderAddMinutesList() {
+  const el = document.getElementById('am-list'); if (!el) return;
+  const games = GAMES.filter(g => GOAL_STATS.some(r => r.gameId === g.id)).sort((a,b) => (parseInt(b.id,10)||0) - (parseInt(a.id,10)||0));
+  el.innerHTML = games.map(g => {
+    const s = amStatus(g), sc = getGameScore(g);
+    const tag = s.done ? '<span class="ls-tag ls-tag-logged">✓ Minutes</span>' : s.timed ? `<span class="ls-tag" style="background:var(--amber-bg);color:#8a6d00">${s.timed}/${s.need}</span>` : '<span class="ls-tag ls-tag-notfilmed">No minutes</span>';
+    return `<div class="ls-game-card${s.done?' logged':''}" onclick="openAddMinutes('${g.id}')"><div><div class="ls-gp-id">#${g.id}</div><div class="ls-gp-date">${g.date} · ${sc.scoreA}–${sc.scoreB}</div></div><div style="display:flex;align-items:center;gap:8px">${tag}<span style="color:var(--dim)">›</span></div></div>`;
+  }).join('') || '<div class="di-sub" style="text-align:center;padding:20px">No filmed games yet</div>';
+}
+function openAddMinutes(gameId) { amGameId = gameId; renderAddMinutesEdit(); navigateTo('add-minutes-edit'); }
+function renderAddMinutesEdit() {
+  const g = GAMES.find(x => x.id === amGameId), el = document.getElementById('am-edit');
+  if (!g || !el) return;
+  const rows = GOAL_STATS.filter(r => r.gameId === g.id);
+  const seq = gameGoalSequence(g) || [];
+  const team = p => g.teamA.includes(p) ? 'A' : 'B';
+  // one slot per goal / own goal in the totals, pre-filled with what is already recorded
+  const slots = [];
+  rows.forEach(r => {
+    [['goals', r.goals||0], ['ownGoals', r.ownGoals||0]].forEach(([key, n]) => {
+      const have = seq.filter(e => e.key === key && e.player === r.player);
+      for (let i = 0; i < n; i++) { const e = have[i]; slots.push({ key, player: r.player, t: e && typeof e.t === 'number' ? e.t : null, assist: e ? e.assist : null }); }
+    });
+  });
+  slots.sort((a,b) => (a.t==null?1e9:a.t) - (b.t==null?1e9:b.t) || team(a.player).localeCompare(team(b.player)) || a.player.localeCompare(b.player));
+  const assisters = t => rows.filter(r => (r.assists||0) > 0 && team(r.player) === t);
+  const sc = getGameScore(g);
+  const fmt = t => t == null ? '' : Math.floor(t/60) + ':' + String(t%60).padStart(2,'0');
+  el.innerHTML = `<div class="di-card" style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+      <div><div style="font-size:11px;color:var(--dim)">#${g.id} · ${g.date}</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900">${sc.scoreA} – ${sc.scoreB}</div></div>
+      <div style="font-size:11px;color:var(--muted);text-align:right">Minute as mm:ss<br>(game clock)</div></div>`
+    + slots.map((s, i) => {
+      const t = team(s.player), og = s.key === 'ownGoals';
+      const opts = og ? '' : `<select class="rk-sel am-ast" data-i="${i}" style="max-width:130px"><option value="">🎯 no assist</option>${assisters(t).filter(r => r.player !== s.player).map(r => `<option value="${r.player}"${r.player===s.assist?' selected':''}>🎯 ${r.player}</option>`).join('')}</select>`;
+      return `<div class="tla-card am-slot" data-key="${s.key}" data-player="${s.player.replace(/"/g,'&quot;')}">
+        <div class="tla-top"><span class="tla-team t${og ? (t==='A'?'B':'A') : t}">${og ? (t==='A'?'B':'A') : t}</span><span class="tla-who">${og?'⭕':'⚽'} ${s.player}${og?' <span style="font-size:10px;color:var(--red)">(OG)</span>':''}</span></div>
+        <div class="tla-ctl" style="justify-content:flex-start;gap:8px"><input class="rk-sel am-t" data-i="${i}" inputmode="numeric" placeholder="mm:ss" value="${fmt(s.t)}" style="width:80px;text-align:center;font-size:15px;font-weight:700">${opts}</div>
+      </div>`;
+    }).join('')
+    + `<div style="position:sticky;bottom:0;background:var(--bg);padding:10px 0;display:flex;gap:8px"><button class="btn" style="flex:1" onclick="goBack()">Cancel</button><button class="btn btn-primary" style="flex:1" onclick="saveAddMinutes()">Save</button></div>`;
+}
+function saveAddMinutes() {
+  const g = GAMES_ALL_YEARS.find(x => x.id === amGameId); if (!g) return;
+  const rows = GOAL_STATS.filter(r => r.gameId === g.id);
+  const slotEls = [...document.querySelectorAll('#am-edit .am-slot')];
+  const list = [];
+  for (const el of slotEls) {
+    const v = el.querySelector('.am-t').value.trim();
+    let t = null;
+    if (v) { t = parseClock(v); if (t === null) { alert('Use the format mm:ss, e.g. 13:24'); el.querySelector('.am-t').focus(); return; } }
+    const a = el.querySelector('.am-ast');
+    list.push({ key: el.dataset.key, player: el.dataset.player, t, assist: a && a.value ? a.value : null });
+  }
+  // an assister can't be used more times than the assists recorded for him
+  const used = {};
+  list.forEach(s => { if (s.assist) used[s.assist] = (used[s.assist]||0) + 1; });
+  for (const p in used) { const r = rows.find(x => x.player === p); if (used[p] > (r ? r.assists||0 : 0)) { alert(`${p} has ${r ? r.assists||0 : 0} assist(s) in this game but was chosen ${used[p]} times.`); return; } }
+  // rebuild goal / own-goal / assist events in minute order (no minute → at the end); keep other events
+  list.sort((a,b) => (a.t==null?1e9:a.t) - (b.t==null?1e9:b.t));
+  const others = (g.events||[]).filter(e => !['goals','ownGoals','assists'].includes(e.key));
+  const ev = [];
+  list.forEach((s, k) => {
+    const id = 'm' + Date.now().toString(36) + k;
+    ev.push({ id, t: s.t, player: s.player, key: s.key });
+    if (s.key === 'goals' && s.assist) ev.push({ id: id + 'a', t: s.t, player: s.assist, key: 'assists', goalId: id });
+  });
+  g.events = ev.concat(others);
+  saveState();
+  refreshAll();
+  goBack();
 }
 
 // ══════════════════════════════════════════
@@ -6451,7 +6613,7 @@ function renderHomeWidgets() {
         ${!topScorer && !topAssist ? '<div style="font-size:12px;color:var(--dim);font-style:italic">No eligible players</div>' : ''}
       `);
     }
-    goalsEl.onclick = () => navigateTo('goalstats');
+    goalsEl.onclick = () => navigateTo('goals-menu');
   }
 }
 
@@ -7504,6 +7666,7 @@ function showPlayerStats(name, btn) {
       })()
     + '</tbody></table></div></div>'
     + '</div>';
+  content.insertAdjacentHTML('beforeend', buildSeasonGoalsHtml(name));
   content.insertAdjacentHTML('beforeend', buildPastSeasonsHtml(name));
 }
 
