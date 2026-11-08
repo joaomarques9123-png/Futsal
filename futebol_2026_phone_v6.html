@@ -4142,6 +4142,36 @@ function amStatus(g) {
   const timed = ev.filter(e => typeof e.t === 'number').length;
   return { need, timed, done: need > 0 && timed >= need };
 }
+function parseLooseClock(v) {
+  v = String(v||'').trim();
+  if (!v) return null;
+  if (/[:.,]/.test(v)) return parseClock(v.replace(/[.,]/g, ':'));
+  if (!/^\d+$/.test(v)) return null;
+  const n = v.length;
+  if (n <= 2) return parseInt(v,10);                         // seconds only
+  const s = parseInt(v.slice(-2),10), rest = v.slice(0,-2);
+  if (s > 59) return null;
+  if (rest.length <= 2) return parseInt(rest,10)*60 + s;     // m:ss / mm:ss
+  const m = parseInt(rest.slice(-2),10), h = parseInt(rest.slice(0,-2),10);
+  if (m > 59) return null;
+  return h*3600 + m*60 + s;                                  // h:mm:ss
+}
+function fmtClockLong(sec) {
+  if (sec == null) return '';
+  const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60), s = sec%60;
+  return (h ? h + ':' + String(m).padStart(2,'0') : m) + ':' + String(s).padStart(2,'0');
+}
+function amPreview(inp) {   // shows how the typed value was understood
+  const out = inp.parentElement.querySelector('.am-hint'); if (!out) return;
+  const v = parseLooseClock(inp.value);
+  if (!inp.value.trim()) { out.textContent = ''; return; }
+  if (v == null) { out.textContent = '?'; out.style.color = 'var(--red)'; return; }
+  const st = parseLooseClock((document.getElementById('am-start')||{}).value) || 0;
+  out.style.color = 'var(--muted)';
+  out.textContent = inp.id === 'am-start' ? '= ' + fmtClockLong(v) : '= ' + fmtClockLong(v) + (v >= st ? ' → game ' + fmtClockLong(v - st) : ' (before kick-off!)');
+}
+function amRefreshHints() { document.querySelectorAll('#am-edit .am-t, #am-start').forEach(amPreview); }
+
 function renderAddMinutesList() {
   const el = document.getElementById('am-list'); if (!el) return;
   const games = GAMES.filter(g => GOAL_STATS.some(r => r.gameId === g.id)).sort((a,b) => (parseInt(b.id,10)||0) - (parseInt(a.id,10)||0));
@@ -4169,29 +4199,48 @@ function renderAddMinutesEdit() {
   slots.sort((a,b) => (a.t==null?1e9:a.t) - (b.t==null?1e9:b.t) || team(a.player).localeCompare(team(b.player)) || a.player.localeCompare(b.player));
   const assisters = t => rows.filter(r => (r.assists||0) > 0 && team(r.player) === t);
   const sc = getGameScore(g);
-  const fmt = t => t == null ? '' : Math.floor(t/60) + ':' + String(t%60).padStart(2,'0');
-  el.innerHTML = `<div class="di-card" style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
-      <div><div style="font-size:11px;color:var(--dim)">#${g.id} · ${g.date}</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900">${sc.scoreA} – ${sc.scoreB}</div></div>
-      <div style="font-size:11px;color:var(--muted);text-align:right">Minute as mm:ss<br>(game clock)</div></div>`
+  const start = g.ytStart || 0;
+  const fmt = t => t == null ? '' : fmtClockLong(t + start);   // fields show VIDEO time
+  el.innerHTML = `<div class="di-card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-size:11px;color:var(--dim)">#${g.id} · ${g.date}</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900">${sc.scoreA} – ${sc.scoreB}</div></div>
+        ${g.youtube ? `<button class="btn" onclick="openYouTubeAt('${g.id}',null)">▶ Open video</button>` : '<span style="font-size:11px;color:var(--dim)">No video link</span>'}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+        <span style="font-size:12px;font-weight:700;flex:1">Game starts at (video time)</span>
+        <input id="am-start" class="rk-sel" inputmode="decimal" placeholder="e.g. 045" value="${start ? fmtClockLong(start) : ''}" oninput="amRefreshHints()" style="width:84px;text-align:center;font-size:15px;font-weight:700">
+        <span class="am-hint" style="font-size:11px;min-width:44px"></span>
+      </div>
+      <div style="font-size:10px;color:var(--dim);margin-top:6px">Write the VIDEO time of each goal — no need for ":" (1324 = 13:24, 10230 = 1:02:30). Game minute = video time − start.</div>
+    </div>`
     + slots.map((s, i) => {
       const t = team(s.player), og = s.key === 'ownGoals';
       const opts = og ? '' : `<select class="rk-sel am-ast" data-i="${i}" style="max-width:130px"><option value="">🎯 no assist</option>${assisters(t).filter(r => r.player !== s.player).map(r => `<option value="${r.player}"${r.player===s.assist?' selected':''}>🎯 ${r.player}</option>`).join('')}</select>`;
       return `<div class="tla-card am-slot" data-key="${s.key}" data-player="${s.player.replace(/"/g,'&quot;')}">
         <div class="tla-top"><span class="tla-team t${og ? (t==='A'?'B':'A') : t}">${og ? (t==='A'?'B':'A') : t}</span><span class="tla-who">${og?'⭕':'⚽'} ${s.player}${og?' <span style="font-size:10px;color:var(--red)">(OG)</span>':''}</span></div>
-        <div class="tla-ctl" style="justify-content:flex-start;gap:8px"><input class="rk-sel am-t" data-i="${i}" inputmode="numeric" placeholder="mm:ss" value="${fmt(s.t)}" style="width:80px;text-align:center;font-size:15px;font-weight:700">${opts}</div>
+        <div class="tla-ctl" style="justify-content:flex-start;gap:8px"><input class="rk-sel am-t" data-i="${i}" inputmode="decimal" placeholder="video" value="${fmt(s.t)}" oninput="amPreview(this)" style="width:84px;text-align:center;font-size:15px;font-weight:700">${opts}<span class="am-hint" style="font-size:11px;flex:1;text-align:right"></span></div>
       </div>`;
     }).join('')
     + `<div style="position:sticky;bottom:0;background:var(--bg);padding:10px 0;display:flex;gap:8px"><button class="btn" style="flex:1" onclick="goBack()">Cancel</button><button class="btn btn-primary" style="flex:1" onclick="saveAddMinutes()">Save</button></div>`;
+  amRefreshHints();
 }
 function saveAddMinutes() {
   const g = GAMES_ALL_YEARS.find(x => x.id === amGameId); if (!g) return;
   const rows = GOAL_STATS.filter(r => r.gameId === g.id);
   const slotEls = [...document.querySelectorAll('#am-edit .am-slot')];
+  const stRaw = (document.getElementById('am-start')||{}).value || '';
+  const start = stRaw.trim() ? parseLooseClock(stRaw) : 0;
+  if (start === null) { alert('Game start: write the video time, e.g. 045 for 0:45'); return; }
   const list = [];
   for (const el of slotEls) {
     const v = el.querySelector('.am-t').value.trim();
     let t = null;
-    if (v) { t = parseClock(v); if (t === null) { alert('Use the format mm:ss, e.g. 13:24'); el.querySelector('.am-t').focus(); return; } }
+    if (v) {
+      const vt = parseLooseClock(v);
+      if (vt === null) { alert('Write the video time, e.g. 1324 for 13:24'); el.querySelector('.am-t').focus(); return; }
+      if (vt < start) { alert(`${el.dataset.player}: ${fmtClockLong(vt)} is before the game start (${fmtClockLong(start)}).`); el.querySelector('.am-t').focus(); return; }
+      t = vt - start;
+    }
     const a = el.querySelector('.am-ast');
     list.push({ key: el.dataset.key, player: el.dataset.player, t, assist: a && a.value ? a.value : null });
   }
@@ -4209,6 +4258,7 @@ function saveAddMinutes() {
     if (s.key === 'goals' && s.assist) ev.push({ id: id + 'a', t: s.t, player: s.assist, key: 'assists', goalId: id });
   });
   g.events = ev.concat(others);
+  g.ytStart = start;   // same offset used by the ▶ video links
   saveState();
   refreshAll();
   goBack();
