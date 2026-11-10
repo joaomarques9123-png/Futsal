@@ -829,8 +829,10 @@ select.st-in { width: auto; }
   <div class="home-grid" style="padding:0">
     <div class="home-card home-shortcut" onclick="navigateTo('goalstats')"><span class="icon">📊</span><span class="label">Stats</span></div>
     <div class="home-card home-shortcut" onclick="navigateTo('goals-list')"><span class="icon">🎬</span><span class="label">Goals list</span></div>
+    <div class="home-card home-shortcut" onclick="navigateTo('best-goals')"><span class="icon">🏆</span><span class="label">Best goals</span></div>
   </div>
 </div>
+<div id="tab-best-goals" class="page"><div id="bg-body"></div></div>
 <div id="tab-goals-list" class="page">
   <div class="rk-bar" style="margin-bottom:10px"><select id="gl-player" class="rk-sel rk-grow" onchange="renderGoalsList()"></select></div>
   <div id="gl-body"></div>
@@ -1762,6 +1764,7 @@ function defaultMotmFormula() {
 }
 let STAT_DEFS = defaultStatDefs();
 let MOTM_FORMULA = defaultMotmFormula();
+let BEST_GOALS = {};   // {year: {monthly:{'Nov':key}, finalists:[key], winner:key}}  key = gameId|eventId
 function enabledStats() { return STAT_DEFS.filter(s => s.enabled); }
 function extraStats() { return STAT_DEFS.filter(s => s.enabled && !CORE_STAT_KEYS.includes(s.key)); }
 function customStats() { return STAT_DEFS.filter(s => s.enabled && !s.builtin); }
@@ -1795,7 +1798,7 @@ function saveState() {
     const state = {
       version: 3,
       ALL_PLAYERS, GAMES_ALL_YEARS, GOAL_STATS, PAY_DATA, GAMES_2025,
-      TOLERANCE, K_FACTOR, ELIGIBILITY_PCT, SELECTED_YEAR, STAT_DEFS, MOTM_FORMULA,
+      TOLERANCE, K_FACTOR, ELIGIBILITY_PCT, SELECTED_YEAR, STAT_DEFS, MOTM_FORMULA, BEST_GOALS,
       savedAt: Date.now()
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -1817,6 +1820,7 @@ function loadState() {
     ELIGIBILITY_PCT = state.ELIGIBILITY_PCT || 30;
     STAT_DEFS = Array.isArray(state.STAT_DEFS) ? state.STAT_DEFS : defaultStatDefs();
     MOTM_FORMULA = state.MOTM_FORMULA || defaultMotmFormula();
+    BEST_GOALS = (state.BEST_GOALS && typeof state.BEST_GOALS==='object') ? state.BEST_GOALS : {};
     normalizeStatConfig();
     ALL_PLAYERS.forEach(p => { if (typeof p.initialElo !== 'number') p.initialElo = p.elo; });
 
@@ -2097,6 +2101,7 @@ const PAGE_TITLES = {
   'add-minutes-edit':'Add Minutes',
   'goals-menu':      'Goals & Assists',
   'goals-list':      'Goals List',
+  'best-goals':      'Best Goals',
   'log-stats-entry': 'Log Stats',
 };
 
@@ -2121,6 +2126,7 @@ function showPage(id) {
   if (id === 'home') renderHomeWidgets();
   if (id === 'log-stats-pick') renderLogStatsPick();
   if (id === 'goals-list') renderGoalsList();
+  if (id === 'best-goals') renderBestGoals();
   if (id === 'add-minutes') renderAddMinutesList();
   if (id === 'duo-insights') renderDuoInsights();
   if (id === 'goal-minutes') renderGoalMinutes();
@@ -4118,6 +4124,79 @@ function buildSeasonGoalsHtml(name) {
   return `<button type="button" class="ps-games-toggle" onclick="const b=this.nextElementSibling;const o=b.style.display==='none';b.style.display=o?'':'none';this.querySelector('.arr').textContent=o?'▲':'▼'"><span>⚽ Goals of the season (${n})</span><span class="arr">▼</span></button>
     <div style="display:none;padding:4px 2px 0">${goalItemsHtml(items)}<div class="di-sub" style="margin-top:6px">▶ opens the video 10 s before the goal</div></div>`;
 }
+// ══════════════════════════════════════════
+// BEST GOALS — ⭐ candidates (marked in Add minutes) → goal of the month → finalists (3–4) → goal of the year
+// ══════════════════════════════════════════
+let bgStage = 'cand';
+const BG_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function bgYear() { return String(SELECTED_YEAR); }
+function bgState(y) { y = y || bgYear(); const b = BEST_GOALS[y] = BEST_GOALS[y] || {}; b.monthly = b.monthly || {}; b.finalists = b.finalists || []; return b; }
+function bgCandidates(games) {
+  const out = [];
+  (games || GAMES).forEach(g => (gameGoalSequence(g) || []).forEach(e => {
+    if (e.key === 'goals' && e.best) out.push({ key: g.id + '|' + e.id, g, e, month: (String(g.date).split(' ')[1] || '?') });
+  }));
+  return out.sort((a,b) => (parseInt(a.g.id,10)||0) - (parseInt(b.g.id,10)||0) || (a.e.t||0) - (b.e.t||0));
+}
+function bgFind(key) {
+  const [gid, eid] = String(key).split('|'); const g = GAMES_ALL_YEARS.find(x => x.id === gid); if (!g) return null;
+  const e = (gameGoalSequence(g) || []).find(x => x.id === eid); return e ? { key, g, e, month: String(g.date).split(' ')[1] || '?' } : null;
+}
+function bgRow(c, right, opts) {
+  opts = opts || {};
+  const yt = c.g.youtube && typeof c.e.t === 'number';
+  return `<div class="di-row" style="align-items:center;${opts.hl?'background:var(--amber-bg);border-radius:8px;':''}${opts.click?'cursor:pointer':''}"${opts.click?` onclick="${opts.click}"`:''}>
+    <span class="nm" style="font-weight:600">${c.e.player}<span class="s" style="display:block;font-weight:400">#${c.g.id.slice(-3)} · ${c.g.date} · ${typeof c.e.t==='number'?fmtMinute(c.e.t):'–'}${c.e.assist?' · 🎯 '+c.e.assist:''} · ${c.e.A}–${c.e.B}</span></span>
+    ${right||''}
+    <button type="button" class="btn" style="padding:4px 10px;margin-left:6px" ${yt?`onclick="event.stopPropagation();openYouTubeAt('${c.g.id}',${c.e.t})"`:'disabled'}>▶</button></div>`;
+}
+function bgSet(stage) { bgStage = stage; renderBestGoals(); }
+function bgPickMonth(m, key) { const b = bgState(); b.monthly[m] = b.monthly[m] === key ? undefined : key; if (!b.monthly[m]) delete b.monthly[m]; bgClean(); saveState(); renderBestGoals(); }
+function bgToggleFinal(key) {
+  const b = bgState(), i = b.finalists.indexOf(key);
+  if (i >= 0) b.finalists.splice(i,1); else { if (b.finalists.length >= 4) { alert('Max 4 finalists'); return; } b.finalists.push(key); }
+  bgClean(); saveState(); renderBestGoals();
+}
+function bgPickWinner(key) { const b = bgState(); b.winner = b.winner === key ? undefined : key; if (!b.winner) delete b.winner; saveState(); renderBestGoals(); }
+function bgUnstar(key) {
+  const [gid, eid] = key.split('|'); const g = GAMES_ALL_YEARS.find(x => x.id === gid);
+  const e = g && (g.events||[]).find(x => x.id === eid); if (!e) return;
+  if (!confirm('Remove ⭐ from this goal?')) return;
+  delete e.best; bgClean(); saveState(); renderBestGoals();
+}
+function bgClean() {   // drop picks that are no longer valid (unstarred / not monthly winner)
+  const b = bgState(), cand = new Set(bgCandidates().map(c => c.key));
+  Object.keys(b.monthly).forEach(m => { if (!cand.has(b.monthly[m])) delete b.monthly[m]; });
+  const mw = new Set(Object.values(b.monthly));
+  b.finalists = b.finalists.filter(k => mw.has(k));
+  if (b.winner && !b.finalists.includes(b.winner)) delete b.winner;
+}
+function renderBestGoals() {
+  const el = document.getElementById('bg-body'); if (!el) return;
+  bgClean();
+  const b = bgState(), cands = bgCandidates();
+  const months = BG_MONTHS.filter(m => cands.some(c => c.month === m));
+  const mw = months.map(m => b.monthly[m]).filter(Boolean).map(bgFind).filter(Boolean);
+  const fin = b.finalists.map(bgFind).filter(Boolean);
+  const stages = [['cand','⭐ Candidates',cands.length],['month','🗓️ Month',mw.length+'/'+months.length],['final','🎯 Finalists',fin.length+'/4'],['year','🏆 Year',b.winner?'✓':'–']];
+  let html = `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${stages.map(([k,l,n]) => `<button type="button" class="btn${bgStage===k?' btn-primary':''}" style="flex:1 1 40%;padding:8px 6px" onclick="bgSet('${k}')">${l} <span style="opacity:.7">${n}</span></button>`).join('')}</div>`;
+  const card = (title, body, sub) => `<div class="di-card" style="margin-bottom:10px">${title?`<div style="font-weight:700;margin-bottom:6px">${title}</div>`:''}${body}${sub?`<div class="di-sub" style="margin-top:6px">${sub}</div>`:''}</div>`;
+  if (bgStage === 'cand') {
+    html += months.length ? months.map(m => card(m + ' ' + bgYear(), cands.filter(c => c.month === m).map(c => bgRow(c, `<button type="button" class="btn" style="padding:4px 8px" onclick="event.stopPropagation();bgUnstar('${c.key}')">⭐</button>`)).join(''))).join('')
+      : card('', '<div class="di-sub">No candidates yet. Mark goals with ☆ in Log stats → ⏱ Add minutes.</div>');
+  } else if (bgStage === 'month') {
+    html += months.length ? months.map(m => card(`🗓️ Goal of ${m}`, cands.filter(c => c.month === m).map(c => bgRow(c, b.monthly[m]===c.key?'<span style="font-size:18px">🗓️</span>':'', { hl: b.monthly[m]===c.key, click: `bgPickMonth('${m}','${c.key}')` })).join(''), 'Tap a goal to pick it (tap again to undo)')).join('')
+      : card('', '<div class="di-sub">No candidates yet.</div>');
+  } else if (bgStage === 'final') {
+    html += card('🎯 Finalists — pick 3 or 4 for the vote', mw.length ? mw.map(c => bgRow(c, b.finalists.includes(c.key)?'<span style="font-size:18px">🎯</span>':`<span class="s">${c.month}</span>`, { hl: b.finalists.includes(c.key), click: `bgToggleFinal('${c.key}')` })).join('') : '<div class="di-sub">Pick goals of the month first.</div>', fin.length && fin.length < 3 ? 'Pick at least 3' : '');
+  } else {
+    html += card('🏆 Goal of the Year ' + bgYear(), fin.length ? fin.map(c => bgRow(c, b.winner===c.key?'<span style="font-size:20px">🏆</span>':'', { hl: b.winner===c.key, click: `bgPickWinner('${c.key}')` })).join('') : '<div class="di-sub">Pick finalists first.</div>', fin.length ? 'Tap the winner after the vote' : '');
+  }
+  // winners of every year
+  const past = Object.keys(BEST_GOALS).filter(y => BEST_GOALS[y] && BEST_GOALS[y].winner).sort((a,b) => b - a).map(y => { const c = bgFind(BEST_GOALS[y].winner); return c ? `<div style="font-size:11px;color:var(--dim);margin-top:6px">${y}</div>` + bgRow(c, '<span style="font-size:18px">🏆</span>') : ''; }).join('');
+  if (past) html += card('🏆 Goals of the Year', past);
+  el.innerHTML = html;
+}
 function renderGoalsList() {
   const sel = document.getElementById('gl-player'); if (!sel) return;
   const tot = {};
@@ -4193,7 +4272,7 @@ function renderAddMinutesEdit() {
   rows.forEach(r => {
     [['goals', r.goals||0], ['ownGoals', r.ownGoals||0]].forEach(([key, n]) => {
       const have = seq.filter(e => e.key === key && e.player === r.player);
-      for (let i = 0; i < n; i++) { const e = have[i]; slots.push({ key, player: r.player, t: e && typeof e.t === 'number' ? e.t : null, assist: e ? e.assist : null }); }
+      for (let i = 0; i < n; i++) { const e = have[i]; slots.push({ key, player: r.player, t: e && typeof e.t === 'number' ? e.t : null, assist: e ? e.assist : null, id: e ? e.id : null, best: !!(e && e.best) }); }
     });
   });
   slots.sort((a,b) => (a.t==null?1e9:a.t) - (b.t==null?1e9:b.t) || team(a.player).localeCompare(team(b.player)) || a.player.localeCompare(b.player));
@@ -4216,13 +4295,24 @@ function renderAddMinutesEdit() {
     + slots.map((s, i) => {
       const t = team(s.player), og = s.key === 'ownGoals';
       const opts = og ? '' : `<select class="rk-sel am-ast" data-i="${i}" style="max-width:130px"><option value="">🎯 no assist</option>${assisters(t).filter(r => r.player !== s.player).map(r => `<option value="${r.player}"${r.player===s.assist?' selected':''}>🎯 ${r.player}</option>`).join('')}</select>`;
-      return `<div class="tla-card am-slot" data-key="${s.key}" data-player="${s.player.replace(/"/g,'&quot;')}">
-        <div class="tla-top"><span class="tla-team t${og ? (t==='A'?'B':'A') : t}">${og ? (t==='A'?'B':'A') : t}</span><span class="tla-who">${og?'⭕':'⚽'} ${s.player}${og?' <span style="font-size:10px;color:var(--red)">(OG)</span>':''}</span></div>
+      return `<div class="tla-card am-slot" data-key="${s.key}" data-player="${s.player.replace(/"/g,'&quot;')}" data-id="${s.id||''}" data-best="${s.best?1:0}">
+        <div class="tla-top"><span class="tla-team t${og ? (t==='A'?'B':'A') : t}">${og ? (t==='A'?'B':'A') : t}</span><span class="tla-who" style="flex:1">${og?'⭕':'⚽'} ${s.player}${og?' <span style="font-size:10px;color:var(--red)">(OG)</span>':''}</span>${g.youtube?`<button type="button" class="btn am-play" style="padding:4px 10px" onclick="amPlay(this)">▶</button>`:''}${og?'':`<button type="button" class="btn am-star" style="padding:4px 10px;margin-left:6px;${s.best?'background:var(--amber-bg)':''}" onclick="amStar(this)">${s.best?'⭐':'☆'}</button>`}</div>
         <div class="tla-ctl" style="justify-content:flex-start;gap:8px"><input class="rk-sel am-t" data-i="${i}" inputmode="decimal" placeholder="video" value="${fmt(s.t)}" oninput="amPreview(this)" style="width:84px;text-align:center;font-size:15px;font-weight:700">${opts}<span class="am-hint" style="font-size:11px;flex:1;text-align:right"></span></div>
       </div>`;
     }).join('')
     + `<div style="position:sticky;bottom:0;background:var(--bg);padding:10px 0;display:flex;gap:8px"><button class="btn" style="flex:1" onclick="goBack()">Cancel</button><button class="btn btn-primary" style="flex:1" onclick="saveAddMinutes()">Save</button></div>`;
   amRefreshHints();
+}
+function amPlay(btn) {   // opens the video at the typed time (10 s before), even before saving
+  const g = GAMES_ALL_YEARS.find(x => x.id === amGameId); if (!g || !g.youtube) return;
+  const id = ytVideoId(g.youtube); if (!id) return;
+  const vt = parseLooseClock(btn.closest('.am-slot').querySelector('.am-t').value);
+  if (vt == null) { alert('Write the video time first'); return; }
+  window.open('https://www.youtube.com/watch?v=' + id + '&t=' + Math.max(0, vt - 10) + 's', '_blank');
+}
+function amStar(btn) {
+  const el = btn.closest('.am-slot'), on = el.dataset.best !== '1';
+  el.dataset.best = on ? '1' : '0'; btn.textContent = on ? '⭐' : '☆'; btn.style.background = on ? 'var(--amber-bg)' : '';
 }
 function saveAddMinutes() {
   const g = GAMES_ALL_YEARS.find(x => x.id === amGameId); if (!g) return;
@@ -4242,7 +4332,7 @@ function saveAddMinutes() {
       t = vt - start;
     }
     const a = el.querySelector('.am-ast');
-    list.push({ key: el.dataset.key, player: el.dataset.player, t, assist: a && a.value ? a.value : null });
+    list.push({ key: el.dataset.key, player: el.dataset.player, t, assist: a && a.value ? a.value : null, id: el.dataset.id || null, best: el.dataset.best === '1' });
   }
   // an assister can't be used more times than the assists recorded for him
   const used = {};
@@ -4253,8 +4343,9 @@ function saveAddMinutes() {
   const others = (g.events||[]).filter(e => !['goals','ownGoals','assists'].includes(e.key));
   const ev = [];
   list.forEach((s, k) => {
-    const id = 'm' + Date.now().toString(36) + k;
-    ev.push({ id, t: s.t, player: s.player, key: s.key });
+    const id = s.id || ('m' + Date.now().toString(36) + k);
+    const e = { id, t: s.t, player: s.player, key: s.key }; if (s.best && s.key === 'goals') e.best = true;
+    ev.push(e);
     if (s.key === 'goals' && s.assist) ev.push({ id: id + 'a', t: s.t, player: s.assist, key: 'assists', goalId: id });
   });
   g.events = ev.concat(others);
@@ -6819,7 +6910,7 @@ function setEligibilityPct(val) {
 function exportJsonBackup() {
   const state = {
     version: 3, ALL_PLAYERS, GAMES_ALL_YEARS, GOAL_STATS, PAY_DATA, GAMES_2025,
-    TOLERANCE, K_FACTOR, ELIGIBILITY_PCT, SELECTED_YEAR, STAT_DEFS, MOTM_FORMULA, exportedAt: new Date().toISOString()
+    TOLERANCE, K_FACTOR, ELIGIBILITY_PCT, SELECTED_YEAR, STAT_DEFS, MOTM_FORMULA, BEST_GOALS, exportedAt: new Date().toISOString()
   };
   const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -6868,6 +6959,7 @@ function importJsonBackup(file) {
       ELIGIBILITY_PCT = state.ELIGIBILITY_PCT || 30;
       STAT_DEFS = Array.isArray(state.STAT_DEFS) ? state.STAT_DEFS : defaultStatDefs();
       MOTM_FORMULA = state.MOTM_FORMULA || defaultMotmFormula();
+      BEST_GOALS = (state.BEST_GOALS && typeof state.BEST_GOALS==='object') ? state.BEST_GOALS : {};
       normalizeStatConfig();
       ALL_PLAYERS.forEach(p => { if (typeof p.initialElo !== 'number') p.initialElo = p.elo; });
       if (!ALL_PLAYERS.find(p => p.name === 'Outro')) ALL_PLAYERS.push({name:'Outro', elo:400, initialElo:400});
@@ -6912,6 +7004,7 @@ function resetAppData() {
   ELIGIBILITY_PCT = 30;
   STAT_DEFS = defaultStatDefs();
   MOTM_FORMULA = defaultMotmFormula();
+  BEST_GOALS = {};
   SELECTED_YEAR = new Date().getFullYear();
   slots = Array.from({length:10}, () => ({name:null, team:null}));
   streakSelected = new Set(); duoTabSelected = new Set();
