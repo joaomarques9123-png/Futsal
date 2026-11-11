@@ -55,13 +55,13 @@ body { background: var(--bg); color: var(--text); font-family: 'Barlow', sans-se
 #tab-builder { padding: 16px 20px; }
 
 /* PAGE HEADER BAR — replaces the top nav; a single back control shown on every screen except Home */
-#page-header-bar { display:none; align-items:center; gap:10px; padding: 0 16px; background: var(--scp-green); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,80,30,0.18); padding-top: env(safe-area-inset-top, 0px); min-height: calc(48px + env(safe-area-inset-top, 0px)); }
+#page-header-bar { display:none; align-items:center; gap:10px; padding: 0 16px; background: var(--scp-green); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,80,30,0.18); padding-top: calc(env(safe-area-inset-top, 0px) + 14px); padding-bottom: 6px; min-height: calc(54px + env(safe-area-inset-top, 0px) + 14px); }
 #page-header-bar .back-btn { background: rgba(255,255,255,0.15); border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%; font-size: 18px; cursor: pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 #page-header-bar .back-btn:active { background: rgba(255,255,255,0.28); }
 #page-header-title { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 800; color: #fff; letter-spacing: 0.02em; }
 
 /* HOME */
-#home-top-bar { display:flex; align-items:center; justify-content:space-between; padding: calc(16px + env(safe-area-inset-top,0px)) 20px 6px; }
+#home-top-bar { display:flex; align-items:center; justify-content:space-between; padding: calc(34px + env(safe-area-inset-top,0px)) 20px 6px; }
 #home-top-bar .home-title { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 900; }
 #home-top-bar .home-title span { color: var(--scp-gold); }
 .home-zone-title { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 18px 20px 8px; }
@@ -751,6 +751,8 @@ select.st-in { width: auto; }
 .tla-ctl button { border:1px solid var(--border2); background:var(--surface); border-radius:7px; font-size:12px; font-weight:700; padding:5px 8px; color:var(--muted); cursor:pointer; margin:0 1px; }
 .tla-ctl button.mi { color:var(--red); } .tla-ctl button.pl { color:var(--scp-green); }
 .tla-time { font-family:'Barlow Condensed',sans-serif; font-size:17px; }
+/* modals stay clear of the iPhone status bar */
+#app-modal, #gd-modal { max-height: calc(100vh - env(safe-area-inset-top,0px) - 60px) !important; top: calc(50% + env(safe-area-inset-top,0px)/2 + 10px) !important; }
 </style>
 </head>
 <body>
@@ -773,11 +775,9 @@ select.st-in { width: auto; }
     <div class="home-card home-widget-compact" id="home-widget-topranking" onclick="navigateTo('stats')"></div>
     <div class="home-card home-shortcut" onclick="navigateTo('games-detail')"><span class="icon">📋</span><span class="label">Games</span></div>
     <div class="home-card home-widget-compact" id="home-widget-goals"></div>
-    <div class="home-card home-shortcut" onclick="navigateTo('goal-analysis')"><span class="icon">⏱</span><span class="label">Goals &amp; Minutes</span></div>
+    <div class="home-card home-shortcut" onclick="navigateTo('builder')"><span class="icon">⚽</span><span class="label">Team Builder</span></div>
     <div class="home-card home-shortcut" onclick="navigateTo('records')"><span class="icon">📊</span><span class="label">Records</span></div>
     <div class="home-card home-widget-compact" id="home-widget-form" onclick="navigateTo('live')"></div>
-    <div class="home-card home-shortcut" onclick="navigateTo('builder')"><span class="icon">⚽</span><span class="label">Team Builder</span></div>
-    <div class="home-card home-widget-compact" id="home-widget-paynext"></div>
     <div id="home-widget-lastgame" style="display:none"></div>
     <div class="home-card home-shortcut" onclick="navigateTo('player-stats')"><span class="icon">👤</span><span class="label">Player Stats</span></div>
     <div class="home-card home-shortcut" onclick="navigateTo('players-manage')"><span class="icon">👥</span><span class="label">Players</span></div>
@@ -798,6 +798,7 @@ select.st-in { width: auto; }
     <div class="home-card home-shortcut" onclick="navigateTo('compare')"><span class="icon">🗓️</span><span class="label">Year Comparison</span></div>
     <div class="home-card home-shortcut" onclick="navigateTo('combinations')"><span class="icon">🧩</span><span class="label">Team Combinations</span></div>
     <div class="home-card home-shortcut" onclick="navigateTo('motm-history')"><span class="icon">🏅</span><span class="label">MOTM History</span></div>
+    <div class="home-card home-widget-compact" id="home-widget-paynext"></div>
   </div>
 </div>
 
@@ -830,11 +831,12 @@ select.st-in { width: auto; }
     <div class="home-card home-shortcut" onclick="navigateTo('goalstats')"><span class="icon">📊</span><span class="label">Stats</span></div>
     <div class="home-card home-shortcut" onclick="navigateTo('goals-list')"><span class="icon">🎬</span><span class="label">Goals list</span></div>
     <div class="home-card home-shortcut" onclick="navigateTo('best-goals')"><span class="icon">🏆</span><span class="label">Best goals</span></div>
+    <div class="home-card home-shortcut" onclick="navigateTo('goal-analysis')"><span class="icon">⏱</span><span class="label">Goals &amp; Minutes</span></div>
   </div>
 </div>
 <div id="tab-best-goals" class="page"><div id="bg-body"></div></div>
 <div id="tab-goals-list" class="page">
-  <div class="rk-bar" style="margin-bottom:10px"><select id="gl-player" class="rk-sel rk-grow" onchange="renderGoalsList()"></select></div>
+  <div class="rk-bar" style="margin-bottom:10px;gap:6px"><select id="gl-player" class="rk-sel rk-grow" onchange="renderGoalsList()"></select><select id="gl-month" class="rk-sel" onchange="renderGoalsList()"></select></div>
   <div id="gl-body"></div>
 </div>
 
@@ -1372,6 +1374,7 @@ select.st-in { width: auto; }
   <div class="card st-list" style="margin-top:12px">
     <div class="st-row st-link" onclick="exportJsonBackup()"><span>⬇ Export backup</span><span class="st-v">›</span></div>
     <div class="st-row st-link" onclick="exportShareData()"><span>📤 Export for sharing (data.json)</span><span class="st-v">›</span></div>
+    <div class="st-row st-link" onclick="exportBrotherData()"><span>📤 Export brother data (data.json)</span><span class="st-v">›</span></div>
     <div class="st-row st-link" onclick="document.getElementById('json-import-input').click()"><span>⬆ Import backup</span><span class="st-v">›</span></div>
     <div class="st-row st-link" onclick="document.getElementById('file-input').click()"><span>📂 Import Excel</span><span class="st-v">›</span></div>
     <div class="st-row st-link" onclick="resetAppData()" style="color:var(--red)"><span>🗑 Reset app data</span><span class="st-v">›</span></div>
@@ -4112,7 +4115,7 @@ function playerGoalItems(name) {
 function goalItemsHtml(items) {
   if (!items.length) return '<div class="di-sub" style="margin:8px 0">No goals this season</div>';
   return items.map(it => {
-    const head = `<span class="nm" style="font-weight:500">#${it.g.id.slice(-3)} · ${it.g.date}${it.assist?` <span class="s">🎯 ${it.assist}</span>`:''}${it.score?` <span class="s">· ${it.score}</span>`:''}</span>`;
+    const head = `<span class="nm" style="font-weight:500">${it.player?`<b>${it.player}</b> · `:''}#${it.g.id.slice(-3)} · ${it.g.date}${it.assist?` <span class="s">🎯 ${it.assist}</span>`:''}${it.score?` <span class="s">· ${it.score}</span>`:''}</span>`;
     if (it.count) return `<div class="di-row" style="cursor:pointer;opacity:.7" onclick="openGameDetail('${it.g.id}')">${head.replace('</span>', ` <span class="s">· no minute</span></span>`)}<span class="v">⚽${it.count>1?'×'+it.count:''}</span></div>`;
     const yt = it.g.youtube && it.t != null;
     return `<div class="di-row" style="cursor:pointer" onclick="${yt ? `openYouTubeAt('${it.g.id}',${it.t})` : `openGameDetail('${it.g.id}')`}">${head}<span class="v">${it.t!=null?fmtMinute(it.t):'–'}</span><span style="width:24px;text-align:center;color:${yt?'var(--scp-green)':'var(--dim)'};font-size:14px">${yt?'▶':''}</span></div>`;
@@ -4197,15 +4200,47 @@ function renderBestGoals() {
   if (past) html += card('🏆 Goals of the Year', past);
   el.innerHTML = html;
 }
+function glMonth(g) { return String(g.date).split(' ')[1] || '?'; }
+function allGoalItems() {   // every goal of every player, newest game first, by minute inside each game
+  const items = [];
+  GAMES.slice().sort((a,b) => (parseInt(b.id,10)||0) - (parseInt(a.id,10)||0)).forEach(g => {
+    const seq = (gameGoalSequence(g) || []).filter(e => e.key === 'goals');
+    seq.slice().sort((a,b) => (typeof a.t==='number'?a.t:1e9) - (typeof b.t==='number'?b.t:1e9)).forEach(e => items.push({ g, player: e.player, t: typeof e.t === 'number' ? e.t : null, assist: e.assist, score: e.A+'–'+e.B }));
+    GOAL_STATS.filter(r => r.gameId === g.id && (r.goals||0) > 0).forEach(r => {
+      const miss = (r.goals||0) - seq.filter(e => e.player === r.player).length;
+      if (miss > 0) items.push({ g, player: r.player, count: miss });
+    });
+  });
+  return items;
+}
+function glGrouped(items) {   // month headings with goal totals
+  const out = []; let cur = null, buf = [];
+  const flush = () => { if (cur) { const n = buf.reduce((s,it) => s + (it.count||1), 0); out.push(`<div style="display:flex;justify-content:space-between;font-weight:800;font-family:'Barlow Condensed',sans-serif;font-size:16px;margin:${out.length?'14px':'0'} 0 4px;padding-bottom:4px;border-bottom:2px solid var(--scp-green)"><span>${cur}</span><span style="color:var(--scp-green)">⚽ ${n}</span></div>` + goalItemsHtml(buf)); } };
+  items.forEach(it => { const m = glMonth(it.g); if (m !== cur) { flush(); cur = m; buf = []; } buf.push(it); });
+  flush();
+  return out.join('') || goalItemsHtml([]);
+}
 function renderGoalsList() {
   const sel = document.getElementById('gl-player'); if (!sel) return;
   const tot = {};
   GAMES.forEach(g => GOAL_STATS.filter(r => r.gameId === g.id && r.player && !r.player.startsWith('Outro')).forEach(r => tot[r.player] = (tot[r.player]||0) + (r.goals||0)));
   const names = Object.keys(tot).filter(n => tot[n] > 0).sort((a,b) => tot[b]-tot[a] || a.localeCompare(b));
   const prev = sel.value;
-  sel.innerHTML = names.map(n => `<option value="${n}">${n} (${tot[n]})</option>`).join('') || '<option value="">No goals yet</option>';
-  sel.value = names.includes(prev) ? prev : (names[0] || '');
+  const all = Object.values(tot).reduce((a,b) => a+b, 0);
+  sel.innerHTML = `<option value="__all">All players (${all})</option>` + names.map(n => `<option value="${n}">${n} (${tot[n]})</option>`).join('');
+  sel.value = (prev === '__all' || names.includes(prev)) ? prev : '__all';
   const name = sel.value;
+  const ms = document.getElementById('gl-month'), pm = ms.value;
+  const months = BG_MONTHS.filter(m => GAMES.some(g => glMonth(g) === m));
+  ms.innerHTML = '<option value="">All months</option>' + months.map(m => `<option value="${m}">${m}</option>`).join('');
+  ms.value = months.includes(pm) ? pm : '';
+  const mf = ms.value;
+  if (true) {
+    let items = name === '__all' ? allGoalItems() : playerGoalItems(name);
+    if (mf) items = items.filter(it => glMonth(it.g) === mf);
+    document.getElementById('gl-body').innerHTML = `<div class="di-card">${glGrouped(items)}<div class="di-sub" style="margin-top:6px">▶ opens the video 10 s before the goal · goals without minute open the game</div></div>`;
+    return;
+  }
   document.getElementById('gl-body').innerHTML = name ? `<div class="di-card">${goalItemsHtml(playerGoalItems(name))}<div class="di-sub" style="margin-top:6px">▶ opens the video 10 s before the goal · goals without minute open the game</div></div>` : '';
 }
 
@@ -6924,6 +6959,19 @@ function exportJsonBackup() {
 }
 
 // Data for the read-only app shared with the group — no ELO, probabilities, payments or comments
+// Full data for the read-only "brother" app: everything except payments
+function exportBrotherData() {
+  const data = {
+    brother: true, version: 1, exportedAt: new Date().toISOString(),
+    ALL_PLAYERS, GAMES_ALL_YEARS, GOAL_STATS, GAMES_2025,
+    TOLERANCE, K_FACTOR, ELIGIBILITY_PCT, SELECTED_YEAR, STAT_DEFS, MOTM_FORMULA, BEST_GOALS
+  };
+  const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = 'data.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 function exportShareData() {
   const games = GAMES_ALL_YEARS.map(g => ({
     id: g.id, date: g.date, month: g.month, year: g.year,
