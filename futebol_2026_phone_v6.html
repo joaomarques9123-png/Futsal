@@ -4235,12 +4235,13 @@ function glGrouped(items) {
   flush();
   return out.join('') || goalItemsHtml([]);
 }
+let GL_PRESET = null;
 function renderGoalsList() {
   const sel = document.getElementById('gl-player'); if (!sel) return;
   const tot = {};
   GAMES.forEach(g => GOAL_STATS.filter(r => r.gameId === g.id && r.player && !r.player.startsWith('Outro')).forEach(r => tot[r.player] = (tot[r.player]||0) + (r.goals||0)));
   const names = Object.keys(tot).filter(n => tot[n] > 0).sort((a,b) => tot[b]-tot[a] || a.localeCompare(b));
-  const prev = sel.value;
+  const prev = GL_PRESET || sel.value; GL_PRESET = null;
   const all = seasonGoals().length;
   sel.innerHTML = `<option value="__all">All players (${all})</option>` + names.map(n => `<option value="${n}">${n} (${tot[n]})</option>`).join('');
   sel.value = (prev === '__all' || names.includes(prev)) ? prev : '__all';
@@ -4425,50 +4426,55 @@ function gameGoalSequence(g) {
     return { ...e, side, before, A, B, assist: assist[e.id] || null };
   });
 }
+let GA_ALL = false;          // show players with < 3 goals in the % section
+let GA_SORT = 'winner';      // sort column of the decisive-goals table
+function gaOpenPlayer(name) { GL_PRESET = name; navigateTo('goals-list'); }
 function renderGoalAnalysis() {
   const grid = document.getElementById('ga-grid'), note = document.getElementById('ga-note');
   if (!grid) return;
-  const minG = minEligibleGames();
-  const seqs = GAMES.map(g => ({ g, s: gameGoalSequence(g) })).filter(x => x.s && x.s.length);
-  const timed = seqs.filter(x => x.s.some(e => typeof e.t === 'number'));
-  note.textContent = `${seqs.length} game${seqs.length===1?'':'s'} with goal order · ${timed.length} with minutes — recorded in Log Stats`;
-  const row = (rank, name, val, sub, gameId) => `<div class="di-row" data-player="${String(name).replace(/"/g,'&quot;')}"${gameId?` style="cursor:pointer" onclick="closeAppModal();openGameDetail('${gameId}')"`:''}><span style="width:22px;color:var(--dim);font-weight:700">${rank}</span><span class="nm">${name}</span><span class="s">${sub||''}</span><span class="v">${val}</span></div>`;
-  const rankList = (arr, valFn, subFn, gameFn, asc) => {
-    const s = arr.slice().sort((a,b) => asc ? valFn(a)-valFn(b) : valFn(b)-valFn(a));
-    const r = competitionRanks(s, (a,b) => valFn(a)===valFn(b));
-    return s.map((x,i) => row(rankMedal(r[i]), x.name, x.disp != null ? x.disp : valFn(x), subFn ? subFn(x) : '', gameFn ? gameFn(x) : null)).join('') || '<div class="di-sub" style="margin:6px 0">No data yet</div>';
-  };
-  const gl = (name, v) => name ? `<div style="display:flex;justify-content:space-between;gap:6px"><b style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</b><b style="font-family:'Barlow Condensed',sans-serif;font-size:17px;color:var(--scp-green)">${v}</b></div>` : '';
+  if (note) note.textContent = '';
   const real = p => p && !p.startsWith('Outro');
   const mmss = s => Math.floor(s/60)+"'"+String(Math.floor(s%60)).padStart(2,'0')+'"';
+  const esc = t => String(t).replace(/'/g,"\\'");
+  const gref = g => `J${g.id.slice(-3)} · ${g.date.split(' ').slice(0,2).join(' ')}`;
+  const play = (g, t) => g.youtube && typeof t === 'number' ? `<span style="color:var(--scp-green);margin-left:8px;cursor:pointer" onclick="event.stopPropagation();openYouTubeAt('${g.id}',${t})">▶</span>` : '';
+  const nameLink = n => real(n) ? `<b style="cursor:pointer" onclick="event.stopPropagation();gaOpenPlayer('${esc(n)}')">${n}</b>` : `<b>${n}</b>`;
+  const sec = (icon, title, desc, body) => `<div class="di-card" style="margin-bottom:12px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800">${icon} ${title}</div>
+      <div class="di-sub" style="margin:2px 0 8px">${desc}</div>${body}</div>`;
+  const line = (rank, left, val, unit, sub, g, t) => `<div class="di-row" style="align-items:center${g?';cursor:pointer':''}"${g?` onclick="openGameDetail('${g.id}')"`:''}>
+      <span style="width:24px;color:var(--dim);font-weight:700">${rank}</span>
+      <span class="nm" style="font-weight:500">${left}${sub?`<span class="s" style="display:block">${sub}</span>`:''}</span>
+      <span style="text-align:right;white-space:nowrap"><b style="font-family:'Barlow Condensed',sans-serif;font-size:17px">${val}</b> <span class="s">${unit}</span></span>${g?play(g,t):''}</div>`;
+  const top = (arr, n, fn) => arr.length ? arr.slice(0, n).map((x, k) => fn(x, rankMedal(k+1))).join('') : '<div class="di-sub">No data yet</div>';
 
-  // ⚡ Speed
-  const braces = [], hats = [], allGoals = [];
-  timed.forEach(({g,s}) => {
-    const by = {};
-    s.filter(e => e.key==='goals' && typeof e.t==='number' && real(e.player)).forEach(e => { (by[e.player]=by[e.player]||[]).push(e.t); allGoals.push({ name:e.player, t:e.t, g }); });
-    Object.entries(by).forEach(([p,ts]) => { ts.sort((a,b)=>a-b);
-      let b2 = Infinity, b3 = Infinity;
-      for (let i=1;i<ts.length;i++) b2 = Math.min(b2, ts[i]-ts[i-1]);
-      for (let i=2;i<ts.length;i++) b3 = Math.min(b3, ts[i]-ts[i-2]);
-      if (b2 < Infinity) braces.push({ name:p, v:b2, g });
-      if (b3 < Infinity) hats.push({ name:p, v:b3, g });
-    });
-  });
-  const gsub = x => '#'+x.g.id.slice(-3)+' · '+x.g.date;
-  const speed = [
-    { tabLabel:'Fastest hat-trick', previewHtml: '', body: rankList(hats.map(x=>({...x, disp:mmss(x.v)})), x=>x.v, gsub, x=>x.g.id, true) },
-    { tabLabel:'Fastest brace', previewHtml: '', body: rankList(braces.map(x=>({...x, disp:mmss(x.v)})), x=>x.v, gsub, x=>x.g.id, true) },
-    { tabLabel:'Earliest goal', previewHtml: '', body: rankList(allGoals.slice().sort((a,b)=>a.t-b.t).slice(0,15).map(x=>({...x, disp:fmtMinute(x.t)})), x=>x.t, gsub, x=>x.g.id, true) },
-    { tabLabel:'Latest goal', previewHtml: '', body: rankList(allGoals.slice().sort((a,b)=>b.t-a.t).slice(0,15).map(x=>({...x, disp:fmtMinute(x.t)})), x=>x.t, gsub, x=>x.g.id, false) },
-  ];
-  const fh = hats.slice().sort((a,b)=>a.v-b.v)[0], fb = braces.slice().sort((a,b)=>a.v-b.v)[0];
-  speed[0].previewHtml = fh ? gl(fh.name, mmss(fh.v)) : (fb ? gl(fb.name, mmss(fb.v)+' (2)') : '');
+  const seqs = GAMES.map(g => ({ g, s: gameGoalSequence(g) })).filter(x => x.s && x.s.length);
+  const timed = seqs.filter(x => x.s.some(e => typeof e.t === 'number'));
+  const allTimed = [];
+  timed.forEach(({g,s}) => s.forEach(e => { if (e.key === 'goals' && typeof e.t === 'number') allTimed.push(Object.assign({ game:g }, e)); }));
+  const seasonTotal = GOAL_STATS.filter(r => GAMES.some(g => g.id === r.gameId)).reduce((a,r) => a + (r.goals||0), 0);
+  const cov = seasonTotal ? Math.round(allTimed.length / seasonTotal * 100) : 0;
 
-  // 📊 Game state + 🎯 decisive + 🤝 partnerships + last 10'
-  const st = {}, dec = {}, pairs = {}, clutch = {};
+  // ── summary
+  let html = `<div class="di-card" style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><b>Based on ${timed.length} of ${GAMES.length} games</b><span class="s">${allTimed.length} / ${seasonTotal} goals</span></div>
+    <div style="height:8px;border-radius:4px;background:var(--border);margin:6px 0 4px;overflow:hidden"><div style="height:100%;width:${cov}%;background:var(--scp-green)"></div></div>
+    <div class="di-sub">${cov}% of the season's goals have a minute. Add more in ⏱ Add minutes — the more games, the more reliable this page is.</div></div>`;
+
+  // ── ⏱ when goals happen
+  const early = allTimed.filter(e => real(e.player)).sort((a,b) => a.t - b.t);
+  html += sec('⏱', 'When goals happen', 'Goals of the season by 15-minute blocks of the game.',
+    gmBlocksHtml(allTimed)
+    + (allTimed.length ? `<div class="di-sub" style="margin:6px 0 10px;color:var(--scp-green);font-weight:700">${gmTopBlockText(allTimed)}</div>` : '')
+    + `<div style="font-weight:700;font-size:13px;margin-top:6px">Earliest goals</div>` + top(early, 3, (e, r) => line(r, nameLink(e.player), fmtMinute(e.t), '', gref(e.game), e.game, e.t))
+    + `<div style="font-weight:700;font-size:13px;margin-top:10px">Latest goals</div>` + top(early.slice().reverse(), 3, (e, r) => line(r, nameLink(e.player), fmtMinute(e.t), '', gref(e.game), e.game, e.t))
+    + `<button type="button" class="btn" style="width:100%;margin-top:10px" onclick="navigateTo('goal-minutes')">Minutes by player →</button>`);
+
+  // ── per-player counters
+  const st = {}, dec = {}, pairs = {};
   const S = p => st[p] = st[p] || { name:p, win:0, draw:0, lose:0, tot:0 };
-  const D = p => dec[p] = dec[p] || { name:p, eq:0, ahead:0, winner:0, opener:0 };
+  const D = p => dec[p] = dec[p] || { name:p, winner:0, eq:0, ahead:0, opener:0, late:0 };
+  const comebacks = [], runs = [];
   seqs.forEach(({g,s}) => {
     const fA = s[s.length-1].A, fB = s[s.length-1].B;
     const wSide = fA>fB ? 'A' : fB>fA ? 'B' : null, lGoals = Math.min(fA,fB);
@@ -4483,65 +4489,69 @@ function renderGoalAnalysis() {
       if (e.before === 0) d.ahead++;
       if (i === 0) d.opener++;
       if (e.side === wSide && wCount === lGoals+1) d.winner++;
-      if (e.assist && real(e.assist)) { const k = e.assist+' → '+e.player; pairs[k] = (pairs[k]||0)+1; }
-      if (typeof e.t === 'number' && endT && e.t >= endT-600 && Math.abs(e.before) <= 1) { clutch[e.player] = (clutch[e.player]||0)+1; }
+      if (typeof e.t === 'number' && endT && e.t >= endT-600 && Math.abs(e.before) <= 1) d.late++;
+      if (e.assist && real(e.assist)) { const k = e.assist+'|'+e.player; pairs[k] = (pairs[k]||0)+1; }
+    });
+    if (wSide) { let worst = 0, at = ''; s.forEach(e => { const diff = wSide==='A' ? e.A-e.B : e.B-e.A; if (diff < worst) { worst = diff; at = e.A+'–'+e.B; } });
+      if (worst < 0) comebacks.push({ g, v:-worst, at, fin:fA+'–'+fB, side:wSide }); }
+    let best = { n:0 }, cur = { side:null, n:0 };
+    s.forEach(e => { if (e.side === cur.side) cur.n++; else cur = { side:e.side, n:1, from:(e.A-(e.side==='A'?1:0))+'–'+(e.B-(e.side==='B'?1:0)) }; if (cur.n > best.n) best = { ...cur, to:e.A+'–'+e.B }; });
+    if (best.n >= 3) runs.push({ g, v:best.n, side:best.side, txt:best.from+' → '+best.to });
+  });
+
+  // ── 🎯 decisive goals table
+  const cols = [['winner','Win','the goal that decided the win'],['ahead','Ahead','put the team in front (from a draw)'],['eq','Equal.','made it level (from −1)'],['opener','1st','opened the score'],['late',"Late",'in the last 10′ of a close game (±1)']];
+  const dArr = Object.values(dec).filter(d => cols.some(([k]) => d[k] > 0)).sort((a,b) => b[GA_SORT]-a[GA_SORT] || b.winner-a.winner || a.name.localeCompare(b.name));
+  const th = (k, l) => `<th onclick="GA_SORT='${k}';renderGoalAnalysis()" style="padding:6px 4px;font-size:11px;cursor:pointer;text-align:center;${GA_SORT===k?'color:var(--scp-green);border-bottom:2px solid var(--scp-green)':'color:var(--dim)'}">${l}${GA_SORT===k?' ▼':''}</th>`;
+  const table = dArr.length ? `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th style="text-align:left;padding:6px 4px;font-size:11px;color:var(--dim)">Player</th>${cols.map(([k,l]) => th(k,l)).join('')}</tr></thead><tbody>`
+    + dArr.map(d => `<tr style="border-top:1px solid var(--border)"><td style="padding:7px 4px">${nameLink(d.name)}</td>${cols.map(([k]) => `<td style="text-align:center;${k===GA_SORT?'font-weight:800;color:var(--scp-green)':''}">${d[k]||'·'}</td>`).join('')}</tr>`).join('')
+    + `</tbody></table></div>` : '<div class="di-sub">No data yet</div>';
+  html += sec('🎯', 'Decisive goals', 'Tap a column to sort. ' + cols.map(([,l,d]) => `<b>${l}</b> = ${d}`).join(' · ') + '.', table);
+
+  // ── 📊 score at the moment of the goal
+  const stArr = Object.values(st).filter(x => GA_ALL || x.tot >= 3).sort((a,b) => b.tot-a.tot || a.name.localeCompare(b.name));
+  const pc = (a, t) => Math.round(a / t * 100);
+  const bars = stArr.map(x => `<div style="margin:8px 0">
+      <div style="display:flex;justify-content:space-between;font-size:13px">${nameLink(x.name)}<span class="s">${x.tot} goals</span></div>
+      <div style="display:flex;height:14px;border-radius:4px;overflow:hidden;margin-top:3px;font-size:9px;color:#fff;font-weight:700;line-height:14px">
+        ${x.win?`<div style="width:${pc(x.win,x.tot)}%;background:var(--scp-green);text-align:center">${pc(x.win,x.tot)}%</div>`:''}
+        ${x.draw?`<div style="width:${pc(x.draw,x.tot)}%;background:#9aa39a;text-align:center">${pc(x.draw,x.tot)}%</div>`:''}
+        ${x.lose?`<div style="width:${pc(x.lose,x.tot)}%;background:var(--red);text-align:center">${pc(x.lose,x.tot)}%</div>`:''}</div></div>`).join('') || '<div class="di-sub">No data yet</div>';
+  html += sec('📊', 'Score when they score', `What the score was at the moment of each goal: <b style="color:var(--scp-green)">winning</b> · <b style="color:#7d867d">drawing</b> · <b style="color:var(--red)">losing</b>. ${GA_ALL?'All players.':'Players with 3+ goals.'}`,
+    bars + `<button type="button" class="btn" style="width:100%;margin-top:8px" onclick="GA_ALL=!GA_ALL;renderGoalAnalysis()">${GA_ALL?'Only 3+ goals':'Show all players'}</button>`);
+
+  // ── ⚡ speed
+  const braces = [], hats = [];
+  timed.forEach(({g,s}) => {
+    const by = {};
+    s.filter(e => e.key==='goals' && typeof e.t==='number' && real(e.player)).forEach(e => (by[e.player]=by[e.player]||[]).push(e.t));
+    Object.entries(by).forEach(([p,ts]) => { ts.sort((a,b)=>a-b);
+      let b2 = null, b3 = null;
+      for (let k=1;k<ts.length;k++) if (!b2 || ts[k]-ts[k-1] < b2.v) b2 = { v: ts[k]-ts[k-1], t: ts[k-1] };
+      for (let k=2;k<ts.length;k++) if (!b3 || ts[k]-ts[k-2] < b3.v) b3 = { v: ts[k]-ts[k-2], t: ts[k-2] };
+      if (b2) braces.push({ name:p, g, ...b2 });
+      if (b3) hats.push({ name:p, g, ...b3 });
     });
   });
-  const stArr = Object.values(st);
-  const stBody = (k, label) => rankList(stArr.filter(x=>x[k]>0).map(x=>({...x, disp:x[k]})), x=>x[k], x=>`${Math.round(x[k]/x.tot*100)}% of ${x.tot}`);
-  const profile = stArr.filter(x=>x.tot>=3).sort((a,b)=>b.tot-a.tot).map(x => `<div class="di-row" data-player="${x.name.replace(/"/g,'&quot;')}"><span class="nm">${x.name}</span>
-      <span class="s" style="display:flex;gap:6px"><span style="color:var(--scp-green)">▲${Math.round(x.win/x.tot*100)}%</span><span>=${Math.round(x.draw/x.tot*100)}%</span><span style="color:var(--red)">▼${Math.round(x.lose/x.tot*100)}%</span></span><span class="v">${x.tot}</span></div>`).join('') || '<div class="di-sub" style="margin:6px 0">No data yet</div>';
-  const state = [
-    { tabLabel:'Profile', previewHtml:'', body: '<div class="di-sub">▲ winning · = drawing · ▼ losing, at the moment of the goal (≥3 goals)</div>' + profile },
-    { tabLabel:'When winning', previewHtml:'', body: stBody('win') },
-    { tabLabel:'When drawing', previewHtml:'', body: stBody('draw') },
-    { tabLabel:'When losing', previewHtml:'', body: stBody('lose') },
-  ];
-  const loser = stArr.filter(x=>x.lose>0).sort((a,b)=>b.lose-a.lose)[0];
-  state[0].previewHtml = loser ? gl(loser.name, loser.lose+' ▼') : '';
-  const dArr = Object.values(dec);
-  const dBody = (k, word) => rankList(dArr.filter(x=>x[k]>0).map(x=>({...x, disp:x[k]})), x=>x[k], () => word);
-  const decisive = [
-    { tabLabel:'Winning goal', previewHtml:'', body: dBody('winner','winning goals') },
-    { tabLabel:'Equalisers', previewHtml:'', body: dBody('eq','equalisers') },
-    { tabLabel:'Go-ahead goals', previewHtml:'', body: dBody('ahead','put team ahead') },
-    { tabLabel:'Opens the score', previewHtml:'', body: dBody('opener','first goal') },
-  ];
-  const tw = dArr.filter(x=>x.winner>0).sort((a,b)=>b.winner-a.winner)[0];
-  decisive[0].previewHtml = tw ? gl(tw.name, tw.winner) : '';
+  const spd = arr => top(arr.sort((a,b) => a.v-b.v), 5, (x, r) => line(r, nameLink(x.name), mmss(x.v), '', `${gref(x.g)} · from ${fmtMinute(x.t)}`, x.g, x.t));
+  html += sec('⚡', 'Speed', 'Shortest time between a player\'s goals in the same game.',
+    `<div style="font-weight:700;font-size:13px">Fastest hat-trick (3 goals)</div>` + spd(hats)
+    + `<div style="font-weight:700;font-size:13px;margin-top:10px">Fastest brace (2 goals)</div>` + spd(braces));
 
-  // 🔄 Moments (team level)
-  const comebacks = [], runs = [];
-  seqs.forEach(({g,s}) => {
-    const fA = s[s.length-1].A, fB = s[s.length-1].B, w = fA>fB?'A':fB>fA?'B':null;
-    if (w) { let worst = 0; s.forEach(e => { const diff = w==='A' ? e.A-e.B : e.B-e.A; worst = Math.min(worst, diff); });
-      if (worst < 0) comebacks.push({ name:'#'+g.id.slice(-3)+' · Team '+w, v:-worst, g, fin:fA+'–'+fB }); }
-    let best = { n:0 }, cur = { side:null, n:0, from:null };
-    s.forEach(e => { if (e.side === cur.side) cur.n++; else cur = { side:e.side, n:1, from:(e.A-(e.side==='A'?1:0))+'–'+(e.B-(e.side==='B'?1:0)) }; if (cur.n > best.n) best = { ...cur, to:e.A+'–'+e.B }; });
-    if (best.n >= 3) runs.push({ name:'#'+g.id.slice(-3)+' · Team '+best.side, v:best.n, g, txt:best.from+' → '+best.to });
-  });
-  const moments = [
-    { tabLabel:'Comebacks', previewHtml:'', body: rankList(comebacks.map(x=>({...x, disp:'−'+x.v})), x=>x.v, x=>'won '+x.fin, x=>x.g.id) },
-    { tabLabel:'Goal runs', previewHtml:'', body: rankList(runs.map(x=>({...x, disp:x.v})), x=>x.v, x=>x.txt, x=>x.g.id) },
-    { tabLabel:"Last 10' (close game)", previewHtml:'', body: rankList(Object.entries(clutch).map(([name,v])=>({name, v})), x=>x.v, () => 'goals') },
-  ];
-  const cb = comebacks.slice().sort((a,b)=>b.v-a.v)[0];
-  moments[0].previewHtml = cb ? gl(cb.name, '−'+cb.v) : '';
+  // ── 🔄 games (team level)
+  html += sec('🔄', 'Games', 'Team moments — tap to open the game.',
+    `<div style="font-weight:700;font-size:13px">Comebacks</div>`
+    + top(comebacks.sort((a,b) => b.v-a.v), 5, (x, r) => line(r, `Team ${x.side}`, x.v, x.v===1?'goal down':'goals down', `${gref(x.g)} · was ${x.at} → won ${x.fin}`, x.g))
+    + `<div style="font-weight:700;font-size:13px;margin-top:10px">Goal runs (3+ in a row)</div>`
+    + top(runs.sort((a,b) => b.v-a.v), 5, (x, r) => line(r, `Team ${x.side}`, x.v, 'in a row', `${gref(x.g)} · ${x.txt}`, x.g)));
 
-  const pArr = Object.entries(pairs).map(([name,v]) => ({ name, v }));
-  const partners = [{ tabLabel:'Assist → goal', previewHtml:'', body: rankList(pArr, x=>x.v, () => 'goals') }];
-  const tp = pArr.slice().sort((a,b)=>b.v-a.v)[0];
-  partners[0].previewHtml = tp ? gl(tp.name, tp.v) : '';
+  // ── 🤝 partnerships
+  const pArr = Object.entries(pairs).map(([k,v]) => { const [a,b] = k.split('|'); return { a, b, v }; }).sort((x,y) => y.v-x.v);
+  html += sec('🤝', 'Partnerships', 'Who assists whom: assist → goal.',
+    top(pArr, 10, (x, r) => line(r, `${nameLink(x.a)} <span class="s">→</span> ${nameLink(x.b)}`, x.v, x.v===1?'goal':'goals')));
 
-  const minutesTile = `<div class="home-card home-widget-compact" onclick="navigateTo('goal-minutes')">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px"><span style="font-size:15px">⏱</span><span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--dim)">Minutes</span></div>
-      <div style="font-size:12px;color:var(--muted)">Goals by 15-minute blocks</div></div>`;
-  grid.innerHTML = minutesTile
-    + categoryTile('⚡', 'Speed', speed)
-    + categoryTile('📊', 'Game state', state)
-    + categoryTile('🎯', 'Decisive goals', decisive)
-    + categoryTile('🔄', 'Moments', moments)
-    + categoryTile('🤝', 'Partnerships', partners);
+  grid.className = ''; grid.style.display = 'block';
+  grid.innerHTML = html;
 }
 
 // ══════════════════════════════════════════
