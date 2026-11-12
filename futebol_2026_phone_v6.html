@@ -836,7 +836,10 @@ select.st-in { width: auto; }
 </div>
 <div id="tab-best-goals" class="page"><div id="bg-body"></div></div>
 <div id="tab-goals-list" class="page">
-  <div class="rk-bar" style="margin-bottom:10px;gap:6px"><select id="gl-player" class="rk-sel rk-grow" onchange="renderGoalsList()"></select><select id="gl-month" class="rk-sel" onchange="renderGoalsList()"></select></div>
+  <div id="gl-bar" style="position:sticky;top:0;z-index:20;background:var(--bg);padding:8px 0 8px;margin:-8px 0 4px">
+    <div class="rk-bar" style="gap:6px;margin:0"><select id="gl-player" class="rk-sel rk-grow" onchange="renderGoalsList()"></select><select id="gl-month" class="rk-sel" onchange="renderGoalsList()"></select></div>
+    <div id="gl-views" style="display:flex;gap:6px;margin-top:6px"></div>
+  </div>
   <div id="gl-body"></div>
 </div>
 
@@ -4099,31 +4102,50 @@ function renderDuoInsights() {
 // GOALS LIST — every goal of a player (selected year), with a link to the moment on YouTube
 // Goals from games without recorded order/minutes are shown grouped, without a link.
 // ══════════════════════════════════════════
-function playerGoalItems(name) {
-  const items = [];
-  GAMES.slice().sort((a,b) => (parseInt(b.id,10)||0) - (parseInt(a.id,10)||0)).forEach(g => {
-    const row = GOAL_STATS.find(r => r.gameId === g.id && r.player === name);
-    const total = row ? (row.goals||0) : 0;
-    const seq = gameGoalSequence(g) || [];
-    const mine = seq.filter(e => e.key === 'goals' && e.player === name);
-    mine.slice().sort((a,b) => (typeof a.t==='number'?a.t:1e9) - (typeof b.t==='number'?b.t:1e9)).forEach(e => items.push({ g, t: typeof e.t === 'number' ? e.t : null, assist: e.assist, score: e.A+'–'+e.B }));
-    const missing = total - mine.length;
-    if (missing > 0) items.push({ g, count: missing });
+// Every goal of the season with a fixed number: oldest game first, by minute inside the game
+// (goals without minute go last in their game). Numbers never change with filters.
+function seasonGoals() {
+  const out = [];
+  GAMES.slice().sort((a,b) => (parseInt(a.id,10)||0) - (parseInt(b.id,10)||0)).forEach(g => {
+    const seq = (gameGoalSequence(g) || []).filter(e => e.key === 'goals');
+    const timed = seq.filter(e => typeof e.t === 'number').sort((a,b) => a.t - b.t);
+    const untimed = seq.filter(e => typeof e.t !== 'number');
+    timed.concat(untimed).forEach(e => out.push({ g, player: e.player, t: typeof e.t === 'number' ? e.t : null, eid: e.id, best: !!e.best }));
+    GOAL_STATS.filter(r => r.gameId === g.id && (r.goals||0) > 0).forEach(r => {
+      const miss = (r.goals||0) - seq.filter(e => e.player === r.player).length;
+      for (let k = 0; k < miss; k++) out.push({ g, player: r.player, t: null, eid: null });
+    });
   });
-  return items;
+  out.forEach((it, k) => it.n = k + 1);
+  return out;
+}
+function allGoalItems() { return seasonGoals().reverse(); }
+function playerGoalItems(name) { return seasonGoals().filter(it => it.player === name).reverse(); }
+function glStar(btn, gid, eid) {
+  if (typeof BROTHER_MODE !== 'undefined' && BROTHER_MODE) return;
+  const g = GAMES_ALL_YEARS.find(x => x.id === gid); const e = g && (g.events||[]).find(x => x.id === eid); if (!e) return;
+  if (e.best) delete e.best; else e.best = true;
+  btn.textContent = e.best ? '⭐' : '☆';
+  saveState();
 }
 function goalItemsHtml(items) {
   if (!items.length) return '<div class="di-sub" style="margin:8px 0">No goals this season</div>';
+  const ro = typeof BROTHER_MODE !== 'undefined' && BROTHER_MODE;
   return items.map(it => {
-    const head = `<span class="nm" style="font-weight:500">${it.player?`<b>${it.player}</b> · `:''}#${it.g.id.slice(-3)} · ${it.g.date}${it.assist?` <span class="s">🎯 ${it.assist}</span>`:''}${it.score?` <span class="s">· ${it.score}</span>`:''}</span>`;
-    if (it.count) return `<div class="di-row" style="cursor:pointer;opacity:.7" onclick="openGameDetail('${it.g.id}')">${head.replace('</span>', ` <span class="s">· no minute</span></span>`)}<span class="v">⚽${it.count>1?'×'+it.count:''}</span></div>`;
-    const yt = it.g.youtube && it.t != null;
-    return `<div class="di-row" style="cursor:pointer" onclick="${yt ? `openYouTubeAt('${it.g.id}',${it.t})` : `openGameDetail('${it.g.id}')`}">${head}<span class="v">${it.t!=null?fmtMinute(it.t):'–'}</span><span style="width:24px;text-align:center;color:${yt?'var(--scp-green)':'var(--dim)'};font-size:14px">${yt?'▶':''}</span></div>`;
+    const has = !!it.eid, yt = has && it.g.youtube && it.t != null;
+    const star = !has ? '<span style="width:30px"></span>'
+      : ro ? `<span style="width:30px;text-align:center">${it.best?'⭐':''}</span>`
+      : `<button type="button" onclick="event.stopPropagation();glStar(this,'${it.g.id}','${it.eid}')" style="width:30px;border:none;background:none;font-size:16px;cursor:pointer;padding:0">${it.best?'⭐':'☆'}</button>`;
+    return `<div class="di-row" style="cursor:pointer;align-items:center;${has?'':'opacity:.55'}" onclick="${yt ? `openYouTubeAt('${it.g.id}',${it.t})` : `openGameDetail('${it.g.id}')`}">
+      <span style="min-width:38px;font-weight:800;color:var(--scp-green);font-family:'Barlow Condensed',sans-serif;font-size:15px">#${it.n}</span>
+      <span class="nm" style="font-weight:500"><span class="s">J${it.g.id.slice(-3)} · ${it.g.date.split(' ').slice(0,2).join(' ')} ·</span> <b>${it.player}</b></span>
+      <span class="v" style="min-width:30px;text-align:right">${it.t!=null?fmtMinute(it.t):'–'}</span>${star}
+      <span style="width:22px;text-align:center;color:${yt?'var(--scp-green)':'var(--dim)'};font-size:14px">${yt?'▶':''}</span></div>`;
   }).join('');
 }
 function buildSeasonGoalsHtml(name) {
   const items = playerGoalItems(name);
-  const n = items.reduce((s,it) => s + (it.count || 1), 0);
+  const n = items.length;
   return `<button type="button" class="ps-games-toggle" onclick="const b=this.nextElementSibling;const o=b.style.display==='none';b.style.display=o?'':'none';this.querySelector('.arr').textContent=o?'▲':'▼'"><span>⚽ Goals of the season (${n})</span><span class="arr">▼</span></button>
     <div style="display:none;padding:4px 2px 0">${goalItemsHtml(items)}<div class="di-sub" style="margin-top:6px">▶ opens the video 10 s before the goal</div></div>`;
 }
@@ -4201,22 +4223,15 @@ function renderBestGoals() {
   el.innerHTML = html;
 }
 function glMonth(g) { return String(g.date).split(' ')[1] || '?'; }
-function allGoalItems() {   // every goal of every player, newest game first, by minute inside each game
-  const items = [];
-  GAMES.slice().sort((a,b) => (parseInt(b.id,10)||0) - (parseInt(a.id,10)||0)).forEach(g => {
-    const seq = (gameGoalSequence(g) || []).filter(e => e.key === 'goals');
-    seq.slice().sort((a,b) => (typeof a.t==='number'?a.t:1e9) - (typeof b.t==='number'?b.t:1e9)).forEach(e => items.push({ g, player: e.player, t: typeof e.t === 'number' ? e.t : null, assist: e.assist, score: e.A+'–'+e.B }));
-    GOAL_STATS.filter(r => r.gameId === g.id && (r.goals||0) > 0).forEach(r => {
-      const miss = (r.goals||0) - seq.filter(e => e.player === r.player).length;
-      if (miss > 0) items.push({ g, player: r.player, count: miss });
-    });
-  });
-  return items;
-}
-function glGrouped(items) {   // month headings with goal totals
+let GL_VIEW = (() => { try { return localStorage.getItem('f26_gl_view') || 'month'; } catch (e) { return 'month'; } })();
+function glSetView(v) { GL_VIEW = v; try { localStorage.setItem('f26_gl_view', v); } catch (e) {} renderGoalsList(); }
+function glGrouped(items) {
+  if (GL_VIEW === 'list') return goalItemsHtml(items);
+  const keyOf = it => GL_VIEW === 'game' ? it.g.id : glMonth(it.g);
+  const label = it => GL_VIEW === 'game' ? `J${it.g.id.slice(-3)} · ${it.g.date}` : glMonth(it.g);
   const out = []; let cur = null, buf = [];
-  const flush = () => { if (cur) { const n = buf.reduce((s,it) => s + (it.count||1), 0); out.push(`<div style="display:flex;justify-content:space-between;font-weight:800;font-family:'Barlow Condensed',sans-serif;font-size:16px;margin:${out.length?'14px':'0'} 0 4px;padding-bottom:4px;border-bottom:2px solid var(--scp-green)"><span>${cur}</span><span style="color:var(--scp-green)">⚽ ${n}</span></div>` + goalItemsHtml(buf)); } };
-  items.forEach(it => { const m = glMonth(it.g); if (m !== cur) { flush(); cur = m; buf = []; } buf.push(it); });
+  const flush = () => { if (cur !== null) out.push(`<div style="display:flex;justify-content:space-between;align-items:center;font-weight:800;font-family:'Barlow Condensed',sans-serif;font-size:16px;margin:${out.length?'14px':'0'} 0 4px;padding-bottom:4px;border-bottom:2px solid var(--scp-green)"${GL_VIEW==='game'?` onclick="openGameDetail('${buf[0].g.id}')" style="cursor:pointer"`:''}><span>${label(buf[0])}</span><span style="color:var(--scp-green)">⚽ ${buf.length}</span></div>` + goalItemsHtml(buf)); };
+  items.forEach(it => { const k = keyOf(it); if (k !== cur) { flush(); cur = k; buf = []; } buf.push(it); });
   flush();
   return out.join('') || goalItemsHtml([]);
 }
@@ -4226,7 +4241,7 @@ function renderGoalsList() {
   GAMES.forEach(g => GOAL_STATS.filter(r => r.gameId === g.id && r.player && !r.player.startsWith('Outro')).forEach(r => tot[r.player] = (tot[r.player]||0) + (r.goals||0)));
   const names = Object.keys(tot).filter(n => tot[n] > 0).sort((a,b) => tot[b]-tot[a] || a.localeCompare(b));
   const prev = sel.value;
-  const all = Object.values(tot).reduce((a,b) => a+b, 0);
+  const all = seasonGoals().length;
   sel.innerHTML = `<option value="__all">All players (${all})</option>` + names.map(n => `<option value="${n}">${n} (${tot[n]})</option>`).join('');
   sel.value = (prev === '__all' || names.includes(prev)) ? prev : '__all';
   const name = sel.value;
@@ -4235,10 +4250,13 @@ function renderGoalsList() {
   ms.innerHTML = '<option value="">All months</option>' + months.map(m => `<option value="${m}">${m}</option>`).join('');
   ms.value = months.includes(pm) ? pm : '';
   const mf = ms.value;
+  const hb = document.getElementById('page-header-bar'), gb = document.getElementById('gl-bar');
+  if (hb && gb) gb.style.top = (hb.offsetHeight || 0) + 'px';
+  document.getElementById('gl-views').innerHTML = [['list','Lista'],['month','Por mês'],['game','Por jogo']].map(([k,l]) => `<button type="button" class="btn${GL_VIEW===k?' btn-primary':''}" style="flex:1;padding:6px" onclick="glSetView('${k}')">${l}</button>`).join('');
   if (true) {
     let items = name === '__all' ? allGoalItems() : playerGoalItems(name);
     if (mf) items = items.filter(it => glMonth(it.g) === mf);
-    document.getElementById('gl-body').innerHTML = `<div class="di-card">${glGrouped(items)}<div class="di-sub" style="margin-top:6px">▶ opens the video 10 s before the goal · goals without minute open the game</div></div>`;
+    document.getElementById('gl-body').innerHTML = `<div class="di-card">${glGrouped(items)}<div class="di-sub" style="margin-top:6px">☆ best goal · ▶ video 10 s before · grey = no minute yet (opens the game)</div></div>`;
     return;
   }
   document.getElementById('gl-body').innerHTML = name ? `<div class="di-card">${goalItemsHtml(playerGoalItems(name))}<div class="di-sub" style="margin-top:6px">▶ opens the video 10 s before the goal · goals without minute open the game</div></div>` : '';
