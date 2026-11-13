@@ -1377,6 +1377,7 @@ select.st-in { width: auto; }
   <div class="card st-list" style="margin-top:12px">
     <div class="st-row st-link" onclick="exportJsonBackup()"><span>⬇ Export backup</span><span class="st-v">›</span></div>
     <div class="st-row st-link" onclick="exportShareData()"><span>📤 Export for sharing (data.json)</span><span class="st-v">›</span></div>
+    <div class="st-row st-link" onclick="exportGroupData()"><span>📤 Export group data (data_grupo.json)</span><span class="st-v">›</span></div>
     <div class="st-row st-link" onclick="exportBrotherData()"><span>📤 Export brother data (data.json)</span><span class="st-v">›</span></div>
     <div class="st-row st-link" onclick="document.getElementById('json-import-input').click()"><span>⬆ Import backup</span><span class="st-v">›</span></div>
     <div class="st-row st-link" onclick="document.getElementById('file-input').click()"><span>📂 Import Excel</span><span class="st-v">›</span></div>
@@ -6988,6 +6989,28 @@ function exportJsonBackup() {
 
 // Data for the read-only app shared with the group — no ELO, probabilities, payments or comments
 // Full data for the read-only "brother" app: everything except payments
+// Data for the group app: no payments, no ELO numbers, no MOTM formula, no best goals
+function exportGroupData() {
+  const strip = arr => JSON.parse(JSON.stringify(arr)).map(g => {
+    delete g.eloAdjust;
+    ['teamAelo','teamBelo'].forEach(k => { if (Array.isArray(g[k])) g[k] = g[k].map(e => ({ name: e.name, elo: 0, adj: 0 })); });
+    (g.events || []).forEach(e => delete e.best);
+    Object.keys(g).forEach(k => { if (/elo/i.test(k) && !Array.isArray(g[k])) delete g[k]; });
+    return g;
+  });
+  const games = strip(GAMES_ALL_YEARS);
+  const players = ALL_PLAYERS.map(p => Object.assign({}, p, { elo: 400, initialElo: 400 }));
+  const data = {
+    group: true, version: 1, exportedAt: new Date().toISOString(),
+    ALL_PLAYERS: players, GAMES_ALL_YEARS: games, GOAL_STATS, GAMES_2025: strip(GAMES_2025),
+    TOLERANCE, K_FACTOR, ELIGIBILITY_PCT, SELECTED_YEAR, STAT_DEFS
+  };
+  const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = 'data_grupo.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 function exportBrotherData() {
   const data = {
     brother: true, version: 1, exportedAt: new Date().toISOString(),
