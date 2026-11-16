@@ -2072,7 +2072,16 @@ function switchCategoryTab(id, idx) {
 // ══════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════
-let slots = Array.from({length:10}, () => ({name:null, team:null}));
+// Team Builder line-up is remembered on this phone (separate from the stats data)
+const SLOTS_KEY = 'futebol2026_builder_slots';
+let slots = (() => {
+  try {
+    const v = JSON.parse(localStorage.getItem(SLOTS_KEY));
+    if (Array.isArray(v) && v.length === 10) return v.map(x => ({ name: x && x.name || null, team: x && (x.team === 'A' || x.team === 'B') ? x.team : null }));
+  } catch (e) {}
+  return Array.from({length:10}, () => ({name:null, team:null}));
+})();
+function saveSlots() { try { localStorage.setItem(SLOTS_KEY, JSON.stringify(slots)); } catch (e) {} }
 
 // ══════════════════════════════════════════
 // NAVIGATION — widget-driven Home, no top tab bar. Every screen but Home shows a
@@ -2231,7 +2240,8 @@ function addFromRoster(name) {
     const outroCount = usedNames().filter(n => n.startsWith('Outro')).length;
     name = outroCount === 0 ? 'Outro' : 'Outro' + (outroCount + 1);
   } else if (usedNames().includes(name)) return;
-  const emptyIdx = slots.findIndex(s => !s.name);
+  let emptyIdx = slots.findIndex(s => !s.name && s.team);   // first fill a spot left by someone who dropped out
+  if (emptyIdx === -1) emptyIdx = slots.findIndex(s => !s.name);
   if (emptyIdx === -1) return;
   slots[emptyIdx].name = name;
   render();
@@ -2290,7 +2300,7 @@ function renderSlots() {
 
     const nameHtml = s.name
       ? `<span class="slot-name">${s.name}</span><span class="slot-elo-lbl">${Math.round(getElo(s.name))}</span>`
-      : `<span class="slot-name empty">empty</span>`;
+      : `<span class="slot-name empty">${s.team ? 'empty · Team '+s.team : 'empty'}</span>`;
 
     const teamColor = s.team==='A' ? 'border-color:rgba(0,102,51,0.5);background:rgba(0,102,51,0.09);border-left:3px solid var(--scp-green)'
                     : s.team==='B' ? 'border-color:rgba(200,168,75,0.5);background:rgba(200,168,75,0.10);border-left:3px solid var(--scp-gold)'
@@ -2314,7 +2324,7 @@ function setTeam(idx, team) {
 }
 
 function clearSlot(idx) {
-  slots[idx] = {name:null, team:null};
+  slots[idx] = {name:null, team:slots[idx].team};
   render();
 }
 
@@ -2946,6 +2956,7 @@ function renderDuoTable() {
 // MAIN RENDER
 // ══════════════════════════════════════════
 function render() {
+  saveSlots();
   renderSlots();
   renderRoster();
   renderPayTracker();
