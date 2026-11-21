@@ -684,6 +684,9 @@ select.st-in { width: auto; }
 .rk-sel { padding:6px 8px; border:1px solid var(--border2); border-radius:8px; background:var(--surface2); font-family:'Barlow',sans-serif; font-size:12px; color:var(--text); min-width:0; }
 .rk-year { font-weight:800; }
 .rk-grow { flex:1; }
+.rk-eq { margin-bottom:8px; }
+.rk-eq .rk-sel { flex:1 1 0; width:0; padding:7px 2px; font-weight:700; font-size:11px; }
+.rk-sq { flex:0 0 36px; height:32px; padding:0; font-size:16px; text-align:center; }
 .rk-btn { padding:6px 9px; border:1px solid var(--border2); border-radius:8px; background:var(--surface); font-family:'Barlow',sans-serif; font-size:12px; font-weight:700; color:var(--muted); cursor:pointer; white-space:nowrap; }
 .rk-btn.active { background:var(--scp-green); border-color:var(--scp-green); color:#fff; }
 
@@ -858,7 +861,7 @@ select.st-in { width: auto; }
   <div id="gm-overall"></div>
   <div class="rk-bar" style="margin:14px 0 8px">
     <select id="gm-player" class="rk-sel rk-grow" onchange="renderGoalMinutes()"></select>
-    <button class="rk-btn" id="gm-elig-btn" onclick="gmEligible=!gmEligible;renderGoalMinutes()">🎟️</button>
+    <button class="rk-btn" id="gm-elig-btn" onclick="gmEligible=!gmEligible;renderGoalMinutes()">👑</button>
   </div>
   <div id="gm-player-content"></div>
 </div>
@@ -873,7 +876,7 @@ select.st-in { width: auto; }
       <div style="font-size:13px;color:var(--muted)">Pick a player, see their Man of the Match points game by game</div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-      <button class="duo-min-btn" id="motm-30pct-btn" onclick="toggleMotmHistory30pct(this)">🎟️</button>
+      <button class="duo-min-btn" id="motm-30pct-btn" onclick="toggleMotmHistory30pct(this)">👑</button>
       <select id="motm-player-select" onchange="renderMotmHistory()" style="padding:7px 10px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);font-family:'Barlow',sans-serif;font-size:13px;color:var(--text);min-width:160px"></select>
     </div>
   </div>
@@ -1067,20 +1070,22 @@ select.st-in { width: auto; }
      TAB 3 — STATISTICS
 ════════════════════════════════ -->
 <div id="tab-stats" class="page">
-  <div class="rk-bar">
-    <select id="ranking-year-filter" class="rk-sel rk-year" onchange="setRankingYear(this.value)"></select>
-    <button class="rk-btn" onclick="stepRankingGame(-1)" title="Previous game">◀</button>
-    <select id="ranking-game-filter" class="rk-sel rk-grow" onchange="setRankingGame(this.value)"></select>
-    <button class="rk-btn" onclick="stepRankingGame(1)" title="Next game">▶</button>
-  </div>
-  <div class="rk-bar" style="margin-bottom:10px">
-    <select id="ranking-month-filter" class="rk-sel rk-grow" onchange="rankingMonthFilter=parseInt(this.value)||'all';rankingGameFilter='all';renderStats()">
-      <option value="all">All months</option>
+  <div class="rk-bar rk-eq">
+    <select id="ranking-year-filter" class="rk-sel" onchange="setRankingYear(this.value)"></select>
+    <select id="ranking-month-filter" class="rk-sel" onchange="rankingMonthFilter=parseInt(this.value)||'all';rankingGameFilter='all';renderStats()">
+      <option value="all">Months</option>
     </select>
-    <button class="rk-btn" id="ranking-eligible-btn" onclick="toggleRankingEligible(this)" title="Only players with the minimum % of games">🎟️</button>
-    <button class="rk-btn" onclick="openChampionsHistory()">🏆 Champions</button>
+    <select id="ranking-game-filter" class="rk-sel" onchange="setRankingGame(this.value)"></select>
+    <button class="rk-btn rk-sq" id="ranking-eligible-btn" onclick="toggleRankingEligible(this)" title="Only players who count for champion">👑</button>
+    <button class="rk-btn rk-sq" onclick="openChampionsHistory()" title="Champions">🏆</button>
   </div>
-  <div class="card" style="padding:18px">
+  <div style="display:flex;align-items:center;gap:8px;margin:2px 2px 10px">
+    <span style="font-size:10px;color:var(--dim);font-weight:700">J1</span>
+    <input type="range" id="rk-slider" min="1" max="1" value="1" step="1" style="flex:1;accent-color:var(--scp-green)" oninput="rkSlide(this.value)">
+    <span id="rk-slider-max" style="font-size:10px;color:var(--dim);font-weight:700">J1</span>
+  </div>
+  <div class="card" id="rk-swipe" style="padding:18px;position:relative;touch-action:pan-y">
+    <div id="rk-toast" style="position:absolute;top:8px;left:50%;transform:translateX(-50%);background:var(--scp-green);color:#fff;font-weight:800;font-family:'Barlow Condensed',sans-serif;font-size:16px;padding:4px 14px;border-radius:14px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:5;white-space:nowrap"></div>
     <div class="table-wrap">
       <table class="data-table">
         <thead><tr>
@@ -1178,7 +1183,7 @@ select.st-in { width: auto; }
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px">
     <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800">Goal Stats</div>
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-      <button class="duo-min-btn" id="goalstats-eligible-btn" onclick="toggleGoalStatsEligible(this)">🎟️</button>
+      <button class="duo-min-btn" id="goalstats-eligible-btn" onclick="toggleGoalStatsEligible(this)">👑</button>
       <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)">
         <span>Up to month:</span>
         <select id="goalstats-month-filter" onchange="goalStatsMonthFilter=parseInt(this.value)||'all';renderGoalStats()" style="padding:5px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);font-family:'Barlow',sans-serif;font-size:12px;color:var(--text)">
@@ -1210,7 +1215,7 @@ select.st-in { width: auto; }
     <div style="border-right:1px solid var(--border);padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--surface)">
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Player</div>
       <select id="ps-main-select" onchange="showPlayerStats(this.value,null)" style="width:100%;padding:7px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);font-family:'Barlow',sans-serif;font-size:13px;color:var(--text)"><option value="">— select player —</option></select>
-      <button class="duo-min-btn" id="ps-30pct-btn" onclick="togglePlayerStats30pct(this)" style="width:100%;text-align:center;margin-top:4px">🎟️</button>
+      <button class="duo-min-btn" id="ps-30pct-btn" onclick="togglePlayerStats30pct(this)" style="width:100%;text-align:center;margin-top:4px">👑</button>
       <div id="player-stats-chips" style="display:none"></div>
     </div>
     <!-- RIGHT: content -->
@@ -1232,7 +1237,7 @@ select.st-in { width: auto; }
           <option value="all">All</option>
         </select>
       </div>
-      <button class="duo-min-btn" id="records-eligible-btn" onclick="toggleRecordsEligible(this)">🎟️</button>
+      <button class="duo-min-btn" id="records-eligible-btn" onclick="toggleRecordsEligible(this)">👑</button>
     </div>
   </div>
   <div id="records-grid" class="home-grid" style="align-items:start;padding:0">
@@ -1296,7 +1301,7 @@ select.st-in { width: auto; }
       <div style="font-size:13px;color:var(--muted)">How a player's ELO moved, game by game</div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-      <button class="duo-min-btn" id="eh-30pct-btn" onclick="toggleEloHistory30pct(this)">🎟️</button>
+      <button class="duo-min-btn" id="eh-30pct-btn" onclick="toggleEloHistory30pct(this)">👑</button>
       <select id="eh-player-select" onchange="renderEloHistory()" style="padding:7px 10px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);font-family:'Barlow',sans-serif;font-size:13px;color:var(--text);min-width:160px"></select>
     </div>
   </div>
@@ -1365,8 +1370,8 @@ select.st-in { width: auto; }
   <div class="card st-list">
     <div class="st-row"><span>📅 Season</span><select id="settings-year" class="st-in" onchange="setSelectedYear(this.value)"></select></div>
     <div class="st-row"><span>⚖️ ELO K-factor</span><input type="number" id="settings-kfactor" min="1" max="100" class="st-in" onchange="setKFactor(this.value)"></div>
-    <div class="st-row"><span>🎟️ Eligibility rule</span><select id="settings-elig-mode" class="st-in" style="width:auto" onchange="setEligibilityMode(this.value)"><option value="games">% of all games</option><option value="top">% of top attendee</option></select></div>
-    <div class="st-row"><span id="settings-elig-lbl">🎟️ Eligibility %</span><input type="number" id="settings-eligibility" min="1" max="100" class="st-in" onchange="setEligibilityPct(this.value)"></div>
+    <div class="st-row"><span>👑 Eligibility rule</span><select id="settings-elig-mode" class="st-in" style="width:auto" onchange="setEligibilityMode(this.value)"><option value="games">% of all games</option><option value="top">% of top attendee</option></select></div>
+    <div class="st-row"><span id="settings-elig-lbl">👑 Eligibility %</span><input type="number" id="settings-eligibility" min="1" max="100" class="st-in" onchange="setEligibilityPct(this.value)"></div>
     <div class="st-row st-link" onclick="openStatsConfigModal()"><span>📋 Stats to collect</span><span class="st-v" id="settings-stats-sum">›</span></div>
     <div class="st-row st-link" onclick="openMotmFormulaModal()"><span>🏅 MOTM formula</span><span class="st-v">›</span></div>
   </div>
@@ -1793,7 +1798,7 @@ function motmFormulaText() {
   return parts.join(' + ') || '—';
 }
 
-// Minimum games to be eligible (champion, rankings, 🎟️ filters) for a given set of games
+// Minimum games to be eligible (champion, rankings, 👑 filters) for a given set of games
 function minGamesFor(games) {
   if (ELIGIBILITY_MODE === 'top') {
     const c = {};
@@ -2017,7 +2022,7 @@ function openWidgetModal(id) {
     <button onclick="closeAppModal()" style="background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:28px;height:28px;font-size:18px;cursor:pointer;color:#fff;line-height:1">×</button>
   </div>
   <div style="padding:12px 20px 0;display:flex;justify-content:flex-end">
-    <button class="duo-min-btn" id="widget-modal-eligible-btn" onclick="toggleWidgetModalEligible(this)">🎟️</button>
+    <button class="duo-min-btn" id="widget-modal-eligible-btn" onclick="toggleWidgetModalEligible(this)">👑</button>
   </div>
   <div style="padding:8px 20px 18px" id="widget-modal-body">${w.body}</div>`;
   openAppModal(html);
@@ -2062,7 +2067,7 @@ function openCategoryModal(id) {
   </div>
   <div style="display:flex;flex-wrap:wrap;gap:6px;padding:12px 20px 0">${tabs}</div>
   <div style="padding:12px 20px 0;display:flex;justify-content:flex-end">
-    <button class="duo-min-btn" id="widget-modal-eligible-btn" onclick="toggleWidgetModalEligible(this)">🎟️</button>
+    <button class="duo-min-btn" id="widget-modal-eligible-btn" onclick="toggleWidgetModalEligible(this)">👑</button>
   </div>
   <div style="padding:8px 20px 18px" id="widget-modal-body">${bodies}</div>`;
   openAppModal(html);
@@ -2151,6 +2156,7 @@ function showPage(id) {
   if (id === 'settings') renderSettingsTab();
   if (id === 'home') renderHomeWidgets();
   if (id === 'log-stats-pick') renderLogStatsPick();
+  if (id === 'stats') { gamesFilter = 1; renderStats(); }
   if (id === 'goals-list') renderGoalsList();
   if (id === 'best-goals') renderBestGoals();
   if (id === 'add-minutes') renderAddMinutesList();
@@ -3056,13 +3062,13 @@ function openChampionsHistory() {
       <button onclick="closeAppModal()" style="background:rgba(0,0,0,0.15);border:none;border-radius:50%;width:28px;height:28px;font-size:18px;cursor:pointer;color:#3a2f0c;line-height:1">×</button>
     </div>
     <div style="padding:2px 18px 12px">${blocks || '<div style="padding:16px 0;color:var(--dim)">No seasons yet.</div>'}</div>
-    <div style="padding:0 18px 16px;font-size:10px;color:var(--dim)">Best Adj% among 🎟️ eligible players</div>`);
+    <div style="padding:0 18px 16px;font-size:10px;color:var(--dim)">Best Adj% among 👑 eligible players</div>`);
 }
 
 function renderStats() {
   const tbody = document.getElementById('stats-tbody');
   const elBtn = document.getElementById('ranking-eligible-btn');
-  if (elBtn) { elBtn.textContent = '🎟️'; elBtn.classList.toggle('active', gamesFilter > 0); }
+  if (elBtn) { elBtn.textContent = '👑'; elBtn.classList.toggle('active', gamesFilter > 0); }
   const minPct = gamesFilter > 0;   // true = eligible players only
 
   // Year shown here is independent of the global Season setting (defaults to it)
@@ -3080,7 +3086,7 @@ function renderStats() {
     const mNames = {1:'January',2:'February',3:'March',4:'April',5:'May',6:'June',7:'July',8:'August',9:'September',10:'October',11:'November',12:'December'};
     const months = [...new Set(yearGames.map(g=>g.month))].sort((a,b)=>a-b);
     if (rankingMonthFilter !== 'all' && !months.includes(rankingMonthFilter)) rankingMonthFilter = 'all';
-    msel.innerHTML = '<option value="all">All months</option>' + months.map(m => `<option value="${m}">Up to ${mNames[m]}</option>`).join('');
+    msel.innerHTML = '<option value="all">Months</option>' + months.map(m => `<option value="${m}">→ ${mNames[m]}</option>`).join('');
     msel.value = String(rankingMonthFilter);
   }
 
@@ -3089,9 +3095,15 @@ function renderStats() {
   if (rankingGameFilter !== 'all' && (rankingGameFilter < 1 || rankingGameFilter > chrono.length)) rankingGameFilter = 'all';
   const gsel = document.getElementById('ranking-game-filter');
   if (gsel) {
-    gsel.innerHTML = '<option value="all">Latest game</option>' + chrono.map((g,i) => `<option value="${i+1}">After game ${i+1} · ${g.date}</option>`).join('');
+    gsel.innerHTML = '<option value="all">Latest</option>' + chrono.map((g,i) => `<option value="${i+1}">J${i+1} · ${parseInt(g.date)} ${g.date.split(' ')[1]||''}</option>`).join('');
     gsel.value = String(rankingGameFilter);
   }
+  const sl = document.getElementById('rk-slider');
+  if (sl) {
+    sl.max = Math.max(1, chrono.length); sl.value = rankingGameFilter === 'all' ? chrono.length : rankingGameFilter;
+    const mx = document.getElementById('rk-slider-max'); if (mx) mx.textContent = 'J' + chrono.length;
+  }
+  window._rkChrono = chrono;
   let filteredGames;
   if (rankingGameFilter !== 'all') {
     filteredGames = chrono.slice(0, rankingGameFilter);
@@ -3167,12 +3179,53 @@ function setRankingGame(val) {
 }
 function stepRankingGame(dir) {
   const n = GAMES_ALL_YEARS.filter(g => g.year === rankingYearShown()).length;
-  if (!n) return;
-  let cur = rankingGameFilter === 'all' ? n : rankingGameFilter;
-  cur = Math.min(n, Math.max(1, cur + dir));
+  if (!n) return false;
+  const before = rankingGameFilter === 'all' ? n : rankingGameFilter;
+  const cur = Math.min(n, Math.max(1, before + dir));
+  if (cur === before) return false;
   rankingGameFilter = (cur === n) ? 'all' : cur;
   renderStats();
+  rkToast(cur);
+  return true;
 }
+function rkSlide(v) {
+  const n = (window._rkChrono || []).length, k = parseInt(v, 10);
+  rankingGameFilter = (k >= n) ? 'all' : k;
+  renderStats();
+  rkToast(k);
+}
+function rkToast(k) {
+  const t = document.getElementById('rk-toast'), g = (window._rkChrono || [])[k-1];
+  if (!t || !g) return;
+  t.textContent = 'J' + k + ' · ' + g.date.split(' ').slice(0,2).join(' ') + (k === window._rkChrono.length ? ' · latest' : '');
+  t.style.opacity = '1';
+  clearTimeout(window._rkToastT); window._rkToastT = setTimeout(() => { t.style.opacity = '0'; }, 700);
+}
+// Swipe the table sideways: left → next jornada, right → previous. Vertical scroll is untouched.
+(function rkSwipeInit() {
+  const el = document.getElementById('rk-swipe'); if (!el) return;
+  let x0 = 0, y0 = 0, dx = 0, mode = null;
+  const body = () => el.querySelector('.table-wrap');
+  el.addEventListener('touchstart', e => { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; dx = 0; mode = null; }, { passive: true });
+  el.addEventListener('touchmove', e => {
+    const t = e.touches[0]; const ddx = t.clientX - x0, ddy = t.clientY - y0;
+    if (!mode) { if (Math.abs(ddx) > 12 && Math.abs(ddx) > Math.abs(ddy) * 1.5) mode = 'h'; else if (Math.abs(ddy) > 12) mode = 'v'; }
+    if (mode !== 'h') return;
+    e.preventDefault(); dx = ddx;
+    const b = body(); if (b) { b.style.transition = 'none'; b.style.transform = `translateX(${dx * 0.6}px)`; b.style.opacity = String(1 - Math.min(0.5, Math.abs(dx) / 400)); }
+  }, { passive: false });
+  el.addEventListener('touchend', () => {
+    const b = body();
+    if (mode === 'h' && Math.abs(dx) > 60) {
+      const dir = dx < 0 ? 1 : -1;
+      const moved = stepRankingGame(dir);
+      const nb = body();
+      if (nb && moved) { nb.style.transition = 'none'; nb.style.transform = `translateX(${dir * 60}px)`; nb.style.opacity = '0.4'; requestAnimationFrame(() => requestAnimationFrame(() => { nb.style.transition = 'transform .2s ease, opacity .2s ease'; nb.style.transform = 'translateX(0)'; nb.style.opacity = '1'; })); return; }
+    }
+    if (b) { b.style.transition = 'transform .2s ease, opacity .2s ease'; b.style.transform = 'translateX(0)'; b.style.opacity = '1'; }
+    mode = null;
+  });
+})();
 
 // ══════════════════════════════════════════
 // STATISTICS / ANALYSIS TAB
@@ -3300,7 +3353,7 @@ function renderRecords() {
   const grid = document.getElementById('records-grid');
   if (!grid || !GAMES.length) return;
   const recBtn = document.getElementById('records-eligible-btn');
-  if (recBtn) recBtn.textContent = '🎟️';
+  if (recBtn) recBtn.textContent = '👑';
 
   // ── Month filter: build a filtered view of games/stats, and local player stats from it ──
   const fGAMES = (recordsMonthFilter === 'all') ? GAMES : GAMES.filter(g => g.month <= recordsMonthFilter);
@@ -3972,7 +4025,7 @@ function renderWinRate() {
   const grid = document.getElementById('winrate-grid');
   if (!grid || !GAMES.length) return;
   const wrbtn = document.getElementById('winrate-20pct-btn');
-  if (wrbtn) wrbtn.textContent = '🎟️';
+  if (wrbtn) wrbtn.textContent = '👑';
 
   const monthShort = {1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'May',6:'Jun',7:'Jul',8:'Aug',9:'Sep',10:'Oct',11:'Nov',12:'Dec'};
   const months = [...new Set(GAMES.map(g=>g.month))].sort((a,b)=>a-b);
@@ -4613,7 +4666,7 @@ function renderGoalMinutes() {
     ${all.length?`<div class="di-sub" style="margin-top:6px;color:var(--scp-green);font-weight:700">${gmTopBlockText(all)}</div>`:''}</div>`;
 
   const btn = document.getElementById('gm-elig-btn');
-  if (btn) { btn.textContent = '🎟️'; btn.classList.toggle('active', gmEligible); }
+  if (btn) { btn.textContent = '👑'; btn.classList.toggle('active', gmEligible); }
   const minG = gmEligible ? minEligibleGames() : 0;
   const scorers = [...new Set(all.map(e => e.player))].filter(p => (PLAYER_STATS.find(s=>s.name===p)?.games||0) >= minG).sort();
   const prev = sel.value;
@@ -4829,7 +4882,7 @@ function streakClearAll() {
 
 function renderStreakGrid() {
   const btn = document.getElementById('streak-20pct-btn');
-  if (btn) btn.textContent = '🎟️';
+  if (btn) btn.textContent = '👑';
   const statsById = Object.fromEntries(PLAYER_STATS.map(p => [p.name, p]));
   let players = PLAYER_STATS.filter(p => streakSelected.has(p.name)).map(p=>p.name);
   if (streak20pctFilter) {
@@ -5085,7 +5138,7 @@ function renderGoalStats() {
   const grid = document.getElementById('goalstats-grid');
   if (!grid) return;
   const gsBtn = document.getElementById('goalstats-eligible-btn');
-  if (gsBtn) gsBtn.textContent = '🎟️';
+  if (gsBtn) gsBtn.textContent = '👑';
   if (!GOAL_STATS.length) {
     grid.innerHTML = '<div class="card" style="padding:18px;color:var(--dim);font-style:italic">Upload your Excel file to see goal statistics.</div>';
     return;
@@ -6415,7 +6468,7 @@ function renderEloHistory() {
   const content = document.getElementById('eh-content');
   if (!sel || !content) return;
   const btn = document.getElementById('eh-30pct-btn');
-  if (btn) btn.textContent = '🎟️';
+  if (btn) btn.textContent = '👑';
   const minGames = eloHistory30pct ? minEligibleGames() : 0;
   const names = ALL_PLAYERS.filter(p => p.name !== 'Outro' && (PLAYER_STATS.find(ps=>ps.name===p.name)?.games||0) >= minGames).sort((a,b) => a.name.localeCompare(b.name)).map(p => p.name);
   const prev = sel.value;
@@ -6671,7 +6724,7 @@ function renderMotmHistory() {
   const content = document.getElementById('motm-history-content');
   if (!sel || !content) return;
   const btn = document.getElementById('motm-30pct-btn');
-  if (btn) btn.textContent = '🎟️';
+  if (btn) btn.textContent = '👑';
   const minGames = motmHistory30pct ? minEligibleGames() : 0;
   const names = ALL_PLAYERS.filter(p => p.name !== 'Outro' && (PLAYER_STATS.find(ps=>ps.name===p.name)?.games||0) >= minGames).sort((a,b) => a.name.localeCompare(b.name)).map(p => p.name);
   const prev = sel.value;
@@ -6853,7 +6906,7 @@ function renderSettingsTab() {
   const el2 = document.getElementById('settings-eligibility');
   if (el2) el2.value = ELIGIBILITY_MODE === 'top' ? ELIGIBILITY_TOP_PCT : ELIGIBILITY_PCT;
   const em = document.getElementById('settings-elig-mode'); if (em) em.value = ELIGIBILITY_MODE;
-  const el3 = document.getElementById('settings-elig-lbl'); if (el3) el3.textContent = '🎟️ Eligibility % ' + (ELIGIBILITY_MODE === 'top' ? '(min ' + minEligibleGames() + ' games)' : '(min ' + minEligibleGames() + ' games)');
+  const el3 = document.getElementById('settings-elig-lbl'); if (el3) el3.textContent = '👑 Eligibility % ' + (ELIGIBILITY_MODE === 'top' ? '(min ' + minEligibleGames() + ' games)' : '(min ' + minEligibleGames() + ' games)');
 
   const yearSel = document.getElementById('settings-year');
   if (yearSel) {
@@ -7527,7 +7580,7 @@ function renderPlayerStats() {
   const chipsEl = document.getElementById('player-stats-chips');
   if (chipsEl) chipsEl.innerHTML = ''; // keep hidden, not used
   const psBtn = document.getElementById('ps-30pct-btn');
-  if (psBtn) psBtn.textContent = '🎟️';
+  if (psBtn) psBtn.textContent = '👑';
   const minGames = playerStats30pct ? minEligibleGames() : 0;
   const players = PLAYER_STATS.filter(p=>p.games>=Math.max(1,minGames)).sort((a,b)=>a.name.localeCompare(b.name));
   // Populate main dropdown
@@ -7587,7 +7640,7 @@ function buildPastSeasonsHtml(name) {
   }).join('');
   return `<button type="button" class="ps-games-toggle" aria-expanded="false" onclick="const b=this.nextElementSibling;const o=b.style.display==='none';b.style.display=o?'':'none';this.setAttribute('aria-expanded',o);this.querySelector('.arr').textContent=o?'▲':'▼'"><span>📜 Previous seasons</span><span class="arr">▼</span></button>
     <div style="display:none;padding:4px 2px 0">
-      <div style="font-size:10px;color:var(--dim);margin:6px 0 2px">Final position by Adj% among 🎟️ eligible players</div>
+      <div style="font-size:10px;color:var(--dim);margin:6px 0 2px">Final position by Adj% among 👑 eligible players</div>
       ${rows}
     </div>`;
 }
