@@ -3119,7 +3119,21 @@ function renderStats() {
   // Previous "jornada" = same period without its last game → position change per player
   const prevGames = filteredGames.slice(0, -1);
   const prevRank = {};
-  if (prevGames.length) rankingTableFor(prevGames, minPct).forEach(p => { prevRank[p.name] = p.rank; });
+  let dropped = [];
+  if (prevGames.length) {
+    const prevList = rankingTableFor(prevGames, minPct);
+    const curNames = new Set(current.map(p => p.name));
+    // players who were in the ranking last jornada but no longer have enough games
+    if (minPct) dropped = prevList.filter(p => !curNames.has(p.name));
+    // positions compared only among players present in both jornadas (someone leaving doesn't make you "climb")
+    const byWr = statsSortKey === 'wr';
+    const kept = prevList.filter(p => curNames.has(p.name));
+    const rk = competitionRanks(kept, (a,b) => byWr ? (a.w/a.games === b.w/b.games) : (a.adj === b.adj));
+    kept.forEach((p,i) => { prevRank[p.name] = rk[i]; });
+  }
+  const allNow = {};
+  if (dropped.length) rankingTableFor(filteredGames, 0).forEach(p => { allNow[p.name] = p; });
+  const minNow = minGamesFor(filteredGames);
 
   tbody.innerHTML = current.map(p => {
     const adjPct = p.adj;
@@ -3143,6 +3157,18 @@ function renderStats() {
       <td>${p.streak ? `<span class="tag ${sc}">${p.streak}</span>` : '—'}</td>
       <td style="color:var(--scp-green);font-weight:600;text-align:center">${p.w}</td>
       <td style="color:var(--red);font-weight:600;text-align:center">${p.l}</td>
+    </tr>`;
+  }).join('') + dropped.map(d => {
+    const p = allNow[d.name] || d;
+    return `<tr style="cursor:pointer;opacity:.55" onclick="openPlayerStatsFor('${p.name.replace(/'/g,"\\'")}')">
+      <td style="text-align:center;font-weight:800;color:var(--red);font-size:10px;width:34px">OUT</td>
+      <td style="text-align:center;width:30px;color:var(--red);font-size:11px">↓</td>
+      <td class="player-name-cell">${p.name}<div style="font-size:9.5px;color:var(--dim);font-weight:500;line-height:1.2">Out vs previous jornada · not enough games (${p.games}/${minNow})</div></td>
+      <td style="text-align:center;font-size:12px">${p.games}</td>
+      <td style="font-weight:700;text-align:center">${p.adj}%</td>
+      <td>—</td>
+      <td style="text-align:center">${p.w}</td>
+      <td style="text-align:center">${p.l}</td>
     </tr>`;
   }).join('') || '<tr><td colspan="8" style="color:var(--dim);font-style:italic;padding:12px">No players match the filter.</td></tr>';
 }
