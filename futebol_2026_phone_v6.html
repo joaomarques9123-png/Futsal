@@ -3165,7 +3165,7 @@ function renderStats() {
     return `<tr style="cursor:pointer;opacity:.55" onclick="openPlayerStatsFor('${p.name.replace(/'/g,"\\'")}')">
       <td style="text-align:center;font-weight:800;color:var(--red);font-size:10px;width:34px">OUT</td>
       <td style="text-align:center;width:30px;color:var(--red);font-size:11px">↓</td>
-      <td class="player-name-cell">${p.name}<div style="font-size:9.5px;color:var(--dim);font-weight:500;line-height:1.2">Out vs previous jornada · not enough games (${p.games}/${minNow})</div></td>
+      <td class="player-name-cell">${p.name}<div style="font-size:9.5px;color:var(--dim);font-weight:500;line-height:1.2">Not enough games (${p.games}/${minNow})</div></td>
       <td style="text-align:center;font-size:12px">${p.games}</td>
       <td style="font-weight:700;text-align:center">${p.adj}%</td>
       <td>—</td>
