@@ -1353,10 +1353,17 @@ select.st-in { width: auto; }
     </div>
     <button class="btn btn-primary" onclick="openAddPlayerModal()">+ Add player</button>
   </div>
+  <div class="rk-bar rk-eq" style="margin-bottom:10px">
+    <select id="pm-sort" class="rk-sel" onchange="PM_SORT=this.value;renderPlayersManage()">
+      <option value="elo-desc">ELO ↓</option><option value="elo-asc">ELO ↑</option><option value="games">Games ↓</option><option value="name">Name A–Z</option>
+    </select>
+    <button class="rk-btn rk-sq" id="pm-elig-btn" onclick="PM_ELIG=!PM_ELIG;renderPlayersManage()" title="Only players who count for champion">👑</button>
+  </div>
   <div class="card" style="padding:0;overflow:hidden">
     <table class="data-table" style="width:100%;border-collapse:collapse;table-layout:fixed">
       <thead><tr>
         <th style="text-align:left;padding:8px;font-size:11px">Name</th>
+        <th style="text-align:center;padding:8px 4px;font-size:11px;width:40px">G</th>
         <th style="text-align:center;padding:8px 4px;font-size:11px;width:52px">Init.</th>
         <th style="text-align:center;padding:8px 4px;font-size:11px;width:52px">Curr.</th>
         <th style="text-align:right;padding:8px 4px;font-size:11px;width:64px">Actions</th>
@@ -1375,6 +1382,8 @@ select.st-in { width: auto; }
   <div class="card st-list">
     <div class="st-row"><span>📅 Season</span><select id="settings-year" class="st-in" onchange="setSelectedYear(this.value)"></select></div>
     <div class="st-row"><span>⚖️ ELO K-factor</span><input type="number" id="settings-kfactor" min="1" max="100" class="st-in" onchange="setKFactor(this.value)"></div>
+    <div class="st-row"><span>★ Star players</span><select id="settings-star-mode" class="st-in" style="width:auto" onchange="setStarMode(this.value)"><option value="auto">Auto</option><option value="manual">Manual</option></select></div>
+    <div class="st-row"><span id="settings-star-lbl">★ Star if ELO above</span><input type="number" id="settings-star-elo" min="0" max="2000" step="10" class="st-in" onchange="setStarElo(this.value)"></div>
     <div class="st-row"><span>👑 Eligibility rule</span><select id="settings-elig-mode" class="st-in" style="width:auto" onchange="setEligibilityMode(this.value)"><option value="games">% of all games</option><option value="top">% of top attendee</option></select></div>
     <div class="st-row"><span id="settings-elig-lbl">👑 Eligibility %</span><input type="number" id="settings-eligibility" min="1" max="100" class="st-in" onchange="setEligibilityPct(this.value)"></div>
     <div class="st-row st-link" onclick="openStatsConfigModal()"><span>📋 Stats to collect</span><span class="st-v" id="settings-stats-sum">›</span></div>
@@ -1757,6 +1766,8 @@ const STORAGE_KEY = 'futebol2026_v2_full';
 let K_FACTOR = 20;
 let ELIGIBILITY_MODE = 'games'; // 'games' = % of all games · 'top' = % of the games of the player with most games
 let ELIGIBILITY_TOP_PCT = 50;
+let STAR_MODE = 'auto';   // 'auto' = average ELO of the 👑 eligible players · 'manual' = STAR_ELO
+let STAR_ELO = 400;
 let ELIGIBILITY_PCT = 30; // % of total games a player needs to count as "eligible" (can win the tournament)
 
 // ══════════════════════════════════════════
@@ -1822,7 +1833,7 @@ function saveState() {
     const state = {
       version: 3,
       ALL_PLAYERS, GAMES_ALL_YEARS, GOAL_STATS, PAY_DATA, GAMES_2025,
-      TOLERANCE, K_FACTOR, ELIGIBILITY_PCT, ELIGIBILITY_MODE, ELIGIBILITY_TOP_PCT, SELECTED_YEAR, STAT_DEFS, MOTM_FORMULA, BEST_GOALS,
+      TOLERANCE, K_FACTOR, ELIGIBILITY_PCT, ELIGIBILITY_MODE, ELIGIBILITY_TOP_PCT, STAR_MODE, STAR_ELO, SELECTED_YEAR, STAT_DEFS, MOTM_FORMULA, BEST_GOALS,
       savedAt: Date.now()
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -1841,7 +1852,7 @@ function loadState() {
     GAMES_2025.length = 0; (state.GAMES_2025||[]).forEach(g => GAMES_2025.push(g));
     TOLERANCE = (typeof state.TOLERANCE === 'number') ? state.TOLERANCE : null;
     K_FACTOR = state.K_FACTOR || 20;
-    ELIGIBILITY_PCT = state.ELIGIBILITY_PCT || 30; ELIGIBILITY_MODE = state.ELIGIBILITY_MODE === 'top' ? 'top' : 'games'; ELIGIBILITY_TOP_PCT = state.ELIGIBILITY_TOP_PCT || 50;
+    ELIGIBILITY_PCT = state.ELIGIBILITY_PCT || 30; ELIGIBILITY_MODE = state.ELIGIBILITY_MODE === 'top' ? 'top' : 'games'; ELIGIBILITY_TOP_PCT = state.ELIGIBILITY_TOP_PCT || 50; STAR_MODE = state.STAR_MODE === 'manual' ? 'manual' : 'auto'; STAR_ELO = state.STAR_ELO || 400;
     STAT_DEFS = Array.isArray(state.STAT_DEFS) ? state.STAT_DEFS : defaultStatDefs();
     MOTM_FORMULA = state.MOTM_FORMULA || defaultMotmFormula();
     BEST_GOALS = (state.BEST_GOALS && typeof state.BEST_GOALS==='object') ? state.BEST_GOALS : {};
@@ -2218,6 +2229,15 @@ function getElo(name) {
   const p = ALL_PLAYERS.find(x => x.name === lookupName);
   return p ? p.elo : 400;
 }
+// ★ star players (Team Builder): ELO above this value
+function starAutoElo() {
+  const min = minGamesFor(GAMES), c = {};
+  GAMES.forEach(g => [...(g.teamA||[]), ...(g.teamB||[])].forEach(p => { if (p && !p.startsWith('Outro')) c[p] = (c[p]||0) + 1; }));
+  const elos = Object.keys(c).filter(n => c[n] >= min).map(n => (ALL_PLAYERS.find(x => x.name === n) || {}).elo).filter(v => typeof v === 'number');
+  return elos.length ? Math.round(elos.reduce((a,b) => a+b, 0) / elos.length) : 400;
+}
+function starThreshold() { return STAR_MODE === 'manual' ? STAR_ELO : starAutoElo(); }
+function isStar(name) { return getElo(name) > starThreshold(); }
 function usedNames() { return slots.map(s=>s.name).filter(Boolean); }
 function teamPlayers(t) { return slots.filter(s=>s.name && s.team===t).map(s=>s.name); }
 
@@ -2246,7 +2266,7 @@ function renderRoster() {
     const isPicked = picked.includes(p.name);
     const games = PLAYER_STATS.find(ps=>ps.name===p.name)?.games ?? 0;
     return `<div class="roster-item ${isPicked ? 'picked' : ''}" onclick="addFromRoster('${p.name.replace(/'/g,"\\'")}')">
-      <span>${p.elo > 400 ? '<span style="color:var(--scp-gold);font-size:11px;margin-right:2px">★</span>' : ''}${p.name}</span>
+      <span>${p.elo > starThreshold() ? '<span style="color:var(--scp-gold);font-size:11px;margin-right:2px">★</span>' : ''}${p.name}</span>
       <span class="roster-item-elo">${Math.round(p.elo)} <span style="color:var(--dim);font-size:10px">${games}g</span></span>
     </div>`;
   }).join('');
@@ -2419,8 +2439,8 @@ function balancedSplit() {
 
   // ── Helper: ELO>400 balance check (max diff 1) ──
   function elo400ok(teamA, teamB) {
-    const a = teamA.filter(n=>getElo(n)>400).length;
-    const b = teamB.filter(n=>getElo(n)>400).length;
+    const a = teamA.filter(isStar).length;
+    const b = teamB.filter(isStar).length;
     return Math.abs(a-b) <= 1;
   }
 
@@ -2501,7 +2521,7 @@ function payBadge(name) {
 
 function playerPip(n, cssClass) {
   const elo = Math.round(getElo(n));
-  const star = elo > 400 ? '<span style="color:var(--scp-gold);font-size:11px;margin-right:2px">★</span>' : '';
+  const star = getElo(n) > starThreshold() ? '<span style="color:var(--scp-gold);font-size:11px;margin-right:2px">★</span>' : '';
   return `<div class="team-pip ${cssClass}">${star}<span>${n}</span><span class="team-pip-elo">${elo}</span></div>`;
 }
 
@@ -6289,14 +6309,23 @@ function lsSaveStats() {
 // ══════════════════════════════════════════
 // PLAYERS MANAGEMENT TAB
 // ══════════════════════════════════════════
+let PM_SORT = 'elo-desc', PM_ELIG = false;
 function renderPlayersManage() {
   const tbody = document.getElementById('players-manage-tbody');
   if (!tbody) return;
-  const rows = [...ALL_PLAYERS].sort((a,b) => b.elo - a.elo).map(p => {
+  const gc = {};
+  GAMES.forEach(g => [...(g.teamA||[]), ...(g.teamB||[])].forEach(n => { if (n) gc[n] = (gc[n]||0) + 1; }));
+  const minG = minGamesFor(GAMES);
+  const eb = document.getElementById('pm-elig-btn'); if (eb) eb.className = 'rk-btn rk-sq' + (PM_ELIG ? ' active' : '');
+  const ss = document.getElementById('pm-sort'); if (ss) ss.value = PM_SORT;
+  const cmp = { 'elo-desc': (a,b) => b.elo - a.elo, 'elo-asc': (a,b) => a.elo - b.elo, 'games': (a,b) => (gc[b.name]||0) - (gc[a.name]||0) || b.elo - a.elo, 'name': (a,b) => a.name.localeCompare(b.name) }[PM_SORT];
+  const list = ALL_PLAYERS.filter(p => !PM_ELIG || ((gc[p.name]||0) >= minG && p.name !== 'Outro'));
+  const rows = list.sort(cmp).map(p => {
     const initElo = (typeof p.initialElo === 'number') ? p.initialElo : p.elo;
     const nEsc = p.name.replace(/'/g,"\\'");
     return `<tr style="border-bottom:1px solid var(--border)">
-      <td style="padding:6px 8px;font-weight:600;font-size:12px;cursor:pointer;color:var(--scp-green)" onclick="openPlayerCard('${nEsc}')">${p.name}</td>
+      <td style="padding:6px 8px;font-weight:600;font-size:12px;cursor:pointer;color:var(--scp-green)" onclick="openPlayerCard('${nEsc}')">${isStar(p.name) && p.name !== 'Outro' ? '<span style="color:var(--scp-gold);font-size:11px;margin-right:3px">★</span>' : ''}${p.name}</td>
+      <td style="padding:6px 4px;text-align:center;font-size:12px;color:var(--muted)">${gc[p.name]||0}</td>
       <td style="padding:6px 4px;text-align:center;font-size:12px;color:var(--muted)">${Math.round(initElo)}</td>
       <td style="padding:6px 4px;text-align:center;font-size:12px">${Math.round(p.elo)}</td>
       <td style="padding:6px 4px;text-align:right;white-space:nowrap">
@@ -6305,7 +6334,7 @@ function renderPlayersManage() {
       </td>
     </tr>`;
   }).join('');
-  tbody.innerHTML = rows || '<tr><td colspan="4" style="padding:20px;text-align:center;color:var(--dim);font-style:italic">No players yet — add one above.</td></tr>';
+  tbody.innerHTML = rows || '<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--dim);font-style:italic">No players.</td></tr>';
 }
 
 function openPlayerCard(name) {
@@ -6934,6 +6963,9 @@ function renderSettingsTab() {
   const el2 = document.getElementById('settings-eligibility');
   if (el2) el2.value = ELIGIBILITY_MODE === 'top' ? ELIGIBILITY_TOP_PCT : ELIGIBILITY_PCT;
   const em = document.getElementById('settings-elig-mode'); if (em) em.value = ELIGIBILITY_MODE;
+  const sm = document.getElementById('settings-star-mode'); if (sm) sm.value = STAR_MODE;
+  const se = document.getElementById('settings-star-elo'); if (se) { se.value = starThreshold(); se.disabled = STAR_MODE !== 'manual'; }
+  const sl = document.getElementById('settings-star-lbl'); if (sl) sl.textContent = STAR_MODE === 'manual' ? '★ Star if ELO above' : '★ Star if ELO above (avg 👑)';
   const el3 = document.getElementById('settings-elig-lbl'); if (el3) el3.textContent = '👑 Eligibility % ' + (ELIGIBILITY_MODE === 'top' ? '(min ' + minEligibleGames() + ' games)' : '(min ' + minEligibleGames() + ' games)');
 
   const yearSel = document.getElementById('settings-year');
@@ -7065,6 +7097,15 @@ function setKFactor(val) {
   saveState();
 }
 
+function setStarMode(v) {
+  if (v === 'manual' && STAR_MODE !== 'manual') STAR_ELO = starAutoElo();   // start from the current average
+  STAR_MODE = v === 'manual' ? 'manual' : 'auto';
+  saveState(); refreshAll();
+}
+function setStarElo(v) {
+  const n = parseInt(v, 10); if (isNaN(n)) return;
+  STAR_ELO = n; saveState(); refreshAll();
+}
 function setEligibilityMode(v) {
   ELIGIBILITY_MODE = v === 'top' ? 'top' : 'games';
   refreshAll();
@@ -7081,7 +7122,7 @@ function setEligibilityPct(val) {
 function exportJsonBackup() {
   const state = {
     version: 3, ALL_PLAYERS, GAMES_ALL_YEARS, GOAL_STATS, PAY_DATA, GAMES_2025,
-    TOLERANCE, K_FACTOR, ELIGIBILITY_PCT, ELIGIBILITY_MODE, ELIGIBILITY_TOP_PCT, SELECTED_YEAR, STAT_DEFS, MOTM_FORMULA, BEST_GOALS, exportedAt: new Date().toISOString()
+    TOLERANCE, K_FACTOR, ELIGIBILITY_PCT, ELIGIBILITY_MODE, ELIGIBILITY_TOP_PCT, STAR_MODE, STAR_ELO, SELECTED_YEAR, STAT_DEFS, MOTM_FORMULA, BEST_GOALS, exportedAt: new Date().toISOString()
   };
   const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -7110,7 +7151,7 @@ function exportGroupData() {
   const data = {
     group: true, version: 1, exportedAt: new Date().toISOString(),
     ALL_PLAYERS: players, GAMES_ALL_YEARS: games, GOAL_STATS, GAMES_2025: strip(GAMES_2025),
-    TOLERANCE, K_FACTOR, ELIGIBILITY_PCT, ELIGIBILITY_MODE, ELIGIBILITY_TOP_PCT, SELECTED_YEAR, STAT_DEFS
+    TOLERANCE, K_FACTOR, ELIGIBILITY_PCT, ELIGIBILITY_MODE, ELIGIBILITY_TOP_PCT, STAR_MODE, STAR_ELO, SELECTED_YEAR, STAT_DEFS
   };
   const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
   const url = URL.createObjectURL(blob), a = document.createElement('a');
@@ -7122,7 +7163,7 @@ function exportBrotherData() {
   const data = {
     brother: true, version: 1, exportedAt: new Date().toISOString(),
     ALL_PLAYERS, GAMES_ALL_YEARS, GOAL_STATS, GAMES_2025,
-    TOLERANCE, K_FACTOR, ELIGIBILITY_PCT, ELIGIBILITY_MODE, ELIGIBILITY_TOP_PCT, SELECTED_YEAR, STAT_DEFS, MOTM_FORMULA, BEST_GOALS
+    TOLERANCE, K_FACTOR, ELIGIBILITY_PCT, ELIGIBILITY_MODE, ELIGIBILITY_TOP_PCT, STAR_MODE, STAR_ELO, SELECTED_YEAR, STAT_DEFS, MOTM_FORMULA, BEST_GOALS
   };
   const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
   const url = URL.createObjectURL(blob), a = document.createElement('a');
@@ -7144,7 +7185,7 @@ function importJsonBackup(file) {
       GAMES_2025.length = 0; (state.GAMES_2025||[]).forEach(g => GAMES_2025.push(g));
       TOLERANCE = (typeof state.TOLERANCE === 'number') ? state.TOLERANCE : null;
       K_FACTOR = state.K_FACTOR || 20;
-      ELIGIBILITY_PCT = state.ELIGIBILITY_PCT || 30; ELIGIBILITY_MODE = state.ELIGIBILITY_MODE === 'top' ? 'top' : 'games'; ELIGIBILITY_TOP_PCT = state.ELIGIBILITY_TOP_PCT || 50;
+      ELIGIBILITY_PCT = state.ELIGIBILITY_PCT || 30; ELIGIBILITY_MODE = state.ELIGIBILITY_MODE === 'top' ? 'top' : 'games'; ELIGIBILITY_TOP_PCT = state.ELIGIBILITY_TOP_PCT || 50; STAR_MODE = state.STAR_MODE === 'manual' ? 'manual' : 'auto'; STAR_ELO = state.STAR_ELO || 400;
       STAT_DEFS = Array.isArray(state.STAT_DEFS) ? state.STAT_DEFS : defaultStatDefs();
       MOTM_FORMULA = state.MOTM_FORMULA || defaultMotmFormula();
       BEST_GOALS = (state.BEST_GOALS && typeof state.BEST_GOALS==='object') ? state.BEST_GOALS : {};
@@ -7189,7 +7230,7 @@ function resetAppData() {
   PLAYER_STATS.length = 0;
   TOLERANCE = null;
   K_FACTOR = 20;
-  ELIGIBILITY_PCT = 30; ELIGIBILITY_MODE = 'games'; ELIGIBILITY_TOP_PCT = 50;
+  ELIGIBILITY_PCT = 30; ELIGIBILITY_MODE = 'games'; ELIGIBILITY_TOP_PCT = 50; STAR_MODE = 'auto'; STAR_ELO = 400;
   STAT_DEFS = defaultStatDefs();
   MOTM_FORMULA = defaultMotmFormula();
   BEST_GOALS = {};
