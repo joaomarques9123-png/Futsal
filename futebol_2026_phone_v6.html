@@ -2845,7 +2845,8 @@ function renderPayTracker() {
     const neverPaid = p.count === 0;
     const barW = p.count === 0 ? 0 : Math.round(p.count / maxCount * 100);
     const col = neverPaid ? 'var(--red)' : i === 0 ? 'var(--scp-green)' : 'var(--amber)';
-    const lastPayInfo = neverPaid ? 'Never paid' : `Paid ${p.count}× · last: ${p.lastDate||'—'}`;
+    const totG = GAMES_ALL_YEARS.filter(g => [...(g.teamA||[]), ...(g.teamB||[])].includes(p.name)).length;
+    const lastPayInfo = (neverPaid ? 'Never paid' : `Paid ${p.count}× · last: ${p.lastDate||'—'}`) + ` · ${totG} game${totG===1?"":"s"}`;
     return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
       <span style="font-size:18px;flex-shrink:0">${medal}</span>
       <div style="flex:1;min-width:0">
