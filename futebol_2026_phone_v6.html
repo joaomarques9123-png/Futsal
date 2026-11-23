@@ -4233,20 +4233,23 @@ function renderDuoInsights() {
 function seasonGoals() {
   const out = [];
   GAMES.slice().sort((a,b) => (parseInt(a.id,10)||0) - (parseInt(b.id,10)||0)).forEach(g => {
-    const seq = (gameGoalSequence(g) || []).filter(e => e.key === 'goals');
+    // every goal of the game, own goals included (so the total matches all goals scored)
+    const seq = (gameGoalSequence(g) || []).filter(e => e.key === 'goals' || e.key === 'ownGoals');
     const timed = seq.filter(e => typeof e.t === 'number').sort((a,b) => a.t - b.t);
     const untimed = seq.filter(e => typeof e.t !== 'number');
-    timed.concat(untimed).forEach(e => out.push({ g, player: e.player, t: typeof e.t === 'number' ? e.t : null, eid: e.id, best: !!e.best }));
-    GOAL_STATS.filter(r => r.gameId === g.id && (r.goals||0) > 0).forEach(r => {
-      const miss = (r.goals||0) - seq.filter(e => e.player === r.player).length;
-      for (let k = 0; k < miss; k++) out.push({ g, player: r.player, t: null, eid: null });
+    timed.concat(untimed).forEach(e => out.push({ g, player: e.player, t: typeof e.t === 'number' ? e.t : null, eid: e.id, best: !!e.best, og: e.key === 'ownGoals' }));
+    GOAL_STATS.filter(r => r.gameId === g.id && ((r.goals||0) > 0 || (r.ownGoals||0) > 0)).forEach(r => {
+      const missG = (r.goals||0) - seq.filter(e => e.player === r.player && e.key === 'goals').length;
+      for (let k = 0; k < missG; k++) out.push({ g, player: r.player, t: null, eid: null });
+      const missO = (r.ownGoals||0) - seq.filter(e => e.player === r.player && e.key === 'ownGoals').length;
+      for (let k = 0; k < missO; k++) out.push({ g, player: r.player, t: null, eid: null, og: true });
     });
   });
   out.forEach((it, k) => it.n = k + 1);
   return out;
 }
 function allGoalItems() { return seasonGoals().reverse(); }
-function playerGoalItems(name) { return seasonGoals().filter(it => it.player === name).reverse(); }
+function playerGoalItems(name) { return seasonGoals().filter(it => it.player === name && !it.og).reverse(); }
 function glStar(btn, gid, eid) {
   if (typeof BROTHER_MODE !== 'undefined' && BROTHER_MODE) return;
   const g = GAMES_ALL_YEARS.find(x => x.id === gid); const e = g && (g.events||[]).find(x => x.id === eid); if (!e) return;
@@ -4259,12 +4262,12 @@ function goalItemsHtml(items) {
   const ro = typeof BROTHER_MODE !== 'undefined' && BROTHER_MODE;
   return items.map(it => {
     const has = !!it.eid, yt = has && it.g.youtube && it.t != null;
-    const star = !has ? '<span style="width:30px"></span>'
+    const star = (!has || it.og) ? '<span style="width:30px"></span>'
       : ro ? `<span style="width:30px;text-align:center">${it.best?'⭐':''}</span>`
       : `<button type="button" onclick="event.stopPropagation();glStar(this,'${it.g.id}','${it.eid}')" style="width:30px;border:none;background:none;font-size:16px;cursor:pointer;padding:0">${it.best?'⭐':'☆'}</button>`;
     return `<div class="di-row" style="cursor:pointer;align-items:center;${has?'':'opacity:.55'}" onclick="${yt ? `openYouTubeAt('${it.g.id}',${it.t})` : `openGameDetail('${it.g.id}')`}">
       <span style="min-width:38px;font-weight:800;color:var(--scp-green);font-family:'Barlow Condensed',sans-serif;font-size:15px">#${it.n}</span>
-      <span class="nm" style="font-weight:500"><span class="s">J${it.g.id.slice(-3)} · ${it.g.date.split(' ').slice(0,2).join(' ')} ·</span> <b>${it.player}</b></span>
+      <span class="nm" style="font-weight:500"><span class="s">J${it.g.id.slice(-3)} · ${it.g.date.split(' ').slice(0,2).join(' ')} ·</span> <b>${it.player}</b>${it.og ? ' <span style="font-size:10px;font-weight:800;color:var(--red)">(OG)</span>' : ''}</span>
       <span class="v" style="min-width:30px;text-align:right">${it.t!=null?fmtMinute(it.t):'–'}</span>${star}
       <span style="width:22px;text-align:center;color:${yt?'var(--scp-green)':'var(--dim)'};font-size:14px">${yt?'▶':''}</span></div>`;
   }).join('');
