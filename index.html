@@ -1096,7 +1096,7 @@ select.st-in { width: auto; }
           <th style="width:30px;text-align:center" title="Change vs previous game">±</th>
           <th>Player</th>
           <th>G</th>
-          <th>Adj%</th>
+          <th style="cursor:pointer" onclick="rkToggleDec()">Adj%</th>
           <th>Streak</th>
           <th>W</th>
           <th>L</th>
@@ -3179,7 +3179,7 @@ function renderStats() {
       <td style="text-align:center;width:30px">${delta}</td>
       <td class="player-name-cell" style="color:var(--scp-green)">${p.name}</td>
       <td style="text-align:center;font-size:12px">${p.games}</td>
-      <td style="font-weight:700;color:${adjColor};text-align:center">${adjPct}%</td>
+      <td style="font-weight:700;color:${adjColor};text-align:center;cursor:pointer" onclick="event.stopPropagation();rkToggleDec()">${rkPct(p)}%</td>
       <td>${p.streak ? `<span class="tag ${sc}">${p.streak}</span>` : '—'}</td>
       <td style="color:var(--scp-green);font-weight:600;text-align:center">${p.w}</td>
       <td style="color:var(--red);font-weight:600;text-align:center">${p.l}</td>
@@ -3191,7 +3191,7 @@ function renderStats() {
       <td style="text-align:center;width:30px;color:var(--red);font-size:11px">↓</td>
       <td class="player-name-cell">${p.name}<div style="font-size:9.5px;color:var(--dim);font-weight:500;line-height:1.2">Not enough games (${p.games}/${minNow})</div></td>
       <td style="text-align:center;font-size:12px">${p.games}</td>
-      <td style="font-weight:700;text-align:center">${p.adj}%</td>
+      <td style="font-weight:700;text-align:center;cursor:pointer" onclick="event.stopPropagation();rkToggleDec()">${rkPct(p)}%</td>
       <td>—</td>
       <td style="text-align:center">${p.w}</td>
       <td style="text-align:center">${p.l}</td>
@@ -3214,7 +3214,8 @@ function rankingTableFor(games, minPct) {
     const r = p._res; let c = 0;
     for (let k = r.length-1; k >= 0 && r[k] === r[r.length-1]; k--) c++;
     const adj = Math.min(100, Math.max(0, Math.round((p.w+10)/(p.games+20)*100) + (playerAdj[p.name]||0)));
-    return { name:p.name, games:p.games, w:p.w, l:p.l, adj, streak: r.length ? r[r.length-1]+c : '' };
+    const adjExact = Math.min(100, Math.max(0, (p.w+10)/(p.games+20)*100 + (playerAdj[p.name]||0)));
+    return { name:p.name, games:p.games, w:p.w, l:p.l, adj, adjExact, streak: r.length ? r[r.length-1]+c : '' };
   }).filter(p => !minPct || p.games >= (minPct === true ? minGamesFor(games) : total * minPct));
   const byWr = statsSortKey === 'wr';
   list.sort((a,b) => (byWr ? (b.w/b.games - a.w/a.games) : (b.adj - a.adj)) || rankTieCmp(a,b));
@@ -3229,6 +3230,10 @@ function setRankingGame(val) {
   rankingGameFilter = isNaN(n) ? 'all' : n;
   renderStats();
 }
+// Tap a % in the ranking to show / hide one decimal place
+let RK_DEC = false;
+function rkPct(p) { return RK_DEC && typeof p.adjExact === 'number' ? p.adjExact.toFixed(1) : p.adj; }
+function rkToggleDec() { RK_DEC = !RK_DEC; renderStats(); }
 function stepRankingGame(dir) {
   const n = GAMES_ALL_YEARS.filter(g => g.year === rankingYearShown()).length;
   if (!n) return false;
@@ -4568,7 +4573,7 @@ function renderGoalAnalysis() {
   const esc = t => String(t).replace(/'/g,"\\'");
   const gref = g => `J${g.id.slice(-3)} · ${g.date.split(' ').slice(0,2).join(' ')}`;
   const play = (g, t) => g.youtube && typeof t === 'number' ? `<span style="color:var(--scp-green);margin-left:8px;cursor:pointer" onclick="event.stopPropagation();openYouTubeAt('${g.id}',${t})">▶</span>` : '';
-  const nameLink = n => real(n) ? `<b style="cursor:pointer" onclick="event.stopPropagation();gaOpenPlayer('${esc(n)}')">${n}</b>` : `<b>${n}</b>`;
+  const nameLink = n => real(n) ? `<b style="cursor:pointer" onclick="event.stopPropagation();if(typeof closeAppModal==='function')closeAppModal();gaOpenPlayer('${esc(n)}')">${n}</b>` : `<b>${n}</b>`;
   const sec = (icon, title, desc, body) => `<div class="di-card" style="margin-bottom:12px">
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800">${icon} ${title}</div>
       <div class="di-sub" style="margin:2px 0 8px">${desc}</div>${body}</div>`;
@@ -4591,15 +4596,20 @@ function renderGoalAnalysis() {
     <div style="height:8px;border-radius:4px;background:var(--border);margin:6px 0 4px;overflow:hidden"><div style="height:100%;width:${cov}%;background:var(--scp-green)"></div></div>
     <div class="di-sub">${cov}% of the season's goals have a minute. Add more in ⏱ Add minutes — the more games, the more reliable this page is.</div></div>`;
 
-  // ── ⏱ when goals happen
+  // ── ⏱ when goals happen (chart stays on the page)
   const early = allTimed.filter(e => real(e.player)).sort((a,b) => a.t - b.t);
   html += sec('⏱', 'When goals happen', 'Goals of the season by 15-minute blocks of the game.',
     gmBlocksHtml(allTimed)
-    + (allTimed.length ? `<div class="di-sub" style="margin:6px 0 10px;color:var(--scp-green);font-weight:700">${gmTopBlockText(allTimed)}</div>` : '')
-    + `<div style="font-weight:700;font-size:13px;margin-top:6px">Earliest goals</div>` + top(early, 3, (e, r) => line(r, nameLink(e.player), fmtMinute(e.t), '', gref(e.game), e.game, e.t))
-    + `<div style="font-weight:700;font-size:13px;margin-top:10px">Latest goals</div>` + top(early.slice().reverse(), 3, (e, r) => line(r, nameLink(e.player), fmtMinute(e.t), '', gref(e.game), e.game, e.t))
-    + `<button type="button" class="btn" style="width:100%;margin-top:10px" onclick="navigateTo('goal-minutes')">Minutes by player →</button>`);
-
+    + (allTimed.length ? `<div class="di-sub" style="margin:6px 0 4px;color:var(--scp-green);font-weight:700">${gmTopBlockText(allTimed)}</div>` : '')
+    + `<button type="button" class="btn" style="width:100%;margin-top:8px" onclick="navigateTo('goal-minutes')">Minutes by player →</button>`);
+  const tiles = [];
+  const all = (arr, fn) => arr.length ? arr.map((x, k) => fn(x, rankMedal(k+1))).join('') : '<div class="di-sub">No data yet</div>';
+  const desc = t => `<div class="di-sub" style="margin:0 0 8px">${t}</div>`;
+  const prev = (name, val) => name ? `<div style="font-size:13px;font-weight:700">${name}</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:var(--scp-green)">${val}</div>` : '<div style="font-size:12px;color:var(--dim);font-style:italic">No data yet</div>';
+  tiles.push(categoryTile('🕐', 'Earliest / Latest', [
+    { tabLabel: 'Earliest', previewHtml: prev(early[0] && early[0].player, early[0] ? mmss(early[0].t) : ''), body: desc('Earliest goals of the season (game clock).') + all(early, (e, r) => line(r, nameLink(e.player), mmss(e.t), '', gref(e.game), e.game, e.t)) },
+    { tabLabel: 'Latest', body: desc('Latest goals of the season (game clock).') + all(early.slice().reverse(), (e, r) => line(r, nameLink(e.player), mmss(e.t), '', gref(e.game), e.game, e.t)) }
+  ]));
   // ── per-player counters
   const st = {}, dec = {}, pairs = {};
   const S = p => st[p] = st[p] || { name:p, win:0, draw:0, lose:0, tot:0 };
@@ -4629,14 +4639,14 @@ function renderGoalAnalysis() {
     if (best.n >= 3) runs.push({ g, v:best.n, side:best.side, txt:best.from+' → '+best.to });
   });
 
-  // ── 🎯 decisive goals table
-  const cols = [['winner','Win','the goal that decided the win'],['ahead','Ahead','put the team in front (from a draw)'],['eq','Equal.','made it level (from −1)'],['opener','1st','opened the score'],['late',"Late",'in the last 10′ of a close game (±1)']];
-  const dArr = Object.values(dec).filter(d => cols.some(([k]) => d[k] > 0)).sort((a,b) => b[GA_SORT]-a[GA_SORT] || b.winner-a.winner || a.name.localeCompare(b.name));
-  const th = (k, l) => `<th onclick="GA_SORT='${k}';renderGoalAnalysis()" style="padding:6px 4px;font-size:11px;cursor:pointer;text-align:center;${GA_SORT===k?'color:var(--scp-green);border-bottom:2px solid var(--scp-green)':'color:var(--dim)'}">${l}${GA_SORT===k?' ▼':''}</th>`;
-  const table = dArr.length ? `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th style="text-align:left;padding:6px 4px;font-size:11px;color:var(--dim)">Player</th>${cols.map(([k,l]) => th(k,l)).join('')}</tr></thead><tbody>`
-    + dArr.map(d => `<tr style="border-top:1px solid var(--border)"><td style="padding:7px 4px">${nameLink(d.name)}</td>${cols.map(([k]) => `<td style="text-align:center;${k===GA_SORT?'font-weight:800;color:var(--scp-green)':''}">${d[k]||'·'}</td>`).join('')}</tr>`).join('')
-    + `</tbody></table></div>` : '<div class="di-sub">No data yet</div>';
-  html += sec('🎯', 'Decisive goals', 'Tap a column to sort. ' + cols.map(([,l,d]) => `<b>${l}</b> = ${d}`).join(' · ') + '.', table);
+  // ── 🎯 decisive goals: one tab per type, full list
+  const cols = [['winner','Win','The goal that decided the win.'],['ahead','Ahead','Put the team in front, from a draw.'],['eq','Equaliser','Made it level, from one goal down.'],['opener','1st goal','Opened the score.'],['late','Late','In the last 10′ of a close game (±1).']];
+  const decTabs = cols.map(([k,l,d]) => {
+    const arr = Object.values(dec).filter(x => x[k] > 0).sort((a,b) => b[k]-a[k] || a.name.localeCompare(b.name));
+    return { tabLabel: l, k, arr, body: desc(d) + all(arr, (x, r) => line(r, nameLink(x.name), x[k], x[k]===1?'goal':'goals')) };
+  });
+  decTabs[0].previewHtml = prev(decTabs[0].arr[0] && decTabs[0].arr[0].name, decTabs[0].arr[0] ? decTabs[0].arr[0].winner + ' winning goals' : '');
+  tiles.push(categoryTile('🎯', 'Decisive goals', decTabs));
 
   // ── 📊 score at the moment of the goal
   const stArr = Object.values(st).filter(x => GA_ALL || x.tot >= 3).sort((a,b) => b.tot-a.tot || a.name.localeCompare(b.name));
@@ -4647,8 +4657,19 @@ function renderGoalAnalysis() {
         ${x.win?`<div style="width:${pc(x.win,x.tot)}%;background:var(--scp-green);text-align:center">${pc(x.win,x.tot)}%</div>`:''}
         ${x.draw?`<div style="width:${pc(x.draw,x.tot)}%;background:#9aa39a;text-align:center">${pc(x.draw,x.tot)}%</div>`:''}
         ${x.lose?`<div style="width:${pc(x.lose,x.tot)}%;background:var(--red);text-align:center">${pc(x.lose,x.tot)}%</div>`:''}</div></div>`).join('') || '<div class="di-sub">No data yet</div>';
-  html += sec('📊', 'Score when they score', `What the score was at the moment of each goal: <b style="color:var(--scp-green)">winning</b> · <b style="color:#7d867d">drawing</b> · <b style="color:var(--red)">losing</b>. ${GA_ALL?'All players.':'Players with 3+ goals.'}`,
-    bars + `<button type="button" class="btn" style="width:100%;margin-top:8px" onclick="GA_ALL=!GA_ALL;renderGoalAnalysis()">${GA_ALL?'Only 3+ goals':'Show all players'}</button>`);
+  const allSt = Object.values(st).sort((a,b) => b.tot-a.tot || a.name.localeCompare(b.name));
+  const barsOf = arr => arr.map(x => `<div style="margin:8px 0">
+      <div style="display:flex;justify-content:space-between;font-size:13px">${nameLink(x.name)}<span class="s">${x.tot} goals</span></div>
+      <div style="display:flex;height:14px;border-radius:4px;overflow:hidden;margin-top:3px;font-size:9px;color:#fff;font-weight:700;line-height:14px">
+        ${x.win?`<div style="width:${pc(x.win,x.tot)}%;background:var(--scp-green);text-align:center">${pc(x.win,x.tot)}%</div>`:''}
+        ${x.draw?`<div style="width:${pc(x.draw,x.tot)}%;background:#9aa39a;text-align:center">${pc(x.draw,x.tot)}%</div>`:''}
+        ${x.lose?`<div style="width:${pc(x.lose,x.tot)}%;background:var(--red);text-align:center">${pc(x.lose,x.tot)}%</div>`:''}</div></div>`).join('') || '<div class="di-sub">No data yet</div>';
+  const legend = desc('Score at the moment of each goal: <b style="color:var(--scp-green)">winning</b> · <b style="color:#7d867d">drawing</b> · <b style="color:var(--red)">losing</b>.');
+  const s3 = allSt.filter(x => x.tot >= 3);
+  tiles.push(categoryTile('📊', 'Score when they score', [
+    { tabLabel: '3+ goals', previewHtml: prev(s3[0] && s3[0].name, s3[0] ? pc(s3[0].win, s3[0].tot) + '% winning' : ''), body: legend + barsOf(s3) },
+    { tabLabel: 'All players', body: legend + barsOf(allSt) }
+  ]));
 
   // ── ⚡ speed
   const braces = [], hats = [];
@@ -4663,22 +4684,25 @@ function renderGoalAnalysis() {
       if (b3) hats.push({ name:p, g, ...b3 });
     });
   });
-  const spd = arr => top(arr.sort((a,b) => a.v-b.v), 5, (x, r) => line(r, nameLink(x.name), mmss(x.v), '', `${gref(x.g)} · from ${fmtMinute(x.t)}`, x.g, x.t));
-  html += sec('⚡', 'Speed', 'Shortest time between a player\'s goals in the same game.',
-    `<div style="font-weight:700;font-size:13px">Fastest hat-trick (3 goals)</div>` + spd(hats)
-    + `<div style="font-weight:700;font-size:13px;margin-top:10px">Fastest brace (2 goals)</div>` + spd(braces));
+  hats.sort((a,b) => a.v-b.v); braces.sort((a,b) => a.v-b.v);
+  const spd = arr => all(arr, (x, r) => line(r, nameLink(x.name), mmss(x.v), '', `${gref(x.g)} · from ${mmss(x.t)}`, x.g, x.t));
+  tiles.push(categoryTile('⚡', 'Speed', [
+    { tabLabel: 'Hat-trick', previewHtml: prev(hats[0] && hats[0].name, hats[0] ? 'hat-trick in ' + mmss(hats[0].v) : ''), body: desc('Shortest time to score 3 goals in the same game.') + spd(hats) },
+    { tabLabel: 'Brace', body: desc('Shortest time between 2 goals of the same player.') + spd(braces) }
+  ]));
 
   // ── 🔄 games (team level)
-  html += sec('🔄', 'Games', 'Team moments — tap to open the game.',
-    `<div style="font-weight:700;font-size:13px">Comebacks</div>`
-    + top(comebacks.sort((a,b) => b.v-a.v), 5, (x, r) => line(r, `Team ${x.side}`, x.v, x.v===1?'goal down':'goals down', `${gref(x.g)} · was ${x.at} → won ${x.fin}`, x.g))
-    + `<div style="font-weight:700;font-size:13px;margin-top:10px">Goal runs (3+ in a row)</div>`
-    + top(runs.sort((a,b) => b.v-a.v), 5, (x, r) => line(r, `Team ${x.side}`, x.v, 'in a row', `${gref(x.g)} · ${x.txt}`, x.g)));
-
+  comebacks.sort((a,b) => b.v-a.v); runs.sort((a,b) => b.v-a.v);
+  tiles.push(categoryTile('🔄', 'Games', [
+    { tabLabel: 'Comebacks', previewHtml: prev(comebacks[0] && gref(comebacks[0].g), comebacks[0] ? comebacks[0].at + ' → ' + comebacks[0].fin : ''), body: desc('Wins after being behind — tap to open the game.') + all(comebacks, (x, r) => line(r, `Team ${x.side}`, x.v, x.v===1?'goal down':'goals down', `${gref(x.g)} · was ${x.at} → won ${x.fin}`, x.g)) },
+    { tabLabel: 'Goal runs', body: desc('3 or more goals in a row by the same team.') + all(runs, (x, r) => line(r, `Team ${x.side}`, x.v, 'in a row', `${gref(x.g)} · ${x.txt}`, x.g)) }
+  ]));
   // ── 🤝 partnerships
   const pArr = Object.entries(pairs).map(([k,v]) => { const [a,b] = k.split('|'); return { a, b, v }; }).sort((x,y) => y.v-x.v);
-  html += sec('🤝', 'Partnerships', 'Who assists whom: assist → goal.',
-    top(pArr, 10, (x, r) => line(r, `${nameLink(x.a)} <span class="s">→</span> ${nameLink(x.b)}`, x.v, x.v===1?'goal':'goals')));
+  tiles.push(categoryTile('🤝', 'Partnerships', [
+    { tabLabel: 'Assist → goal', previewHtml: prev(pArr[0] && (pArr[0].a + ' → ' + pArr[0].b), pArr[0] ? pArr[0].v + ' goals' : ''), body: desc('Who assists whom.') + all(pArr, (x, r) => line(r, `${nameLink(x.a)} <span class="s">→</span> ${nameLink(x.b)}`, x.v, x.v===1?'goal':'goals')) }
+  ]));
+  html += `<div class="home-grid" style="padding:0;margin-bottom:12px">${tiles.join('')}</div>`;
 
   grid.className = ''; grid.style.display = 'block';
   grid.innerHTML = html;
@@ -4691,22 +4715,21 @@ function renderGoalAnalysis() {
 let gmEligible = false;
 function gmBlocksHtml(goals) {
   if (!goals.length) return '<div class="di-sub" style="margin:6px 0">No goals with minutes yet — use the clock in Log Stats.</div>';
-  const maxMin = Math.max(...goals.map(e => Math.floor(e.t/60)+1));
-  const nb = Math.max(4, Math.ceil(maxMin/15));
+  const nb = 4;   // 1–15, 16–30, 31–45, 46–60+ (anything after 60' goes in the last block)
   const counts = Array(nb).fill(0);
   goals.forEach(e => { counts[Math.min(nb-1, Math.floor((Math.floor(e.t/60))/15))]++; });
   const top = Math.max(...counts);
   const uniqueTop = counts.filter(c => c === top).length === 1;
-  return counts.map((c,i) => `<div class="gm-bar"><span>${i*15+1}'–${(i+1)*15}'</span>
+  return counts.map((c,i) => `<div class="gm-bar"><span>${i*15+1}'–${(i+1)*15}'${i===nb-1?'+':''}</span>
       <div class="gm-track"><div class="gm-fill ${uniqueTop&&c===top&&c>0?'top':''}" style="width:${top?Math.round(c/top*100):0}%"></div></div>
       <b style="text-align:right">${c}</b></div>`).join('');
 }
 function gmTopBlockText(goals) {
   if (!goals.length) return '';
   const counts = {};
-  goals.forEach(e => { const b = Math.floor(Math.floor(e.t/60)/15); counts[b] = (counts[b]||0)+1; });
+  goals.forEach(e => { const b = Math.min(3, Math.floor(Math.floor(e.t/60)/15)); counts[b] = (counts[b]||0)+1; });
   const b = +Object.keys(counts).sort((x,y) => counts[y]-counts[x])[0];
-  return `Most goals between ${b*15+1}' and ${(b+1)*15}'`;
+  return `Most goals between ${b*15+1}' and ${(b+1)*15}'${b===3?'+':''}`;
 }
 function renderGoalMinutes() {
   const ov = document.getElementById('gm-overall'), pc = document.getElementById('gm-player-content'), sel = document.getElementById('gm-player');
