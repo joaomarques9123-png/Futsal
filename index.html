@@ -3154,7 +3154,7 @@ function renderStats() {
     // positions compared only among players present in both jornadas (someone leaving doesn't make you "climb")
     const byWr = statsSortKey === 'wr';
     const kept = prevList.filter(p => curNames.has(p.name));
-    const rk = competitionRanks(kept, (a,b) => (byWr ? (a.w/a.games === b.w/b.games) : (a.adj === b.adj)) && rankTieCmp(a,b) === 0);
+    const rk = competitionRanks(kept, (a,b) => (byWr ? (a.w/a.games === b.w/b.games) : (adjX(a) === adjX(b))) && rankTieCmp(a,b) === 0);
     kept.forEach((p,i) => { prevRank[p.name] = rk[i]; });
   }
   const allNow = {};
@@ -3218,8 +3218,8 @@ function rankingTableFor(games, minPct) {
     return { name:p.name, games:p.games, w:p.w, l:p.l, adj, adjExact, streak: r.length ? r[r.length-1]+c : '' };
   }).filter(p => !minPct || p.games >= (minPct === true ? minGamesFor(games) : total * minPct));
   const byWr = statsSortKey === 'wr';
-  list.sort((a,b) => (byWr ? (b.w/b.games - a.w/a.games) : (b.adj - a.adj)) || rankTieCmp(a,b));
-  const ranks = competitionRanks(list, (a,b) => (byWr ? (a.w/a.games === b.w/b.games) : (a.adj === b.adj)) && rankTieCmp(a,b) === 0);
+  list.sort((a,b) => (byWr ? (b.w/b.games - a.w/a.games) : (adjX(b) - adjX(a))) || rankTieCmp(a,b));
+  const ranks = competitionRanks(list, (a,b) => (byWr ? (a.w/a.games === b.w/b.games) : (adjX(a) === adjX(b))) && rankTieCmp(a,b) === 0);
   list.forEach((p,i) => p.rank = ranks[i]);
   return list;
 }
@@ -6686,6 +6686,8 @@ function getGameMOTM(gameId) {
 // Competition-style ranking ("1, 2, 2, 4"): tied items share a position, the next one is skipped.
 // sameFn(a,b) decides whether two neighbouring (already sorted) items are tied.
 // Tie-break after the %: wins minus losses, then total wins, then total games
+// Ranking order uses the exact Adj% (with decimals); the rounded value is only for display
+function adjX(p) { return typeof p.adjExact === 'number' ? Math.round(p.adjExact * 1e6) / 1e6 : p.adj; }
 function rankTieCmp(a, b) {
   const la = (a.l != null ? a.l : a.games - a.w), lb = (b.l != null ? b.l : b.games - b.w);
   return ((b.w - lb) - (a.w - la)) || (b.w - a.w) || (b.games - a.games);
@@ -6912,7 +6914,8 @@ function renderHomeWidgets() {
   // --- Ranking (top 2 by adjusted win %, eligible players only — same formula as Player Ranking page) ---
   const eligibleMin = minEligibleGames();
   const getHomeAdj = p => Math.min(100, Math.max(0, Math.round((p.w + 10) / (p.games + 20) * 100) + (playerAdj[p.name] || 0)));
-  const ranked = [...PLAYER_STATS].filter(p=>p.games>0 && p.games>=eligibleMin).sort((a,b)=>(getHomeAdj(b)-getHomeAdj(a)) || rankTieCmp(a,b));
+  const getHomeAdjX = p => Math.min(100, Math.max(0, (p.w + 10) / (p.games + 20) * 100 + (playerAdj[p.name] || 0)));
+  const ranked = [...PLAYER_STATS].filter(p=>p.games>0 && p.games>=eligibleMin).sort((a,b)=>(getHomeAdjX(b)-getHomeAdjX(a)) || rankTieCmp(a,b));
   if (!ranked.length) {
     topRankEl.innerHTML = homeWidgetShell('Ranking', '🏆', '<div style="font-size:12px;color:var(--dim);font-style:italic">No eligible players</div>');
   } else {
@@ -7712,9 +7715,9 @@ function seasonRankingFor(year) {
       pm[p].games++; if (g.winner === t) pm[p].w++;
     }));
   });
-  const all = Object.values(pm).map(p => ({ ...p, l: p.games - p.w, adj: Math.round((p.w+10)/(p.games+20)*100) }));
-  const eligible = all.filter(p => p.games >= minG).sort((a,b) => (b.adj - a.adj) || rankTieCmp(a,b));
-  const ranks = competitionRanks(eligible, (a,b) => a.adj === b.adj && rankTieCmp(a,b) === 0);
+  const all = Object.values(pm).map(p => ({ ...p, l: p.games - p.w, adj: Math.round((p.w+10)/(p.games+20)*100), adjExact: (p.w+10)/(p.games+20)*100 }));
+  const eligible = all.filter(p => p.games >= minG).sort((a,b) => (adjX(b) - adjX(a)) || rankTieCmp(a,b));
+  const ranks = competitionRanks(eligible, (a,b) => adjX(a) === adjX(b) && rankTieCmp(a,b) === 0);
   eligible.forEach((p,i) => p.rank = ranks[i]);
   return { total, minG, all, eligible };
 }
